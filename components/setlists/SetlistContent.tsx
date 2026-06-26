@@ -40,6 +40,7 @@ export default function SetlistContent({
   );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -80,11 +81,16 @@ export default function SetlistContent({
     router.push("/setlists");
   }
 
-  async function handleDelete() {
-    if (!confirm("Delete this setlist and all its songs?")) return;
+  async function handleDeleteConfirm() {
     setDeleting(true);
-    await fetch(`/api/setlists/${setlist.id}`, { method: "DELETE" });
+    setShowDeleteConfirm(false);
+    const res = await fetch(`/api/setlists/${setlist.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setDeleting(false);
+      return;
+    }
     router.push("/setlists");
+    router.refresh();
   }
 
   async function handleDeleteSong(sectionId: string) {
@@ -357,7 +363,7 @@ export default function SetlistContent({
                     Edit
                   </button>
                   <button
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteConfirm(true)}
                     disabled={deleting}
                     className="rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50"
                     style={{
@@ -649,6 +655,56 @@ export default function SetlistContent({
           </button>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="rounded-xl p-6 max-w-sm w-full"
+            style={{
+              backgroundColor: "var(--color-surface-card)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <h3
+              className="text-lg font-bold mb-2"
+              style={{ color: "var(--color-text)" }}
+            >
+              Delete lineup?
+            </h3>
+            <p
+              className="text-sm mb-6"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Are you sure you want to delete the lineup for {setlist.date}?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                style={{ backgroundColor: "#DC2626", color: "#fff" }}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

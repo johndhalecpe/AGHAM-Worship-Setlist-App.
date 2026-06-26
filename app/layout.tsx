@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 
@@ -10,8 +10,14 @@ export const metadata: Metadata = {
   title: "Agham Setlist",
   description: "Worship team setlist manager",
   icons: {
-    icon: "/logo.jpg",
+    icon: "/transparent-logo.svg",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#252320",
 };
 
 const themeScript = `
