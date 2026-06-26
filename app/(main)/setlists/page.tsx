@@ -2,6 +2,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
 
+export const dynamic = "force-dynamic";
+
 const sectionLabels: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",

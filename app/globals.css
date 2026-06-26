@@ -2,7 +2,7 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-theme {
+@theme {
   --color-gold-50: #FBF5E8;
   --color-gold-100: #F5E4C0;
   --color-gold-200: #EDD399;

@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { Song } from "@/lib/type";
 import SongCard from "@/components/songs/SongCard";
 
+export const dynamic = "force-dynamic";
+
 const categoryPriority = ["worship", "praise"];
 const categoryLabels: Record<string, string> = {
   worship: "Worship",

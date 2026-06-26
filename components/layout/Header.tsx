@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -10,15 +10,15 @@ const navLinks = [
   { href: "/songs", label: "Songs" },
 ];
 
+function getInitialTheme(): boolean {
+  if (typeof window === "undefined") return true;
+  const stored = localStorage.getItem("theme");
+  return stored !== "light";
+}
+
 export default function Header() {
   const pathname = usePathname();
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    const dark = stored !== "light";
-    setIsDark(dark);
-  }, []);
+  const [isDark, setIsDark] = useState(getInitialTheme);
 
   function toggleTheme() {
     const next = !isDark;

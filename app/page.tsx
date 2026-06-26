@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 function Silhouette() {
@@ -52,10 +53,12 @@ export default function Home() {
               "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 color-mix(in srgb, var(--color-border) 30%, transparent)",
           }}
         >
-          <img
+          <Image
             src="/transparent-logo.svg"
             alt="Agham Setlist"
             className="mx-auto mb-6 w-20 h-20 sm:w-24 sm:h-24 object-contain"
+            width={96}
+            height={96}
           />
           <h1
             className="text-lg sm:text-xl font-medium leading-relaxed"
