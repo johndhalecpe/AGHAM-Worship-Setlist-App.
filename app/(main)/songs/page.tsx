@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Song } from "@/lib/type";
+import SongCard from "@/components/songs/SongCard";
 
 const categoryPriority = ["worship", "praise"];
 const categoryLabels: Record<string, string> = {
@@ -71,51 +72,47 @@ export default async function SongsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-neutral-900">Song Library</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h2
+          className="text-xl sm:text-2xl font-bold"
+          style={{ color: "var(--color-text)" }}
+        >
+          Song Library
+        </h2>
         <Link
           href="/songs/new"
-          className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="rounded-lg px-4 py-2.5 text-sm font-medium text-center transition-all hover:-translate-y-0.5 w-full sm:w-auto"
+          style={{
+            backgroundColor: "#D84F0B",
+            color: "var(--color-surface-card)",
+          }}
         >
           Add a song
         </Link>
       </div>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         {groups.map((group) => (
           <div key={group.category}>
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">
+            <h3
+              className="text-base font-bold mb-3"
+              style={{ color: "var(--color-text)" }}
+            >
               {categoryLabels[group.category] ?? group.category}
             </h3>
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               {languageOrder
                 .filter((lang) => group.songs[lang])
                 .map((lang) => (
                   <div key={lang}>
-                    <h4 className="text-xs uppercase tracking-wider text-neutral-400 font-semibold mb-2.5">
+                    <h4
+                      className="text-xs uppercase tracking-wider font-semibold mb-1.5"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
                       {languageLabels[lang] ?? lang}
                     </h4>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-0.5">
                       {group.songs[lang].map((song) => (
-                        <div
-                          key={song.id}
-                          className="bg-white rounded-xl shadow-sm border border-neutral-200 p-4 flex items-center justify-between"
-                        >
-                          <div>
-                            <p className="font-medium text-neutral-900">
-                              {song.title}
-                            </p>
-                            {song.author && (
-                              <p className="text-sm text-neutral-400 mt-0.5">
-                                {song.author}
-                              </p>
-                            )}
-                          </div>
-                          {group.category === "other" && song.category && (
-                            <span className="text-xs text-blue-600 bg-blue-50 rounded-full px-2.5 py-0.5 font-medium">
-                              {song.category}
-                            </span>
-                          )}
-                        </div>
+                        <SongCard key={song.id} song={song} />
                       ))}
                     </div>
                   </div>
@@ -124,7 +121,12 @@ export default async function SongsPage() {
           </div>
         ))}
         {groups.length === 0 && (
-          <p className="text-neutral-400 text-sm">No songs yet. Add one above.</p>
+          <p
+            className="text-sm"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            No songs yet. Add one above.
+          </p>
         )}
       </div>
     </div>

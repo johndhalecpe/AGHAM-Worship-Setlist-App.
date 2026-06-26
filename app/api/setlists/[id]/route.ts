@@ -19,11 +19,30 @@ export async function GET(
   return NextResponse.json(data);
 }
 
+async function isPastDate(id: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("setlists")
+    .select("date")
+    .eq("id", id)
+    .single();
+  if (!data) return false;
+  const today = new Date().toISOString().split("T")[0];
+  return data.date < today;
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  if (await isPastDate(id)) {
+    return NextResponse.json(
+      { error: "Cannot edit a past setlist" },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json();
 
   const { data, error } = await supabase
@@ -50,6 +69,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  if (await isPastDate(id)) {
+    return NextResponse.json(
+      { error: "Cannot delete a past setlist" },
+      { status: 403 }
+    );
+  }
+
   const { error } = await supabase
     .from("setlists")
     .delete()

@@ -90,14 +90,24 @@ export default function SongPicker({
   }
 
   return (
-    <div className="mt-3 bg-neutral-50 rounded-xl border border-neutral-200 p-4">
+    <div
+      className="mt-3 rounded-xl p-4"
+      style={{
+        backgroundColor: "var(--color-surface-muted)",
+        border: "1px solid var(--color-border)",
+      }}
+    >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-neutral-700">
+        <span
+          className="text-sm font-medium"
+          style={{ color: "var(--color-text)" }}
+        >
           Add a song
         </span>
         <button
           onClick={onCancel}
-          className="text-neutral-400 hover:text-neutral-600 text-lg leading-none transition-colors"
+          className="text-lg leading-none transition-colors"
+          style={{ color: "var(--color-text-tertiary)" }}
         >
           ✕
         </button>
@@ -107,22 +117,53 @@ export default function SongPicker({
         value={search}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder="Search song title..."
-        className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        className="w-full rounded-lg px-3 py-2 text-sm transition-colors"
+        style={{
+          border: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-surface-card)",
+          color: "var(--color-text)",
+        }}
+        onFocus={(e) =>
+          (e.target.style.borderColor = "#D84F0B")
+        }
+        onBlur={(e) =>
+          (e.target.style.borderColor = "var(--color-border)")
+        }
       />
       {results.length > 0 && (
-        <div className="border border-neutral-200 rounded-lg mt-2 overflow-hidden">
+        <div
+          className="rounded-lg mt-2 overflow-hidden"
+          style={{
+            border: "1px solid var(--color-border)",
+          }}
+        >
           {results.map((song) => (
             <button
               key={song.id}
               onClick={() => handleSelectSong(song.id)}
               disabled={loading}
-              className="w-full text-left px-3 py-2.5 text-sm hover:bg-blue-50 border-b border-neutral-100 last:border-b-0 transition-colors"
+              className="w-full text-left px-3 py-2.5 text-sm border-b last:border-b-0 transition-colors"
+              style={{
+                color: "var(--color-text)",
+                borderColor: "var(--color-border)",
+              }}
+              onMouseEnter={(e) =>
+                ((e.target as HTMLElement).style.backgroundColor =
+                  "var(--color-surface-elevated)")
+              }
+              onMouseLeave={(e) =>
+                ((e.target as HTMLElement).style.backgroundColor =
+                  "transparent")
+              }
             >
-              <span className="font-medium text-neutral-900">
-                {song.title}
-              </span>
+              <span className="font-medium">{song.title}</span>
               {song.author && (
-                <span className="text-neutral-400 ml-2">{song.author}</span>
+                <span
+                  className="ml-2"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  {song.author}
+                </span>
               )}
             </button>
           ))}
@@ -134,7 +175,8 @@ export default function SongPicker({
             setShowNewSongForm(true);
             setNewTitle(search);
           }}
-          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+          className="mt-2 text-sm font-medium w-full text-left px-3 py-2 rounded-lg transition-colors"
+          style={{ color: "#D84F0B" }}
         >
           + Add &ldquo;{search}&rdquo; as a new song
         </button>
@@ -146,46 +188,90 @@ export default function SongPicker({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Title"
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="rounded-lg px-3 py-2 text-sm transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface-card)",
+              color: "var(--color-text)",
+            }}
+            onFocus={(e) =>
+              (e.target.style.borderColor = "#D84F0B")
+            }
+            onBlur={(e) =>
+              (e.target.style.borderColor = "var(--color-border)")
+            }
           />
           <input
             type="text"
             value={newAuthor}
             onChange={(e) => setNewAuthor(e.target.value)}
             placeholder="Author (optional)"
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="rounded-lg px-3 py-2 text-sm transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface-card)",
+              color: "var(--color-text)",
+            }}
+            onFocus={(e) =>
+              (e.target.style.borderColor = "#D84F0B")
+            }
+            onBlur={(e) =>
+              (e.target.style.borderColor = "var(--color-border)")
+            }
           />
           <select
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="rounded-lg px-3 py-2 text-sm transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface-card)",
+              color: "var(--color-text)",
+            }}
+            onFocus={(e) =>
+              (e.target.style.borderColor = "#D84F0B")
+            }
+            onBlur={(e) =>
+              (e.target.style.borderColor = "var(--color-border)")
+            }
           >
             <option value="worship">Worship</option>
             <option value="praise">Praise</option>
             <option value="other">Other (specify)</option>
           </select>
           <div>
-            <span className="text-sm text-neutral-600">Language</span>
+            <span
+              className="text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Language
+            </span>
             <div className="flex gap-3 mt-1">
-              <label className="flex items-center gap-1.5 text-sm text-neutral-700">
+              <label
+                className="flex items-center gap-1.5 text-sm"
+                style={{ color: "var(--color-text)" }}
+              >
                 <input
                   type="radio"
                   name="pickerLanguage"
                   value="english"
                   checked={newLanguage === "english"}
                   onChange={(e) => setNewLanguage(e.target.value)}
-                  className="text-blue-600 focus:ring-blue-500"
+                  style={{ accentColor: "#D84F0B" }}
                 />
                 English
               </label>
-              <label className="flex items-center gap-1.5 text-sm text-neutral-700">
+              <label
+                className="flex items-center gap-1.5 text-sm"
+                style={{ color: "var(--color-text)" }}
+              >
                 <input
                   type="radio"
                   name="pickerLanguage"
                   value="filipino"
                   checked={newLanguage === "filipino"}
                   onChange={(e) => setNewLanguage(e.target.value)}
-                  className="text-blue-600 focus:ring-blue-500"
+                  style={{ accentColor: "#D84F0B" }}
                 />
                 Filipino
               </label>
@@ -197,13 +283,28 @@ export default function SongPicker({
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
               placeholder="Describe the category"
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="rounded-lg px-3 py-2 text-sm transition-colors"
+              style={{
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-surface-card)",
+                color: "var(--color-text)",
+              }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = "#D84F0B")
+              }
+              onBlur={(e) =>
+                (e.target.style.borderColor = "var(--color-border)")
+              }
             />
           )}
           <button
             onClick={handleAddNewSong}
             disabled={loading}
-            className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            style={{
+              backgroundColor: "#D84F0B",
+              color: "var(--color-surface-card)",
+            }}
           >
             {loading ? "Adding..." : "Add song"}
           </button>

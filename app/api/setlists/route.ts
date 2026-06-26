@@ -17,6 +17,14 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json();
 
+  const today = new Date().toISOString().split("T")[0];
+  if (body.date < today) {
+    return NextResponse.json(
+      { error: "Cannot create a setlist with a past date" },
+      { status: 400 }
+    );
+  }
+
   const { data, error } = await supabase
     .from("setlists")
     .insert({

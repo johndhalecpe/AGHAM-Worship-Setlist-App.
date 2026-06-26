@@ -22,6 +22,7 @@ export type SetlistSection = {
   song_id: string;
   section_type: string;
   sort_order: number;
+  notes: string | null;
   created_at: string;
 };
 
@@ -31,6 +32,7 @@ export type SetlistSectionWithSong = {
   song_id: string;
   section_type: string;
   sort_order: number;
+  notes: string | null;
   created_at: string;
   songs: {
     id: string;
@@ -39,4 +41,8 @@ export type SetlistSectionWithSong = {
     category: string | null;
     language: string | null;
   };
+};
+
+export type SetlistWithSections = Setlist & {
+  sections: SetlistSectionWithSong[];
 };
