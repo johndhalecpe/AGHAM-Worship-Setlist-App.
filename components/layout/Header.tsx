@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
@@ -10,9 +12,17 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const dark = stored !== "light";
+    setIsDark(dark);
+  }, []);
 
   function toggleTheme() {
-    const next = !document.documentElement.classList.contains("dark");
+    const next = !isDark;
+    setIsDark(next);
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
   }
@@ -31,11 +41,15 @@ export default function Header() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="inline-block text-center sm:text-left font-bold text-base sm:text-lg"
-          style={{ color: "var(--color-text)" }}
+          className="inline-flex items-center"
         >
-          <span className="block sm:inline" style={{ color: "#D84F0B" }}>Agham</span>
-          <span className="block sm:inline text-sm sm:text-lg sm:ml-1" style={{ color: "var(--color-text-secondary)" }}>Setlist</span>
+          <Image
+            src="/transparent-logo.svg"
+            alt="Agham Setlist"
+            className="h-15 sm:h-18 w-auto mt-0.5"
+            width={40}
+            height={40}
+          />
         </Link>
         <nav className="flex items-center gap-3 sm:gap-6">
           {navLinks.map((link) => (
@@ -63,18 +77,11 @@ export default function Header() {
           ))}
           <button
             onClick={toggleTheme}
-            className="ml-2 p-2 rounded-lg transition-colors"
+            className="ml-2 p-2 rounded-lg transition-colors active:scale-95"
             style={{
-              color: "var(--color-text-secondary)",
               backgroundColor: "var(--color-surface-muted)",
+              touchAction: "manipulation",
             }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.color = "var(--color-text)")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.color =
-                "var(--color-text-secondary)")
-            }
             aria-label="Toggle theme"
           >
             <svg
@@ -83,8 +90,11 @@ export default function Header() {
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
-              className="w-4 h-4 hidden dark:block"
-              style={{ color: "var(--color-text)" }}
+              className="w-4 h-4"
+              style={{
+                color: "var(--color-text)",
+                display: isDark ? "block" : "none",
+              }}
             >
               <circle cx="12" cy="12" r="4" />
               <path d="M12 2v2" />
@@ -100,10 +110,13 @@ export default function Header() {
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="w-4 h-4 block dark:hidden"
-              style={{ color: "var(--color-text)" }}
+              className="w-4 h-4"
+              style={{
+                color: "var(--color-text)",
+                display: isDark ? "none" : "block",
+              }}
             >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              <path fillRule="evenodd" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
           </button>
         </nav>

@@ -166,7 +166,7 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
 
       {open && (
         <div
-          className="absolute z-50 mt-2 rounded-xl p-4 shadow-lg w-72"
+          className="absolute left-0 z-50 mt-2 rounded-xl p-4 shadow-lg w-full sm:w-72"
           style={{
             backgroundColor: "var(--color-surface-card)",
             border: "1px solid var(--color-border)",

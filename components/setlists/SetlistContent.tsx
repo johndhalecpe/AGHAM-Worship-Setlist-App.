@@ -296,78 +296,80 @@ export default function SetlistContent({
           </div>
         ) : (
           <div
-            className="rounded-xl p-6 relative"
+            className="rounded-xl p-6"
             style={{
               backgroundColor: "var(--color-surface-card)",
               border: "1px solid var(--color-border)",
             }}
           >
-            <div className="sm:pr-0 pr-24">
-              <h2
-                className="text-2xl font-bold"
-                style={{ color: "var(--color-text)" }}
-              >
-                {setlist.date}
-              </h2>
-              {setlist.title && (
-                <p
-                  className="mt-1"
-                  style={{ color: "var(--color-text-secondary)" }}
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2
+                  className="text-xl sm:text-2xl font-bold break-words"
+                  style={{ color: "var(--color-text)" }}
                 >
-                  {setlist.title}
-                </p>
-              )}
-              {setlist.description && (
-                <p
-                  className="text-sm italic mt-0.5"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  {setlist.description}
-                </p>
-              )}
-              {setlist.song_leader && (
-                <p
-                  className="text-sm mt-2 flex items-center gap-1.5"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className="w-3.5 h-3.5"
-                    style={{ color: "#D84F0B" }}
+                  {setlist.date}
+                </h2>
+                {setlist.title && (
+                  <p
+                    className="mt-1 text-sm sm:text-base"
+                    style={{ color: "var(--color-text-secondary)" }}
                   >
-                    <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
-                  </svg>
-                  Song leader: {setlist.song_leader}
-                </p>
+                    {setlist.title}
+                  </p>
+                )}
+                {setlist.description && (
+                  <p
+                    className="text-sm italic mt-0.5"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    {setlist.description}
+                  </p>
+                )}
+                {setlist.song_leader && (
+                  <p
+                    className="text-sm mt-2 flex items-center gap-1.5"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={{ color: "#D84F0B" }}
+                    >
+                      <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+                    </svg>
+                    {setlist.song_leader}
+                  </p>
+                )}
+              </div>
+              {!isPast && (
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  <button
+                    onClick={startEditing}
+                    className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                    style={{
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+                    style={{
+                      border: "1px solid #FCA5A5",
+                      color: "#DC2626",
+                    }}
+                  >
+                    {deleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
               )}
             </div>
-            {!isPast && (
-              <div className="sm:static sm:flex sm:flex-wrap sm:gap-2 absolute top-3 right-3 flex-col gap-1.5">
-                <button
-                  onClick={startEditing}
-                  className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
-                  style={{
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50"
-                  style={{
-                    border: "1px solid #FCA5A5",
-                    color: "#DC2626",
-                  }}
-                >
-                  {deleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
