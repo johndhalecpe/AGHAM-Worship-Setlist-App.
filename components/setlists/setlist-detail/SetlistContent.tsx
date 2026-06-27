@@ -31,6 +31,7 @@ export default function SetlistContent({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, { override_key?: string; override_bpm?: number; override_time_signature?: string }>>({});
 
   function startEditing() {
     setEditing(true);
@@ -118,6 +119,7 @@ export default function SetlistContent({
           <SetlistHeader
             setlist={setlist}
             sections={sections}
+            overrides={overrides}
             isLocked={isLocked}
             isPast={isPast}
             onEdit={startEditing}
@@ -129,6 +131,8 @@ export default function SetlistContent({
       <SetlistSections
         setlist={setlist}
         sections={sections}
+        overrides={overrides}
+        onOverridesChange={setOverrides}
         isPast={isPast}
         isLocked={isLocked}
         onSectionsChange={setSections}

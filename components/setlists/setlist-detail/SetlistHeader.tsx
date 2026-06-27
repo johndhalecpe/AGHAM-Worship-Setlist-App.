@@ -7,6 +7,7 @@ import { getBranchLabel } from "@/lib/branches";
 type SetlistHeaderProps = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
+  overrides: Record<string, { override_key?: string; override_bpm?: number; override_time_signature?: string }>;
   isLocked: boolean;
   isPast: boolean;
   onEdit: () => void;
@@ -28,6 +29,7 @@ function formatDate(dateStr: string) {
 export default function SetlistHeader({
   setlist,
   sections,
+  overrides,
   isLocked,
   isPast,
   onEdit,
@@ -54,7 +56,7 @@ export default function SetlistHeader({
           </h2>
           <p
             className="mt-0.5 text-sm font-medium"
-            style={{ color: "#D84F0B" }}
+            style={{ color: "var(--color-accent)" }}
           >
             {getBranchLabel(setlist.branch)}
           </p>
@@ -95,7 +97,7 @@ export default function SetlistHeader({
                 </span>
               )}
             </p>
-            <p className="font-semibold text-[11px] mt-0.5" style={{ color: "#D84F0B" }}>
+            <p className="font-semibold text-[11px] mt-0.5" style={{ color: "var(--color-accent)" }}>
               {getBranchLabel(setlist.branch)}
             </p>
           </div>
@@ -120,7 +122,8 @@ export default function SetlistHeader({
                 if (sectionSongs.length > 0) {
                   text += `\n\n${sectionLabels[type] ?? type}`;
                   for (const s of sectionSongs) {
-                    text += `\n• ${s.songs.title}`;
+                    const key = overrides[s.id]?.override_key || s.songs.default_key || "G";
+                    text += `\n• [${key}] ${s.songs.title}`;
                     if (s.songs.author) text += ` (${s.songs.author})`;
                     if (s.notes) text += ` — "${s.notes}"`;
                   }
@@ -133,8 +136,8 @@ export default function SetlistHeader({
             }}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0"
             style={{
-              backgroundColor: copiedText ? "#16A34A" : "#D84F0B",
-              color: "#fff",
+              backgroundColor: copiedText ? "var(--color-success)" : "var(--color-accent)",
+              color: "var(--color-text-on-accent)",
             }}
           >
             {copiedText ? "Copied!" : "Copy text"}
@@ -152,7 +155,7 @@ export default function SetlistHeader({
         )}
         {sections.filter((s) => s.section_type === "worship").length > 0 && (
           <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Worship
             </p>
             {sections
@@ -160,7 +163,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • {s.songs.title}
+                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -169,7 +172,7 @@ export default function SetlistHeader({
         )}
         {sections.filter((s) => s.section_type === "praise").length > 0 && (
           <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Praise
             </p>
             {sections
@@ -177,7 +180,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • {s.songs.title}
+                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -186,7 +189,7 @@ export default function SetlistHeader({
         )}
         {sections.filter((s) => s.section_type === "tithes_offering").length > 0 && (
           <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Tithes and offering
             </p>
             {sections
@@ -194,7 +197,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • {s.songs.title}
+                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -203,7 +206,7 @@ export default function SetlistHeader({
         )}
         {sections.filter((s) => s.section_type === "special").length > 0 && (
           <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Special numbers
             </p>
             {sections
@@ -211,7 +214,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • {s.songs.title}
+                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -228,7 +231,7 @@ export default function SetlistHeader({
               viewBox="0 0 20 20"
               fill="currentColor"
               className="w-3.5 h-3.5 shrink-0"
-              style={{ color: "#D84F0B" }}
+              style={{ color: "var(--color-accent)" }}
             >
               <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
             </svg>
@@ -264,8 +267,8 @@ export default function SetlistHeader({
                 onClick={onDeleteRequest}
                 className="rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
                 style={{
-                  border: "1px solid #FCA5A5",
-                  color: "#DC2626",
+                  border: "1px solid var(--color-danger)",
+                  color: "var(--color-danger)",
                 }}
               >
                 Delete

@@ -36,6 +36,18 @@
   --color-text: #2D2B28;
   --color-text-secondary: #7A756E;
   --color-text-tertiary: #A39D93;
+  --color-accent: #D84F0B;
+  --color-danger: #DC2626;
+  --color-success: #16A34A;
+  --color-text-on-accent: #FFFFFF;
+  --color-badge-key: #FEF0E6;
+  --color-badge-key-text: #B84A0A;
+  --color-badge-bpm: #E8F0FE;
+  --color-badge-bpm-text: #2563EB;
+  --color-badge-ts: #F0FDF4;
+  --color-badge-ts-text: #16A34A;
+  --color-badge-lyrics: #F3E8FF;
+  --color-badge-lyrics-text: #9333EA;
 }
 
 html.dark {
@@ -48,6 +60,18 @@ html.dark {
   --color-text: #E8E3D8;
   --color-text-secondary: #9C978E;
   --color-text-tertiary: #6B665E;
+  --color-accent: #D84F0B;
+  --color-danger: #DC2626;
+  --color-success: #16A34A;
+  --color-text-on-accent: #FFFFFF;
+  --color-badge-key: #3A2818;
+  --color-badge-key-text: #F5A623;
+  --color-badge-bpm: #1A2A3A;
+  --color-badge-bpm-text: #60A5FA;
+  --color-badge-ts: #1A2A1A;
+  --color-badge-ts-text: #4ADE80;
+  --color-badge-lyrics: #2D1B3D;
+  --color-badge-lyrics-text: #C084FC;
 }
 
 body {
@@ -58,5 +82,33 @@ body {
 }
 
 ::selection {
-  background-color: #D84F0B40;
+  background-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+button, a, input, textarea, select {
+  touch-action: manipulation;
 }

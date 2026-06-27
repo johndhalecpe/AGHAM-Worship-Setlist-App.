@@ -4,6 +4,10 @@ export type Song = {
   author: string | null;
   category: string | null;
   language: string | null;
+  default_key: string;
+  default_bpm: number;
+  default_time_signature: string;
+  lyrics: string;
   created_at: string;
 };
 
@@ -41,6 +45,10 @@ export type SetlistSectionWithSong = {
     author: string | null;
     category: string | null;
     language: string | null;
+    default_key: string;
+    default_bpm: number;
+    default_time_signature: string;
+    lyrics: string;
   };
 };
 

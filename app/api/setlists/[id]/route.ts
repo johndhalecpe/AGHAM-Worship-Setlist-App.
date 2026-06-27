@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { isSetlistDateInPast } from "@/app/api/_lib/setlistGuards";
 
 export async function GET(
   request: Request,
@@ -17,17 +18,6 @@ export async function GET(
   }
 
   return NextResponse.json(data);
-}
-
-async function isSetlistDateInPast(id: string): Promise<boolean> {
-  const { data } = await supabase
-    .from("setlists")
-    .select("date")
-    .eq("id", id)
-    .single();
-  if (!data) return false;
-  const today = new Date().toISOString().split("T")[0];
-  return data.date < today;
 }
 
 export async function PATCH(

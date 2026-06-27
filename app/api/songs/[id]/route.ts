@@ -33,6 +33,10 @@ export async function PATCH(
       author: body.author,
       category: body.category,
       language: body.language,
+      default_key: body.default_key ?? "G",
+      default_bpm: body.default_bpm ?? 120,
+      default_time_signature: body.default_time_signature ?? "4/4",
+      lyrics: body.lyrics ?? "",
     })
     .eq("id", id)
     .select()

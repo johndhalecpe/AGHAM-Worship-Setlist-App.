@@ -67,7 +67,12 @@ async function fetchSectionsBySetlistId(id: string) {
         id,
         title,
         author,
-        category
+        category,
+        language,
+        default_key,
+        default_bpm,
+        default_time_signature,
+        lyrics
       )
     `
     )
