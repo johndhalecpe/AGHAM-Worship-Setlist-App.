@@ -9,6 +9,7 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Agham Setlist",
   description: "Worship team setlist manager",
+  metadataBase: new URL("https://worship-setlist.vercel.app"),
   icons: {
     icon: "/transparent-logo.svg",
   },

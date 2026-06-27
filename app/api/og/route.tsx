@@ -51,103 +51,123 @@ export async function GET(request: Request) {
       <div
         style={{
           width: 1200,
-          height: 630,
+          height: 1200,
           display: "flex",
           flexDirection: "column",
-          background: "#1a1a1a",
-          color: "#f0f0f0",
-          fontFamily: "system-ui, sans-serif",
-          padding: 48,
+          gap: 16,
+          background: "#1A1916",
+          color: "#E8E3D8",
+          fontFamily: "Geist, sans-serif",
+          padding: 24,
         }}
       >
+        {/* Header Row */}
         <div
           style={{
             display: "flex",
+            flexDirection: "row",
             alignItems: "center",
-            gap: 16,
-            marginBottom: 24,
+            gap: 24,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://worship-setlist.vercel.app/transparent-logo.svg"
-            width={48}
-            height={48}
-            alt="logo"
-            style={{ borderRadius: 8 }}
-          />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-0.02em" }}>
-              {setlist.date}
-            </span>
-            {setlist.title && (
-              <span style={{ fontSize: 20, opacity: 0.8, marginTop: 4 }}>
-                {setlist.title}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 20,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://worship-setlist.vercel.app/transparent-logo.svg"
+              width={72}
+              height={72}
+              alt="logo"
+            />
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: 72, fontWeight: 700, color: "#E8E3D8" }}>
+                {setlist.date}
               </span>
-            )}
-            {setlist.song_leader && (
-              <span style={{ fontSize: 16, opacity: 0.6, marginTop: 2 }}>
-                Song leader: {setlist.song_leader}
-              </span>
-            )}
+              {setlist.title && (
+                <span style={{ fontSize: 36, color: "#9C978E" }}>
+                  {setlist.title}
+                </span>
+              )}
+              {setlist.song_leader && (
+                <span style={{ fontSize: 28, color: "#6B665E" }}>
+                  Song leader: {setlist.song_leader}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* Sections Area */}
         <div
           style={{
             display: "flex",
-            flex: 1,
-            gap: 32,
+            flexDirection: "column",
+            gap: 16,
           }}
         >
           {grouped.map((group) => (
             <div
               key={group.type}
               style={{
-                flex: 1,
                 display: "flex",
-                flexDirection: "column",
-                background: "rgba(255,255,255,0.06)",
-                borderRadius: 12,
-                padding: 20,
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 16,
               }}
             >
               <span
                 style={{
-                  fontSize: 14,
+                  width: 200,
+                  fontSize: 28,
                   fontWeight: 600,
+                  color: "#D84F0B",
                   textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  opacity: 0.5,
-                  marginBottom: 12,
+                  letterSpacing: "2px",
+                  paddingTop: 10,
                 }}
               >
                 {group.label}
               </span>
-              {group.songs.map((s) => (
-                <div
-                  key={s.id}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    marginBottom: 8,
-                  }}
-                >
-                  <span style={{ fontSize: 16, fontWeight: 500 }}>
-                    {s.songs.title}
-                  </span>
-                  {s.songs.author && (
-                    <span style={{ fontSize: 12, opacity: 0.5 }}>
-                      {s.songs.author}
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {group.songs.map((s) => (
+                  <div
+                    key={s.id}
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "baseline",
+                      gap: 10,
+                    }}
+                  >
+                    <span style={{ fontSize: 40, fontWeight: 500, color: "#E8E3D8" }}>
+                      {s.songs.title}
                     </span>
-                  )}
-                </div>
-              ))}
+                    {s.songs.author && (
+                      <span style={{ fontSize: 26, color: "#6B665E" }}>
+                        {s.songs.author}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    { width: 1200, height: 1200 }
   );
 }

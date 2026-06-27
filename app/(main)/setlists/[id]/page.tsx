@@ -20,9 +20,7 @@ export async function generateMetadata({
     return { title: "Setlist not found" };
   }
 
-  const title = setlist.title
-    ? `${setlist.date} — ${setlist.title}`
-    : setlist.date;
+  const title = `Worship Lineup — ${setlist.date}${setlist.title ? ` — ${setlist.title}` : ""}`;
 
   const description = setlist.song_leader
     ? `Song leader: ${setlist.song_leader}`
