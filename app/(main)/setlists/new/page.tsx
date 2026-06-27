@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DatePicker from "@/components/setlists/DatePicker";
+import DatePicker from "@/components/ui/DatePicker";
 import { BRANCHES } from "@/lib/branches";
 
 export default function NewSetlistPage() {

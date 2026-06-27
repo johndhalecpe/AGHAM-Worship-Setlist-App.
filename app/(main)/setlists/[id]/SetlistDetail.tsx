@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import SetlistContent from "@/components/setlists/SetlistContent";
+import SetlistContent from "@/components/setlists/setlist-detail/SetlistContent";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 
 type SetlistDetailProps = {
