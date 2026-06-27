@@ -26,15 +26,18 @@ export async function generateMetadata({
     ? `Song leader: ${setlist.song_leader}`
     : "Agham worship team lineup";
 
+  const ogImage = `/api/og?id=${id}`;
+
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      images: [{ url: `/api/og?id=${id}`, width: 1200, height: 630 }],
+      images: [{ url: ogImage, width: 1200, height: 1200 }],
       type: "website",
     },
+
   };
 }
 

@@ -33,10 +33,13 @@ export default function SetlistDetail({
   }, [id]);
 
   const handleCopyLink = useCallback(() => {
-    navigator.clipboard.writeText(window.location.href);
+    const title = initialSetlist.title
+      ? `${initialSetlist.date} — ${initialSetlist.title}`
+      : initialSetlist.date;
+    navigator.clipboard.writeText(`${title} — ${window.location.href}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, []);
+  }, [initialSetlist]);
 
   return (
     <SetlistContent
