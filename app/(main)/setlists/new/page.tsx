@@ -143,26 +143,32 @@ export default function NewSetlistPage() {
             >
               Branch
             </label>
-            <select
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
-              style={{
-                border: "1px solid var(--color-border)",
-                backgroundColor: "var(--color-surface)",
-                color: "var(--color-text)",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
-              onBlur={(e) =>
-                (e.target.style.borderColor = "var(--color-border)")
-              }
-            >
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
               {BRANCHES.map((b) => (
-                <option key={b.value} value={b.value}>
+                <button
+                  key={b.value}
+                  type="button"
+                  onClick={() => setBranch(b.value)}
+                  className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
+                  style={{
+                    backgroundColor:
+                      branch === b.value
+                        ? "#D84F0B"
+                        : "var(--color-surface)",
+                    color:
+                      branch === b.value
+                        ? "#fff"
+                        : "var(--color-text-secondary)",
+                    border:
+                      branch === b.value
+                        ? "1px solid #D84F0B"
+                        : "1px solid var(--color-border)",
+                  }}
+                >
                   {b.label}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
           <div>
             <label
