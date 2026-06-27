@@ -44,13 +44,11 @@ export default function Home() {
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
         <div
-          className="w-full max-w-md rounded-lg p-6 sm:p-10 text-center"
+          className="w-full max-w-md rounded-2xl p-6 sm:p-10 text-center"
           style={{
-            backgroundColor:
-              "color-mix(in srgb, var(--color-surface-card) 75%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)",
+            backgroundColor: "var(--color-surface-card)",
             boxShadow:
-              "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 color-mix(in srgb, var(--color-border) 30%, transparent)",
+              "-8px -8px 16px color-mix(in srgb, var(--color-surface-elevated) 80%, transparent), 8px 8px 16px color-mix(in srgb, #000 12%, transparent)",
           }}
         >
           <Image
@@ -64,11 +62,11 @@ export default function Home() {
             className="text-lg sm:text-xl font-medium leading-relaxed"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            Welcome{" "}
+            Welcome,{" "}
             <span className="font-semibold" style={{ color: "#D84F0B" }}>
-              Agham&rsquo;s{" "}
+              Agham{" "}
             </span>
-            worship team.
+            worship team!
           </h1>
           <p
             className="mt-3 text-sm leading-relaxed"

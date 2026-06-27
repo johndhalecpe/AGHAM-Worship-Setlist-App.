@@ -89,7 +89,7 @@ export default function SongCard({ song }: SongCardProps) {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
+            placeholder="e.g. Lihim"
             className="w-full rounded-lg px-3 py-2 text-sm"
             style={{
               border: "1px solid var(--color-border)",
@@ -103,7 +103,7 @@ export default function SongCard({ song }: SongCardProps) {
             type="text"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Author"
+            placeholder="e.g. Kenneth Acebuche"
             className="w-full rounded-lg px-3 py-2 text-sm"
             style={{
               border: "1px solid var(--color-border)",
@@ -113,22 +113,32 @@ export default function SongCard({ song }: SongCardProps) {
             onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
             onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
           />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg px-3 py-2 text-sm"
-            style={{
-              border: "1px solid var(--color-border)",
-              backgroundColor: "var(--color-surface)",
-              color: "var(--color-text)",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-          >
-            <option value="worship">Worship</option>
-            <option value="praise">Praise</option>
-            <option value="other">Other (specify)</option>
-          </select>
+          <div className="flex gap-2">
+            {(["worship", "praise", "other"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setCategory(opt)}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-all flex-1"
+                style={{
+                  backgroundColor:
+                    category === opt
+                      ? "#D84F0B"
+                      : "var(--color-surface)",
+                  color:
+                    category === opt
+                      ? "#fff"
+                      : "var(--color-text-secondary)",
+                  border:
+                    category === opt
+                      ? "1px solid #D84F0B"
+                      : "1px solid var(--color-border)",
+                }}
+              >
+                {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : "Other"}
+              </button>
+            ))}
+          </div>
           {category === "other" && (
             <input
               type="text"

@@ -82,7 +82,7 @@ export default function NewSongPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Amazing Grace"
+            placeholder="e.g. Lihim"
             className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
             style={{
               border: "1px solid var(--color-border)",
@@ -102,13 +102,13 @@ export default function NewSongPage() {
             className="text-sm font-medium"
             style={{ color: "var(--color-text)" }}
           >
-            Author
+            Author/Band
           </label>
           <input
             type="text"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            placeholder="e.g. John Newton"
+            placeholder="e.g. Kenneth Acebuche"
             className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
             style={{
               border: "1px solid var(--color-border)",
@@ -130,27 +130,61 @@ export default function NewSongPage() {
           >
             Category
           </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
-            style={{
-              border: "1px solid var(--color-border)",
-              backgroundColor: "var(--color-surface)",
-              color: "var(--color-text)",
-            }}
-            onFocus={(e) =>
-              (e.target.style.borderColor = "#D84F0B")
-            }
-            onBlur={(e) =>
-              (e.target.style.borderColor = "var(--color-border)")
-            }
-          >
-            <option value="worship">Worship</option>
-            <option value="praise">Praise</option>
-            <option value="other">Other (specify)</option>
-          </select>
+          <div className="flex gap-2 mt-1.5">
+            {(["worship", "praise", "other"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setCategory(opt)}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-all flex-1"
+                style={{
+                  backgroundColor:
+                    category === opt
+                      ? "#D84F0B"
+                      : "var(--color-surface)",
+                  color:
+                    category === opt
+                      ? "#fff"
+                      : "var(--color-text-secondary)",
+                  border:
+                    category === opt
+                      ? "1px solid #D84F0B"
+                      : "1px solid var(--color-border)",
+                }}
+              >
+                {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : "Other"}
+              </button>
+            ))}
+          </div>
         </div>
+        {category === "other" && (
+          <div>
+            <label
+              className="text-sm font-medium"
+              style={{ color: "var(--color-text)" }}
+            >
+              Specify category
+            </label>
+            <input
+              type="text"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="e.g. Hymn"
+              className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
+              style={{
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-surface)",
+                color: "var(--color-text)",
+              }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = "#D84F0B")
+              }
+              onBlur={(e) =>
+                (e.target.style.borderColor = "var(--color-border)")
+              }
+            />
+          </div>
+        )}
         <div>
           <label
             className="text-sm font-medium"
@@ -189,34 +223,6 @@ export default function NewSongPage() {
             </label>
           </div>
         </div>
-        {category === "other" && (
-          <div>
-            <label
-              className="text-sm font-medium"
-              style={{ color: "var(--color-text)" }}
-            >
-              Specify category
-            </label>
-            <input
-              type="text"
-              value={customCategory}
-              onChange={(e) => setCustomCategory(e.target.value)}
-              placeholder="e.g. Hymn"
-              className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
-              style={{
-                border: "1px solid var(--color-border)",
-                backgroundColor: "var(--color-surface)",
-                color: "var(--color-text)",
-              }}
-              onFocus={(e) =>
-                (e.target.style.borderColor = "#D84F0B")
-              }
-              onBlur={(e) =>
-                (e.target.style.borderColor = "var(--color-border)")
-              }
-            />
-          </div>
-        )}
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           onClick={handleFormSubmit}
