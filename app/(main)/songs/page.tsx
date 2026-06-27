@@ -5,57 +5,59 @@ import SongCard from "@/components/songs/SongCard";
 
 export const dynamic = "force-dynamic";
 
-const categoryPriority = ["worship", "praise"];
-const categoryLabels: Record<string, string> = {
+const PRIORITY_CATEGORIES = ["worship", "praise"];
+const CATEGORY_LABELS: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
   other: "Other",
 };
-const languageLabels: Record<string, string> = {
+const LANGUAGE_LABELS: Record<string, string> = {
   english: "English",
   filipino: "Filipino",
 };
-const languageOrder = ["english", "filipino"];
+const SORTED_LANGUAGES = ["english", "filipino"];
 
 type Group = {
   category: string;
   songs: Record<string, Song[]>;
 };
 
-function buildGroups(songs: Song[]): Group[] {
-  const valid = songs.filter((s) => s.category !== null && s.language !== null);
-  const groups: Group[] = [];
+function groupSongsByCategoryAndLanguage(songs: Song[]): Group[] {
+  const songsWithCategoryAndLanguage = songs.filter(
+    (s) => s.category !== null && s.language !== null
+  );
+  const songGroups: Group[] = [];
 
-  for (const cat of categoryPriority) {
-    const byLang: Record<string, Song[]> = {};
-    for (const song of valid) {
-      if (song.category === cat) {
+  for (const category of PRIORITY_CATEGORIES) {
+    const songsByLanguage: Record<string, Song[]> = {};
+    for (const song of songsWithCategoryAndLanguage) {
+      if (song.category === category) {
         const lang = song.language!;
-        if (!byLang[lang]) byLang[lang] = [];
-        byLang[lang].push(song);
+        if (!songsByLanguage[lang]) songsByLanguage[lang] = [];
+        songsByLanguage[lang].push(song);
       }
     }
-    if (Object.keys(byLang).length > 0) {
-      groups.push({ category: cat, songs: byLang });
+    if (Object.keys(songsByLanguage).length > 0) {
+      songGroups.push({ category, songs: songsByLanguage });
     }
   }
 
-  const otherByLang: Record<string, Song[]> = {};
-  for (const song of valid) {
-    if (!categoryPriority.includes(song.category!)) {
+  const otherSongsByLanguage: Record<string, Song[]> = {};
+  for (const song of songsWithCategoryAndLanguage) {
+    if (!PRIORITY_CATEGORIES.includes(song.category!)) {
       const lang = song.language!;
-      if (!otherByLang[lang]) otherByLang[lang] = [];
-      otherByLang[lang].push(song);
+      if (!otherSongsByLanguage[lang]) otherSongsByLanguage[lang] = [];
+      otherSongsByLanguage[lang].push(song);
     }
   }
-  if (Object.keys(otherByLang).length > 0) {
-    groups.push({ category: "other", songs: otherByLang });
+  if (Object.keys(otherSongsByLanguage).length > 0) {
+    songGroups.push({ category: "other", songs: otherSongsByLanguage });
   }
 
-  return groups;
+  return songGroups;
 }
 
-async function getSongs(): Promise<Song[]> {
+async function fetchAllSongs(): Promise<Song[]> {
   const { data, error } = await supabase
     .from("songs")
     .select("*")
@@ -69,8 +71,8 @@ async function getSongs(): Promise<Song[]> {
 }
 
 export default async function SongsPage() {
-  const songs = await getSongs();
-  const groups = buildGroups(songs);
+  const songs = await fetchAllSongs();
+  const groups = groupSongsByCategoryAndLanguage(songs);
 
   return (
     <div>
@@ -99,10 +101,10 @@ export default async function SongsPage() {
               className="text-base font-bold mb-3"
               style={{ color: "var(--color-text)" }}
             >
-              {categoryLabels[group.category] ?? group.category}
+              {CATEGORY_LABELS[group.category] ?? group.category}
             </h3>
             <div className="flex flex-col gap-4">
-              {languageOrder
+              {SORTED_LANGUAGES
                 .filter((lang) => group.songs[lang])
                 .map((lang) => (
                   <div key={lang}>
@@ -110,7 +112,7 @@ export default async function SongsPage() {
                       className="text-xs uppercase tracking-wider font-semibold mb-1.5"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      {languageLabels[lang] ?? lang}
+                      {LANGUAGE_LABELS[lang] ?? lang}
                     </h4>
                     <div className="flex flex-col gap-0.5">
                       {group.songs[lang].map((song) => (

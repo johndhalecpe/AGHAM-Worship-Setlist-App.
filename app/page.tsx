@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-function Silhouette() {
+function HomePageSkeleton() {
   return (
     <div className="opacity-15 dark:opacity-10 pointer-events-none select-none">
       <div
@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0" aria-hidden="true">
-        <Silhouette />
+        <HomePageSkeleton />
       </div>
 
       <div className="absolute inset-0 backdrop-blur" aria-hidden="true" />

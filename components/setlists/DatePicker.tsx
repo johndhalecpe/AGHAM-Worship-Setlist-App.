@@ -2,69 +2,69 @@
 
 import { useState, useRef, useEffect } from "react";
 
-type Props = {
+type DatePickerProps = {
   value: string;
   onChange: (value: string) => void;
   minDate?: string;
 };
 
-const monthNames = [
+const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function buildWeeks(year: number, month: number) {
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+function buildCalendarWeeks(year: number, month: number) {
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const weeks: (number | null)[][] = [];
-  let day = 1;
+  const calendarWeeks: (number | null)[][] = [];
+  let currentDay = 1;
   for (let w = 0; w < 6; w++) {
-    if (day > daysInMonth) break;
-    const week: (number | null)[] = [];
+    if (currentDay > totalDaysInMonth) break;
+    const weekDays: (number | null)[] = [];
     for (let d = 0; d < 7; d++) {
-      if ((w === 0 && d < firstDay) || day > daysInMonth) {
-        week.push(null);
+      if ((w === 0 && d < firstDayOfWeek) || currentDay > totalDaysInMonth) {
+        weekDays.push(null);
       } else {
-        week.push(day);
-        day++;
+        weekDays.push(currentDay);
+        currentDay++;
       }
     }
-    weeks.push(week);
+    calendarWeeks.push(weekDays);
   }
-  return weeks;
+  return calendarWeeks;
 }
 
-export default function DatePicker({ value, onChange, minDate }: Props) {
-  const [open, setOpen] = useState(false);
+export default function DatePicker({ value, onChange, minDate }: DatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() =>
     value ? new Date(value + "T00:00:00") : new Date()
   );
-  const ref = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+    function handleClickOutside(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
-  const weeks = buildWeeks(year, month);
+  const weeks = buildCalendarWeeks(year, month);
 
-  const today = new Date();
+  const todayDate = new Date();
   const selectedDate = value ? new Date(value + "T00:00:00") : null;
 
-  function formatDisplay() {
+  function formatDisplayDate() {
     if (!value) return "Select a date";
     const d = new Date(value + "T00:00:00");
-    return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
   }
 
   function isSelected(day: number) {
@@ -85,9 +85,9 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
 
   function isToday(day: number) {
     return (
-      today.getFullYear() === year &&
-      today.getMonth() === month &&
-      today.getDate() === day &&
+      todayDate.getFullYear() === year &&
+      todayDate.getMonth() === month &&
+      todayDate.getDate() === day &&
       !isSelected(day)
     );
   }
@@ -97,16 +97,16 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
     const m = String(month + 1).padStart(2, "0");
     const d = String(day).padStart(2, "0");
     onChange(`${year}-${m}-${d}`);
-    setOpen(false);
+    setIsOpen(false);
   }
 
-  const atMinMonth =
+  const isAtMinimumMonth =
     minDate &&
     year * 12 + month <=
       Number(minDate.split("-")[0]) * 12 + Number(minDate.split("-")[1]) - 1;
 
   function prevMonth() {
-    if (atMinMonth) return;
+    if (isAtMinimumMonth) return;
     setViewDate(new Date(year, month - 1, 1));
   }
 
@@ -115,10 +115,10 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={pickerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => setIsOpen(!isOpen)}
         className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors flex items-center gap-2"
         style={{
           border: "1px solid var(--color-border)",
@@ -145,7 +145,7 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
             clipRule="evenodd"
           />
         </svg>
-        <span className="flex-1 text-left">{formatDisplay()}</span>
+        <span className="flex-1 text-left">{formatDisplayDate()}</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
@@ -153,7 +153,7 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
           className="w-4 h-4 shrink-0 transition-transform"
           style={{
             color: "var(--color-text-tertiary)",
-            transform: open ? "rotate(180deg)" : "none",
+            transform: isOpen ? "rotate(180deg)" : "none",
           }}
         >
           <path
@@ -164,7 +164,7 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
         </svg>
       </button>
 
-      {open && (
+      {isOpen && (
         <div
           className="absolute left-0 z-50 mt-2 rounded-xl p-4 shadow-lg w-full sm:w-72"
           style={{
@@ -179,14 +179,14 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
               className="p-1 rounded-lg transition-colors"
               style={{
                 color: "var(--color-text-secondary)",
-                opacity: atMinMonth ? 0.3 : 1,
-                cursor: atMinMonth ? "default" : "pointer",
+                opacity: isAtMinimumMonth ? 0.3 : 1,
+                cursor: isAtMinimumMonth ? "default" : "pointer",
               }}
               onMouseEnter={(e) => {
-                if (!atMinMonth) e.currentTarget.style.opacity = "0.7";
+                if (!isAtMinimumMonth) e.currentTarget.style.opacity = "0.7";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = atMinMonth ? "0.3" : "1";
+                e.currentTarget.style.opacity = isAtMinimumMonth ? "0.3" : "1";
               }}
             >
               <svg
@@ -206,7 +206,7 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
               className="text-sm font-semibold"
               style={{ color: "var(--color-text)" }}
             >
-              {monthNames[month]} {year}
+              {MONTH_NAMES[month]} {year}
             </span>
             <button
               type="button"
@@ -230,7 +230,7 @@ export default function DatePicker({ value, onChange, minDate }: Props) {
           </div>
 
           <div className="grid grid-cols-7 gap-0.5 text-center text-xs mb-2">
-            {dayNames.map((name, i) => (
+            {DAY_NAMES.map((name, i) => (
               <span
                 key={name}
                 className="py-1 text-xs font-medium"

@@ -13,7 +13,7 @@ export default function NewSetlistPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit() {
+  async function handleFormSubmit() {
     if (!date) {
       setError("Date is required");
       return;
@@ -22,7 +22,7 @@ export default function NewSetlistPage() {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/setlists", {
+    const response = await fetch("/api/setlists", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -33,18 +33,29 @@ export default function NewSetlistPage() {
       }),
     });
 
-    if (!res.ok) {
+    if (!response.ok) {
       setError("Something went wrong. Try again.");
       setLoading(false);
       return;
     }
 
-    const newSetlist = await res.json();
-    router.push(`/setlists/${newSetlist.id}`);
+    const createdSetlist = await response.json();
+    router.push(`/setlists/${createdSetlist.id}`);
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center -my-4">
+    <div className="flex-1 flex flex-col -my-4">
+      <button
+        onClick={() => router.back()}
+        className="inline-flex items-center gap-1.5 text-sm font-medium mb-4 w-fit px-1 py-1 -ml-1 rounded-lg transition-colors"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+          <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clipRule="evenodd" />
+        </svg>
+        Back
+      </button>
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-xl">
         <div
           className="rounded-xl p-6 flex flex-col gap-4"
@@ -148,7 +159,7 @@ export default function NewSetlistPage() {
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
-            onClick={handleSubmit}
+            onClick={handleFormSubmit}
             disabled={loading}
             className="rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
             style={{
@@ -159,6 +170,7 @@ export default function NewSetlistPage() {
             {loading ? "Saving..." : "Save setlist"}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

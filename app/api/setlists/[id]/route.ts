@@ -19,7 +19,7 @@ export async function GET(
   return NextResponse.json(data);
 }
 
-async function isPastDate(id: string): Promise<boolean> {
+async function isSetlistDateInPast(id: string): Promise<boolean> {
   const { data } = await supabase
     .from("setlists")
     .select("date")
@@ -36,7 +36,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  if (await isPastDate(id)) {
+  if (await isSetlistDateInPast(id)) {
     return NextResponse.json(
       { error: "Cannot edit a past setlist" },
       { status: 403 }
@@ -70,7 +70,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  if (await isPastDate(id)) {
+  if (await isSetlistDateInPast(id)) {
     return NextResponse.json(
       { error: "Cannot delete a past setlist" },
       { status: 403 }

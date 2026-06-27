@@ -13,7 +13,7 @@ export default function NewSongPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit() {
+  async function handleFormSubmit() {
     if (!title) {
       setError("Title is required");
       return;
@@ -22,20 +22,20 @@ export default function NewSongPage() {
     setLoading(true);
     setError("");
 
-    const finalCategory = category === "other" ? customCategory : category;
+    const resolvedCategory = category === "other" ? customCategory : category;
 
-    const res = await fetch("/api/songs", {
+    const response = await fetch("/api/songs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
         author,
-        category: finalCategory,
+        category: resolvedCategory,
         language,
       }),
     });
 
-    if (!res.ok) {
+    if (!response.ok) {
       setError("Something went wrong. Try again.");
       setLoading(false);
       return;
@@ -45,7 +45,18 @@ export default function NewSongPage() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center -my-4">
+    <div className="flex-1 flex flex-col -my-4">
+      <button
+        onClick={() => router.back()}
+        className="inline-flex items-center gap-1.5 text-sm font-medium mb-4 w-fit px-1 py-1 -ml-1 rounded-lg transition-colors"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+          <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clipRule="evenodd" />
+        </svg>
+        Back
+      </button>
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-xl">
         <div
           className="rounded-xl p-6 flex flex-col gap-4"
@@ -208,7 +219,7 @@ export default function NewSongPage() {
         )}
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
-          onClick={handleSubmit}
+          onClick={handleFormSubmit}
           disabled={loading}
           className="rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
           style={{
@@ -219,6 +230,7 @@ export default function NewSongPage() {
           {loading ? "Saving..." : "Save song"}
         </button>
         </div>
+      </div>
       </div>
     </div>
   );

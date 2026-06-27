@@ -6,13 +6,17 @@ import SongPicker from "@/components/setlists/SongPicker";
 import DatePicker from "@/components/setlists/DatePicker";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 
-type Props = {
+type SetlistContentProps = {
   initialSetlist: Setlist;
   initialSections: SetlistSectionWithSong[];
   isPast?: boolean;
+  isLocked?: boolean;
+  copied?: boolean;
+  onCopyLink?: () => void;
+  onToggleLock?: () => void;
 };
 
-const sectionTypes = [
+const SECTION_TYPES = [
   { key: "worship", label: "Worship songs" },
   { key: "praise", label: "Praise songs" },
   { key: "tithes_offering", label: "Tithes and offering" },
@@ -23,7 +27,11 @@ export default function SetlistContent({
   initialSetlist,
   initialSections,
   isPast = false,
-}: Props) {
+  isLocked = true,
+  copied = false,
+  onCopyLink,
+  onToggleLock,
+}: SetlistContentProps) {
   const router = useRouter();
   const [setlist] = useState(initialSetlist);
   const [sections, setSections] = useState(initialSections);
@@ -38,19 +46,19 @@ export default function SetlistContent({
   const [editSongLeader, setEditSongLeader] = useState(
     setlist.song_leader ?? ""
   );
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+const [isSaving, setIsSaving] = useState(false);
+const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
 
-  async function fetchSections() {
-    const res = await fetch(`/api/setlists/${setlist.id}/sections`);
-    const data = await res.json();
+  async function refreshSectionsFromApi() {
+    const response = await fetch(`/api/setlists/${setlist.id}/sections`);
+    const data = await response.json();
     setSections(data);
   }
 
@@ -65,40 +73,32 @@ export default function SetlistContent({
   async function handleSaveAndExit() {
     if (editing) {
       if (!editDate) return;
-      setSaving(true);
-      await fetch(`/api/setlists/${setlist.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: editDate,
-          title: editTitle,
-          description: editDescription,
-          song_leader: editSongLeader,
-        }),
-      });
-      setSaving(false);
+setIsSaving(true);
+setIsSaving(false);
+setIsSaving(true);
+setIsSaving(false);
     }
     router.push("/setlists");
   }
 
   async function handleDeleteConfirm() {
-    setDeleting(true);
+    setIsDeleting(true);
     setShowDeleteConfirm(false);
-    const res = await fetch(`/api/setlists/${setlist.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      setDeleting(false);
+    const response = await fetch(`/api/setlists/${setlist.id}`, { method: "DELETE" });
+    if (!response.ok) {
+      setIsDeleting(false);
       return;
     }
     router.push("/setlists");
     router.refresh();
   }
 
-  async function handleDeleteSong(sectionId: string) {
+  async function handleRemoveSongFromSection(sectionId: string) {
     await fetch(
       `/api/setlists/${setlist.id}/sections?sectionId=${sectionId}`,
       { method: "DELETE" }
     );
-    fetchSections();
+    refreshSectionsFromApi();
   }
 
   function getSectionSongs(sectionType: string) {
@@ -108,46 +108,45 @@ export default function SetlistContent({
   }
 
   function handleSongAdded() {
-    fetchSections();
-    setActiveSection(null);
+    refreshSectionsFromApi();
   }
 
   function handleDragStart(sectionId: string) {
-    setDraggedId(sectionId);
+    setDraggedSectionId(sectionId);
   }
 
   function handleDragOver(e: React.DragEvent, sectionId: string) {
     e.preventDefault();
-    setDragOverId(sectionId);
+    setDragOverSectionId(sectionId);
   }
 
   function handleDragLeave() {
-    setDragOverId(null);
+    setDragOverSectionId(null);
   }
 
   async function handleDrop(e: React.DragEvent, sectionType: string, targetId: string) {
     e.preventDefault();
-    setDragOverId(null);
+    setDragOverSectionId(null);
 
-    if (!draggedId || draggedId === targetId) {
-      setDraggedId(null);
+    if (!draggedSectionId || draggedSectionId === targetId) {
+      setDraggedSectionId(null);
       return;
     }
 
     const sectionSongs = getSectionSongs(sectionType);
-    const fromIndex = sectionSongs.findIndex((s) => s.id === draggedId);
+    const fromIndex = sectionSongs.findIndex((s) => s.id === draggedSectionId);
     const toIndex = sectionSongs.findIndex((s) => s.id === targetId);
 
     if (fromIndex === -1 || toIndex === -1) {
-      setDraggedId(null);
+      setDraggedSectionId(null);
       return;
     }
 
-    const reordered = [...sectionSongs];
-    const [moved] = reordered.splice(fromIndex, 1);
-    reordered.splice(toIndex, 0, moved);
+    const reorderedSections = [...sectionSongs];
+    const [movedSection] = reorderedSections.splice(fromIndex, 1);
+    reorderedSections.splice(toIndex, 0, movedSection);
 
-    const updated = reordered.map((item, i) => ({
+    const updatedSections = reorderedSections.map((item, i) => ({
       ...item,
       sort_order: i,
     }));
@@ -156,26 +155,55 @@ export default function SetlistContent({
       const otherSections = prev.filter(
         (s) => s.section_type !== sectionType
       );
-      return [...otherSections, ...updated];
+      return [...otherSections, ...updatedSections];
     });
 
     await fetch(`/api/setlists/${setlist.id}/sections`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        items: updated.map((item) => ({
+        items: updatedSections.map((item) => ({
           id: item.id,
           sort_order: item.sort_order,
         })),
       }),
     });
 
-    setDraggedId(null);
+    setDraggedSectionId(null);
   }
 
   function handleDragEnd() {
-    setDraggedId(null);
-    setDragOverId(null);
+    setDraggedSectionId(null);
+    setDragOverSectionId(null);
+  }
+
+  async function handleMoveSong(sectionType: string, songId: string, direction: "up" | "down") {
+    const sectionSongs = getSectionSongs(sectionType);
+    const currentIndex = sectionSongs.findIndex((s) => s.id === songId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= sectionSongs.length) return;
+
+    const updatedItems = [
+      { id: sectionSongs[currentIndex].id, sort_order: targetIndex },
+      { id: sectionSongs[targetIndex].id, sort_order: currentIndex },
+    ];
+
+    setSections((prev) => {
+      const next = [...prev];
+      for (const item of updatedItems) {
+        const idx = next.findIndex((s) => s.id === item.id);
+        if (idx !== -1) next[idx] = { ...next[idx], sort_order: item.sort_order };
+      }
+      return next;
+    });
+
+    await fetch(`/api/setlists/${setlist.id}/sections`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: updatedItems }),
+    });
   }
 
   function startEditingNote(sectionId: string, currentNotes: string | null) {
@@ -192,7 +220,7 @@ export default function SetlistContent({
       }),
     });
     setEditingNoteId(null);
-    fetchSections();
+    refreshSectionsFromApi();
   }
 
   function cancelNote() {
@@ -202,6 +230,31 @@ export default function SetlistContent({
 
   return (
     <div>
+      <button
+        onClick={() => router.push("/setlists")}
+        className="inline-flex items-center gap-1.5 text-sm font-medium mb-4 w-fit px-1 py-1 -ml-1 rounded-lg transition-colors"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+          <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clipRule="evenodd" />
+        </svg>
+        Back to lineups
+      </button>
+      {isLocked && (
+        <div
+          className="rounded-xl p-3 mb-4 flex items-center gap-2 text-sm"
+          style={{
+            backgroundColor: "var(--color-surface-muted)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
+            <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+          </svg>
+          This lineup is locked. Unlock to make changes.
+        </div>
+      )}
       <div className="mb-8">
         {editing ? (
           <div
@@ -353,26 +406,50 @@ export default function SetlistContent({
               {!isPast && (
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
-                    onClick={startEditing}
+                    onClick={onCopyLink}
+                    className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                    style={{
+                      border: "1px solid var(--color-border)",
+                      color: copied ? "#16A34A" : "var(--color-text-secondary)",
+                    }}
+                  >
+                    {copied ? "Copied!" : "Copy link"}
+                  </button>
+                  <button
+                    onClick={onToggleLock}
                     className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
                     style={{
                       border: "1px solid var(--color-border)",
                       color: "var(--color-text-secondary)",
                     }}
                   >
-                    Edit
+                    {isLocked ? "Unlock" : "Lock"}
                   </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={deleting}
-                    className="rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50"
-                    style={{
-                      border: "1px solid #FCA5A5",
-                      color: "#DC2626",
-                    }}
-                  >
-                    {deleting ? "Deleting..." : "Delete"}
-                  </button>
+                  {!isLocked && (
+                    <button
+                      onClick={startEditing}
+                      className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                      style={{
+                        border: "1px solid var(--color-border)",
+                        color: "var(--color-text-secondary)",
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {!isLocked && (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={isDeleting}
+                      className="rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+                      style={{
+                        border: "1px solid #FCA5A5",
+                        color: "#DC2626",
+                      }}
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -380,13 +457,13 @@ export default function SetlistContent({
         )}
       </div>
       <div className="flex flex-col gap-4">
-        {sectionTypes.map((section) => {
+        {SECTION_TYPES.map((section) => {
           const sectionSongs = getSectionSongs(section.key);
           return (
             <div
               key={section.key}
               className={`rounded-xl p-5 transition-colors ${
-                draggedId !== null ? "min-h-[80px]" : ""
+                draggedSectionId !== null ? "min-h-[80px]" : ""
               }`}
               style={{
                 backgroundColor: "var(--color-surface-card)",
@@ -400,10 +477,12 @@ export default function SetlistContent({
                 {section.label}
               </h3>
               <div className="flex flex-col gap-1">
-                  {sectionSongs.map((s) => {
-                  const isDragging = draggedId === s.id;
-                  const isDragOver = dragOverId === s.id;
+                  {sectionSongs.map((s, songIndex) => {
+                  const isDragging = draggedSectionId === s.id;
+                  const isDragOver = dragOverSectionId === s.id;
                   const isEditingNote = editingNoteId === s.id;
+                  const isFirstSong = songIndex === 0;
+                  const isLastSong = songIndex === sectionSongs.length - 1;
                   return (
                     <div key={s.id}>
                       <div
@@ -421,20 +500,33 @@ export default function SetlistContent({
                             ? "var(--color-surface-muted)"
                             : "transparent",
                           borderTop:
-                            isDragOver && draggedId !== s.id
+                            isDragOver && draggedSectionId !== s.id
                               ? "2px solid #D84F0B"
                               : "2px solid transparent",
                           cursor: "default",
                         }}
                       >
-                        {!isPast && (
-                          <span
-                            className="cursor-grab active:cursor-grabbing select-none text-base leading-none pt-0.5"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                          >
-                            ⋮⋮
-                          </span>
+                        {!isPast && !isLocked && (
+                          <div className="flex flex-col items-center gap-0.5 pt-0.5">
+                            <button
+                              onClick={() => handleMoveSong(section.key, s.id, "up")}
+                              disabled={isFirstSong}
+                              className="p-0.5 leading-none transition-colors disabled:opacity-20 hover:opacity-80"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              title="Move up"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              onClick={() => handleMoveSong(section.key, s.id, "down")}
+                              disabled={isLastSong}
+                              className="p-0.5 leading-none transition-colors disabled:opacity-20 hover:opacity-80"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              title="Move down"
+                            >
+                              ▼
+                            </button>
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -444,7 +536,7 @@ export default function SetlistContent({
                             >
                               {s.songs.title}
                             </span>
-                            {!isPast && (
+                            {!isPast && !isLocked && (
                               <button
                                 onClick={() =>
                                   startEditingNote(s.id, s.notes)
@@ -545,9 +637,9 @@ export default function SetlistContent({
                             {s.songs.author}
                           </span>
                         )}
-                        {!isPast && (
+                        {!isPast && !isLocked && (
                           <button
-                            onClick={() => handleDeleteSong(s.id)}
+                            onClick={() => handleRemoveSongFromSection(s.id)}
                             className="p-1 rounded transition-colors hover:opacity-100 shrink-0 mt-0.5"
                             style={{
                               color: "#DC2626",
@@ -582,7 +674,7 @@ export default function SetlistContent({
                   No songs in this section yet.
                 </p>
               )}
-              {!isPast && (
+              {!isPast && !isLocked && (
                 activeSection === section.key ? (
                   <SongPicker
                     setlistId={setlist.id}
@@ -632,7 +724,7 @@ export default function SetlistContent({
         ) : (
           <button
             onClick={handleSaveAndExit}
-            disabled={saving}
+            disabled={isSaving}
             className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
             style={{
               backgroundColor: "#D84F0B",
@@ -684,7 +776,7 @@ export default function SetlistContent({
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                disabled={deleting}
+                disabled={isDeleting}
                 className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                 style={{
                   border: "1px solid var(--color-border)",
@@ -695,11 +787,11 @@ export default function SetlistContent({
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                disabled={deleting}
+                disabled={isDeleting}
                 className="rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                 style={{ backgroundColor: "#DC2626", color: "#fff" }}
               >
-                {deleting ? "Deleting..." : "Delete"}
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

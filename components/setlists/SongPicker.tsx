@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Song } from "@/lib/type";
 
-type Props = {
+type SongPickerProps = {
   setlistId: string;
   sectionType: string;
   onSongAdded: () => void;
   onCancel: () => void;
+};
+
+const SECTION_TO_CATEGORY: Record<string, string | null> = {
+  worship: "worship",
+  praise: "praise",
+  tithes_offering: null,
+  special: null,
 };
 
 export default function SongPicker({
@@ -15,9 +22,9 @@ export default function SongPicker({
   sectionType,
   onSongAdded,
   onCancel,
-}: Props) {
+}: SongPickerProps) {
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [showNewSongForm, setShowNewSongForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -26,18 +33,27 @@ export default function SongPicker({
   const [newLanguage, setNewLanguage] = useState("english");
   const [customCategory, setCustomCategory] = useState("");
 
-  async function handleSearch(value: string) {
+  useEffect(() => {
+    fetch("/api/songs")
+      .then((res) => res.json())
+      .then(setAllSongs);
+  }, []);
+
+  const categoryFilter = SECTION_TO_CATEGORY[sectionType];
+
+  const filteredSongs = allSongs.filter((song) => {
+    if (search.trim() === "") return false;
+    const matchesSearch = song.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesCategory =
+      categoryFilter === null || song.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  function handleSearchInput(value: string) {
     setSearch(value);
     setShowNewSongForm(false);
-
-    if (value.trim() === "") {
-      setResults([]);
-      return;
-    }
-
-    const res = await fetch(`/api/songs?search=${encodeURIComponent(value)}`);
-    const data = await res.json();
-    setResults(data);
   }
 
   async function handleSelectSong(songId: string) {
@@ -53,28 +69,29 @@ export default function SongPicker({
     });
 
     setLoading(false);
+    setSearch("");
     onSongAdded();
   }
 
-  async function handleAddNewSong() {
+  async function handleCreateAndAddNewSong() {
     if (!newTitle) return;
     setLoading(true);
 
-    const finalCategory =
+    const resolvedCategory =
       newCategory === "other" ? customCategory : newCategory;
 
-    const songRes = await fetch("/api/songs", {
+    const songResponse = await fetch("/api/songs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: newTitle,
         author: newAuthor,
-        category: finalCategory,
+        category: resolvedCategory,
         language: newLanguage,
       }),
     });
 
-    const newSong = await songRes.json();
+    const newSong = await songResponse.json();
 
     await fetch(`/api/setlists/${setlistId}/sections`, {
       method: "POST",
@@ -86,6 +103,8 @@ export default function SongPicker({
     });
 
     setLoading(false);
+    setSearch("");
+    setShowNewSongForm(false);
     onSongAdded();
   }
 
@@ -115,7 +134,7 @@ export default function SongPicker({
       <input
         type="text"
         value={search}
-        onChange={(e) => handleSearch(e.target.value)}
+        onChange={(e) => handleSearchInput(e.target.value)}
         placeholder="Search song title..."
         className="w-full rounded-lg px-3 py-2 text-sm transition-colors"
         style={{
@@ -130,46 +149,59 @@ export default function SongPicker({
           (e.target.style.borderColor = "var(--color-border)")
         }
       />
-      {results.length > 0 && (
+      {filteredSongs.length > 0 && (
         <div
           className="rounded-lg mt-2 overflow-hidden"
           style={{
             border: "1px solid var(--color-border)",
           }}
         >
-          {results.map((song) => (
-            <button
+          {filteredSongs.map((song) => (
+            <div
               key={song.id}
-              onClick={() => handleSelectSong(song.id)}
-              disabled={loading}
-              className="w-full text-left px-3 py-2.5 text-sm border-b last:border-b-0 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 transition-colors"
               style={{
-                color: "var(--color-text)",
                 borderColor: "var(--color-border)",
               }}
               onMouseEnter={(e) =>
-                ((e.target as HTMLElement).style.backgroundColor =
+                ((e.currentTarget as HTMLElement).style.backgroundColor =
                   "var(--color-surface-elevated)")
               }
               onMouseLeave={(e) =>
-                ((e.target as HTMLElement).style.backgroundColor =
+                ((e.currentTarget as HTMLElement).style.backgroundColor =
                   "transparent")
               }
             >
-              <span className="font-medium">{song.title}</span>
-              {song.author && (
-                <span
-                  className="ml-2"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  {song.author}
-                </span>
-              )}
-            </button>
+              <div
+                className="flex-1 min-w-0 cursor-pointer"
+                onClick={() => handleSelectSong(song.id)}
+              >
+                <span className="font-medium">{song.title}</span>
+                {song.author && (
+                  <span
+                    className="ml-2"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    {song.author}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => handleSelectSong(song.id)}
+                disabled={loading}
+                className="shrink-0 p-1 rounded transition-colors hover:opacity-80 active:scale-95"
+                style={{ color: "#D84F0B" }}
+                aria-label={`Add ${song.title}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
       )}
-      {search.trim() !== "" && results.length === 0 && !showNewSongForm && (
+      {search.trim() !== "" && filteredSongs.length === 0 && !showNewSongForm && (
         <button
           onClick={() => {
             setShowNewSongForm(true);
@@ -298,7 +330,7 @@ export default function SongPicker({
             />
           )}
           <button
-            onClick={handleAddNewSong}
+            onClick={handleCreateAndAddNewSong}
             disabled={loading}
             className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             style={{

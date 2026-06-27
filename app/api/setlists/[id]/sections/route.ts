@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-async function isPastDate(id: string): Promise<boolean> {
+async function isSetlistDateInPast(id: string): Promise<boolean> {
   const { data } = await supabase
     .from("setlists")
     .select("date")
@@ -47,7 +47,7 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  if (await isPastDate(id)) {
+  if (await isSetlistDateInPast(id)) {
     return NextResponse.json(
       { error: "Cannot modify a past setlist" },
       { status: 403 }
@@ -56,7 +56,7 @@ export async function POST(
 
   const body = await request.json();
 
-  const { data: existingSections, error: countError } = await supabase
+    const { data: existingSectionsCount, error: countError } = await supabase
     .from("setlist_sections")
     .select("id")
     .eq("setlist_id", id)
@@ -72,7 +72,7 @@ export async function POST(
       setlist_id: id,
       song_id: body.song_id,
       section_type: body.section_type,
-      sort_order: existingSections.length,
+      sort_order: existingSectionsCount.length,
     })
     .select(
       `
@@ -100,7 +100,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  if (await isPastDate(id)) {
+  if (await isSetlistDateInPast(id)) {
     return NextResponse.json(
       { error: "Cannot modify a past setlist" },
       { status: 403 }
@@ -133,7 +133,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  if (await isPastDate(id)) {
+  if (await isSetlistDateInPast(id)) {
     return NextResponse.json(
       { error: "Cannot modify a past setlist" },
       { status: 403 }
@@ -142,21 +142,21 @@ export async function PATCH(
 
   const body = await request.json();
 
-  for (const item of body.items as {
+  for (const sectionUpdate of body.items as {
     id: string;
     sort_order?: number;
     notes?: string | null;
   }[]) {
-    const update: Record<string, unknown> = {};
-    if (item.sort_order !== undefined) update.sort_order = item.sort_order;
-    if ("notes" in item) update.notes = item.notes;
+    const updatePayload: Record<string, unknown> = {};
+    if (sectionUpdate.sort_order !== undefined) updatePayload.sort_order = sectionUpdate.sort_order;
+    if ("notes" in sectionUpdate) updatePayload.notes = sectionUpdate.notes;
 
-    if (Object.keys(update).length === 0) continue;
+    if (Object.keys(updatePayload).length === 0) continue;
 
     const { error } = await supabase
       .from("setlist_sections")
-      .update(update)
-      .eq("id", item.id)
+      .update(updatePayload)
+      .eq("id", sectionUpdate.id)
       .eq("setlist_id", id);
 
     if (error) {

@@ -3,18 +3,18 @@ import { supabase } from "@/lib/supabase";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search");
+  const searchTitle = searchParams.get("search");
 
-  let query = supabase
+  let supabaseQuery = supabase
     .from("songs")
     .select("*")
     .order("title", { ascending: true });
 
-  if (search) {
-    query = query.ilike("title", `%${search}%`);
+  if (searchTitle) {
+    supabaseQuery = supabaseQuery.ilike("title", `%${searchTitle}%`);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await supabaseQuery;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

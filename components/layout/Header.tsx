@@ -10,7 +10,7 @@ const navLinks = [
   { href: "/songs", label: "Songs" },
 ];
 
-function getInitialTheme(): boolean {
+function getInitialDarkMode(): boolean {
   if (typeof window === "undefined") return true;
   const stored = localStorage.getItem("theme");
   return stored !== "light";
@@ -18,16 +18,16 @@ function getInitialTheme(): boolean {
 
 export default function Header() {
   const pathname = usePathname();
-  const [isDark, setIsDark] = useState(getInitialTheme);
+  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
 
-  function toggleTheme() {
-    const next = !isDark;
-    setIsDark(next);
+  function toggleDarkMode() {
+    const next = !isDarkMode;
+    setIsDarkMode(next);
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
   }
 
-  function isActive(href: string) {
+  function isNavLinkActive(href: string) {
     if (href === "/setlists") return pathname.startsWith("/setlists");
     if (href === "/songs") return pathname.startsWith("/songs");
     return pathname === href;
@@ -58,16 +58,16 @@ export default function Header() {
               href={link.href}
               className="text-sm font-medium transition-colors"
               style={{
-                color: isActive(link.href)
+                color: isNavLinkActive(link.href)
                   ? "#D84F0B"
                   : "var(--color-text-secondary)",
               }}
               onMouseEnter={(e) => {
-                if (!isActive(link.href))
+                if (!isNavLinkActive(link.href))
                   (e.target as HTMLElement).style.color = "var(--color-text)";
               }}
               onMouseLeave={(e) => {
-                if (!isActive(link.href))
+                if (!isNavLinkActive(link.href))
                   (e.target as HTMLElement).style.color =
                     "var(--color-text-secondary)";
               }}
@@ -76,7 +76,7 @@ export default function Header() {
             </Link>
           ))}
           <button
-            onClick={toggleTheme}
+            onClick={toggleDarkMode}
             className="ml-2 p-2 rounded-lg transition-colors active:scale-95"
             style={{
               backgroundColor: "var(--color-surface-muted)",
@@ -93,7 +93,7 @@ export default function Header() {
               className="w-4 h-4"
               style={{
                 color: "var(--color-text)",
-                display: isDark ? "block" : "none",
+                display: isDarkMode ? "block" : "none",
               }}
             >
               <circle cx="12" cy="12" r="4" />
@@ -113,7 +113,7 @@ export default function Header() {
               className="w-4 h-4"
               style={{
                 color: "var(--color-text)",
-                display: isDark ? "none" : "block",
+                display: isDarkMode ? "none" : "block",
               }}
             >
               <path fillRule="evenodd" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />

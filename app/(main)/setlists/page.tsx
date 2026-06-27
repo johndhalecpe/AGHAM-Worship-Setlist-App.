@@ -4,12 +4,12 @@ import { SetlistWithSections } from "@/lib/type";
 
 export const dynamic = "force-dynamic";
 
-const sectionLabels: Record<string, string> = {
+const SECTION_LABELS: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
 };
 
-async function getSetlists(): Promise<SetlistWithSections[]> {
+async function fetchAllSetlists(): Promise<SetlistWithSections[]> {
   const { data, error } = await supabase
     .from("setlists")
     .select(
@@ -44,7 +44,7 @@ async function getSetlists(): Promise<SetlistWithSections[]> {
   });
 }
 
-function formatDate(dateStr: string) {
+function formatDisplayDate(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", {
     weekday: "long",
@@ -54,20 +54,20 @@ function formatDate(dateStr: string) {
   });
 }
 
-function SongSection({
-  type,
+function SectionSongList({
+  sectionType,
   sections,
   dimmed,
 }: {
-  type: string;
+  sectionType: string;
   sections: SetlistWithSections["sections"];
   dimmed?: boolean;
 }) {
-  const items = sections
-    .filter((s) => s.section_type === type)
+  const sectionSongs = sections
+    .filter((s) => s.section_type === sectionType)
     .sort((a, b) => a.sort_order - b.sort_order);
 
-  if (items.length === 0) return null;
+  if (sectionSongs.length === 0) return null;
 
   return (
     <div>
@@ -75,10 +75,10 @@ function SongSection({
         className={`text-xs uppercase tracking-wider font-semibold mb-2 ${dimmed ? "opacity-60" : ""}`}
         style={{ color: "var(--color-text-tertiary)" }}
       >
-        {sectionLabels[type] ?? type}
+        {SECTION_LABELS[sectionType] ?? sectionType}
       </h4>
       <div className="flex flex-col gap-1.5">
-        {items.map((s) => (
+        {sectionSongs.map((s) => (
           <div key={s.id}>
             <p
               className={`text-sm ${dimmed ? "opacity-60" : ""}`}
@@ -109,7 +109,7 @@ function SongSection({
   );
 }
 
-function SetlistCard({
+function SetlistPreviewCard({
   setlist,
   dimmed,
 }: {
@@ -131,7 +131,7 @@ function SetlistCard({
             className={`font-bold text-lg ${dimmed ? "opacity-70" : ""}`}
             style={{ color: "var(--color-text)" }}
           >
-            {formatDate(setlist.date)}
+            {formatDisplayDate(setlist.date)}
           </p>
           {setlist.title && (
             <p
@@ -172,13 +172,13 @@ function SetlistCard({
       </div>
 
       <div className="flex flex-col gap-4">
-        <SongSection
-          type="worship"
+        <SectionSongList
+          sectionType="worship"
           sections={setlist.sections}
           dimmed={dimmed}
         />
-        <SongSection
-          type="praise"
+        <SectionSongList
+          sectionType="praise"
           sections={setlist.sections}
           dimmed={dimmed}
         />
@@ -199,15 +199,15 @@ function SetlistCard({
 }
 
 export default async function SetlistsPage() {
-  const setlists = await getSetlists();
-  const today = new Date().toISOString().split("T")[0];
+  const setlists = await fetchAllSetlists();
+  const todayISOString = new Date().toISOString().split("T")[0];
 
-  const upcoming = setlists
-    .filter((s) => s.date >= today)
+  const upcomingSetlists = setlists
+    .filter((s) => s.date >= todayISOString)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const past = setlists
-    .filter((s) => s.date < today)
+  const pastSetlists = setlists
+    .filter((s) => s.date < todayISOString)
     .sort((a, b) => b.date.localeCompare(a.date));
 
   return (
@@ -231,24 +231,24 @@ export default async function SetlistsPage() {
         </Link>
       </div>
 
-      {upcoming.length > 0 && (
+          {upcomingSetlists.length > 0 && (
         <>
           <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
             Upcoming lineups
           </h3>
           <div className="flex flex-col gap-3 sm:gap-4">
-            {upcoming.map((setlist) => (
+            {upcomingSetlists.map((setlist) => (
               <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
-                <SetlistCard setlist={setlist} />
+                <SetlistPreviewCard setlist={setlist} />
               </Link>
             ))}
           </div>
         </>
       )}
 
-      {past.length > 0 && (
+      {pastSetlists.length > 0 && (
         <>
-          {upcoming.length > 0 && (
+      {upcomingSetlists.length > 0 && (
             <hr
               className="my-8"
               style={{
@@ -264,16 +264,16 @@ export default async function SetlistsPage() {
             Past lineups
           </h3>
           <div className="flex flex-col gap-3 sm:gap-4">
-            {past.map((setlist) => (
+            {pastSetlists.map((setlist) => (
               <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
-                <SetlistCard setlist={setlist} dimmed />
+                <SetlistPreviewCard setlist={setlist} dimmed />
               </Link>
             ))}
           </div>
         </>
       )}
 
-      {upcoming.length === 0 && past.length === 0 && (
+      {upcomingSetlists.length === 0 && pastSetlists.length === 0 && (
         <p
           className="text-sm"
           style={{ color: "var(--color-text-tertiary)" }}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Song } from "@/lib/type";
 
-type Props = {
+type SongCardProps = {
   song: Song;
 };
 
@@ -19,61 +19,62 @@ const languageLabels: Record<string, string> = {
   filipino: "Filipino",
 };
 
-function isKnownCategory(cat: string | null): cat is keyof typeof categoryLabels {
+function isPredefinedCategory(cat: string | null): cat is keyof typeof categoryLabels {
   return cat !== null && cat in categoryLabels;
 }
 
-export default function SongCard({ song }: Props) {
+export default function SongCard({ song }: SongCardProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [title, setTitle] = useState(song.title);
   const [author, setAuthor] = useState(song.author ?? "");
   const [category, setCategory] = useState(
-    isKnownCategory(song.category) ? song.category : "other"
+    isPredefinedCategory(song.category) ? song.category : "other"
   );
   const [customCategory, setCustomCategory] = useState(
-    isKnownCategory(song.category) ? "" : (song.category ?? "")
+    isPredefinedCategory(song.category) ? "" : (song.category ?? "")
   );
   const [language, setLanguage] = useState(song.language ?? "english");
 
-  function resetForm() {
+  function resetEditForm() {
     setTitle(song.title);
     setAuthor(song.author ?? "");
-    setCategory(isKnownCategory(song.category) ? song.category : "other");
-    setCustomCategory(isKnownCategory(song.category) ? "" : (song.category ?? ""));
+    setCategory(isPredefinedCategory(song.category) ? song.category : "other");
+    setCustomCategory(isPredefinedCategory(song.category) ? "" : (song.category ?? ""));
     setLanguage(song.language ?? "english");
   }
 
-  async function handleDelete() {
-    if (!confirm(`Delete "${song.title}"?`)) return;
-    setDeleting(true);
+  async function handleDeleteConfirm() {
+    setIsDeleting(true);
+    setShowDeleteConfirm(false);
     await fetch(`/api/songs/${song.id}`, { method: "DELETE" });
     router.refresh();
   }
 
   async function handleSave() {
     if (!title) return;
-    setSaving(true);
-    const finalCategory = category === "other" ? customCategory : category;
+    setIsSaving(true);
+    const resolvedCategory = category === "other" ? customCategory : category;
     await fetch(`/api/songs/${song.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, author, category: finalCategory, language }),
+      body: JSON.stringify({ title, author, category: resolvedCategory, language }),
     });
-    setSaving(false);
+    setIsSaving(false);
     setEditing(false);
     router.refresh();
   }
 
   function handleCancel() {
-    resetForm();
+    resetEditForm();
     setEditing(false);
   }
 
-  const showBadge = !isKnownCategory(song.category) && song.category;
+  const showCategoryBadge = !isPredefinedCategory(song.category) && song.category;
 
   return (
     <div
@@ -181,14 +182,14 @@ export default function SongCard({ song }: Props) {
             </button>
             <button
               onClick={handleSave}
-              disabled={saving || !title}
+              disabled={isSaving || !title}
               className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
               style={{
                 backgroundColor: "#D84F0B",
                 color: "var(--color-surface-card)",
               }}
             >
-              {saving ? "Saving..." : "Save"}
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
@@ -205,7 +206,7 @@ export default function SongCard({ song }: Props) {
             )}
           </div>
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            {showBadge && (
+            {showCategoryBadge && (
               <span
                 className="text-xs rounded-full px-2 py-0.5 font-medium"
                 style={{
@@ -230,8 +231,8 @@ export default function SongCard({ song }: Props) {
               </svg>
             </button>
             <button
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isDeleting}
               className="p-1 rounded transition-colors disabled:opacity-50"
               style={{ color: "#DC2626", opacity: 0.6 }}
               onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "1")}
@@ -244,6 +245,56 @@ export default function SongCard({ song }: Props) {
             </button>
           </div>
         </>
+      )}
+
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="rounded-xl p-6 max-w-sm w-full"
+            style={{
+              backgroundColor: "var(--color-surface-card)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <h3
+              className="text-lg font-bold mb-2"
+              style={{ color: "var(--color-text)" }}
+            >
+              Delete song?
+            </h3>
+            <p
+              className="text-sm mb-6"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Are you sure you want to delete &ldquo;{song.title}&rdquo;?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                style={{ backgroundColor: "#DC2626", color: "#fff" }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
