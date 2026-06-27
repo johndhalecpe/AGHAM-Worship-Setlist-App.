@@ -52,6 +52,7 @@ export async function PATCH(
       title: body.title,
       description: body.description,
       song_leader: body.song_leader,
+      branch: body.branch,
     })
     .eq("id", id)
     .select()

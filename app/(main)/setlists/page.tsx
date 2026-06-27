@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
+import { getBranchLabel } from "@/lib/branches";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,6 @@ async function fetchAllSetlists(): Promise<SetlistWithSections[]> {
 function formatDisplayDate(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", {
-    weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -81,7 +81,7 @@ function SectionSongList({
         {sectionSongs.map((s) => (
           <div key={s.id}>
             <p
-              className={`text-sm ${dimmed ? "opacity-60" : ""}`}
+              className={`text-sm break-words ${dimmed ? "opacity-60" : ""}`}
               style={{ color: "var(--color-text)" }}
             >
               {s.songs.title}
@@ -125,53 +125,39 @@ function SetlistPreviewCard({
         ...(dimmed ? { filter: "grayscale(0.3)" } : {}),
       }}
     >
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-0 mb-4">
-        <div>
-          <p
-            className={`font-bold text-lg ${dimmed ? "opacity-70" : ""}`}
-            style={{ color: "var(--color-text)" }}
-          >
-            {formatDisplayDate(setlist.date)}
-          </p>
-          {setlist.title && (
-            <p
-              className={`text-sm mt-0.5 ${dimmed ? "opacity-60" : ""}`}
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {setlist.title}
-            </p>
-          )}
-          {setlist.description && (
-            <p
-              className={`text-xs italic mt-0.5 ${dimmed ? "opacity-60" : ""}`}
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              {setlist.description}
-            </p>
-          )}
-        </div>
-        {setlist.song_leader && (
-          <div className="flex items-center gap-1.5 text-sm shrink-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className={`w-3.5 h-3.5 ${dimmed ? "opacity-60" : ""}`}
-              style={{ color: "#D84F0B" }}
-            >
-              <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
-            </svg>
-            <span
-              className={dimmed ? "opacity-60" : ""}
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {setlist.song_leader}
-            </span>
-          </div>
-        )}
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <p
+          className={`font-bold text-lg ${dimmed ? "opacity-70" : ""}`}
+          style={{ color: "var(--color-text)" }}
+        >
+          {formatDisplayDate(setlist.date)}
+        </p>
+        <p
+          className={`text-sm font-medium shrink-0 ${dimmed ? "opacity-60" : ""}`}
+          style={{ color: "#D84F0B" }}
+        >
+          {getBranchLabel(setlist.branch)}
+        </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      {setlist.title && (
+        <p
+          className={`text-sm ${dimmed ? "opacity-60" : ""}`}
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          {setlist.title}
+        </p>
+      )}
+      {setlist.description && (
+        <p
+          className={`text-xs italic mt-0.5 ${dimmed ? "opacity-60" : ""}`}
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          {setlist.description}
+        </p>
+      )}
+
+      <div className="flex flex-col gap-3 mt-3">
         <SectionSongList
           sectionType="worship"
           sections={setlist.sections}
@@ -188,11 +174,28 @@ function SetlistPreviewCard({
         (s) => s.section_type !== "worship" && s.section_type !== "praise"
       ).length > 0 && (
         <p
-          className={`mt-3 text-xs ${dimmed ? "opacity-60" : ""}`}
+          className={`mt-2 text-xs ${dimmed ? "opacity-60" : ""}`}
           style={{ color: "var(--color-text-tertiary)" }}
         >
           + more sections &rarr;
         </p>
+      )}
+
+      {setlist.song_leader && (
+        <div className={`mt-3 ${dimmed ? "opacity-60" : ""}`}>
+          <span className="text-xs flex items-center gap-1" style={{ color: "var(--color-text-tertiary)" }}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-3 h-3"
+              style={{ color: "#D84F0B" }}
+            >
+              <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+            </svg>
+            {setlist.song_leader}
+          </span>
+        </div>
       )}
     </div>
   );

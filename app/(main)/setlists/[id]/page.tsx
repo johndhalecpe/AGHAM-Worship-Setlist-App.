@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import { getBranchLabel } from "@/lib/branches";
 import SetlistDetail from "./SetlistDetail";
 
 export async function generateMetadata({
@@ -20,7 +21,15 @@ export async function generateMetadata({
     return { title: "Setlist not found" };
   }
 
-  const title = `Worship Lineup — ${setlist.date}${setlist.title ? ` — ${setlist.title}` : ""}`;
+  const date = new Date(setlist.date + "T00:00:00").toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const branch = getBranchLabel(setlist.branch);
+
+  const title = `Worship Lineup — ${date} — ${branch}${setlist.title ? ` — ${setlist.title}` : ""}`;
 
   const description = setlist.song_leader
     ? `Song leader: ${setlist.song_leader}`

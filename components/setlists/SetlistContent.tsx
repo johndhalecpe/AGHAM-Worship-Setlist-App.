@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import SongPicker from "@/components/setlists/SongPicker";
 import DatePicker from "@/components/setlists/DatePicker";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import { BRANCHES, getBranchLabel } from "@/lib/branches";
 
 type SetlistContentProps = {
   initialSetlist: Setlist;
   initialSections: SetlistSectionWithSong[];
   isPast?: boolean;
   isLocked?: boolean;
-  copied?: boolean;
-  onCopyLink?: () => void;
   onToggleLock?: () => void;
 };
 
@@ -28,8 +27,6 @@ export default function SetlistContent({
   initialSections,
   isPast = false,
   isLocked = true,
-  copied = false,
-  onCopyLink,
   onToggleLock,
 }: SetlistContentProps) {
   const router = useRouter();
@@ -46,6 +43,7 @@ export default function SetlistContent({
   const [editSongLeader, setEditSongLeader] = useState(
     setlist.song_leader ?? ""
   );
+  const [editBranch, setEditBranch] = useState(setlist.branch);
 const [isSaving, setIsSaving] = useState(false);
 const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -55,6 +53,7 @@ const [isDeleting, setIsDeleting] = useState(false);
 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [copiedText, setCopiedText] = useState(false);
 
   async function refreshSectionsFromApi() {
     const response = await fetch(`/api/setlists/${setlist.id}/sections`);
@@ -67,16 +66,39 @@ const [isDeleting, setIsDeleting] = useState(false);
     setEditTitle(setlist.title ?? "");
     setEditDescription(setlist.description ?? "");
     setEditSongLeader(setlist.song_leader ?? "");
+    setEditBranch(setlist.branch);
     setEditing(true);
+  }
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   }
 
   async function handleSaveAndExit() {
     if (editing) {
       if (!editDate) return;
-setIsSaving(true);
-setIsSaving(false);
-setIsSaving(true);
-setIsSaving(false);
+      setIsSaving(true);
+      const response = await fetch(`/api/setlists/${setlist.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: editDate,
+          title: editTitle || null,
+          description: editDescription || null,
+          song_leader: editSongLeader || null,
+          branch: editBranch,
+        }),
+      });
+      if (!response.ok) {
+        setIsSaving(false);
+        return;
+      }
+      setIsSaving(false);
     }
     router.push("/setlists");
   }
@@ -351,6 +373,36 @@ setIsSaving(false);
                 rows={3}
               />
             </div>
+            <div>
+              <label
+                className="text-sm font-medium"
+                style={{ color: "var(--color-text)" }}
+              >
+                Branch
+              </label>
+              <select
+                value={editBranch}
+                onChange={(e) => setEditBranch(e.target.value)}
+                className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "var(--color-surface)",
+                  color: "var(--color-text)",
+                }}
+                onFocus={(e) =>
+                  (e.target.style.borderColor = "#D84F0B")
+                }
+                onBlur={(e) =>
+                  (e.target.style.borderColor = "var(--color-border)")
+                }
+              >
+                {BRANCHES.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
           </div>
         ) : (
@@ -361,14 +413,20 @@ setIsSaving(false);
               border: "1px solid var(--color-border)",
             }}
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 mb-4">
               <div className="min-w-0">
                 <h2
                   className="text-xl sm:text-2xl font-bold break-words"
                   style={{ color: "var(--color-text)" }}
                 >
-                  {setlist.date}
+                  {formatDate(setlist.date)}
                 </h2>
+                <p
+                  className="mt-0.5 text-sm font-medium"
+                  style={{ color: "#D84F0B" }}
+                >
+                  {getBranchLabel(setlist.branch)}
+                </p>
                 {setlist.title && (
                   <p
                     className="mt-1 text-sm sm:text-base"
@@ -385,39 +443,173 @@ setIsSaving(false);
                     {setlist.description}
                   </p>
                 )}
-                {setlist.song_leader && (
-                  <p
-                    className="text-sm mt-2 flex items-center gap-1.5"
-                    style={{ color: "var(--color-text-secondary)" }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="w-3.5 h-3.5 shrink-0"
-                      style={{ color: "#D84F0B" }}
-                    >
-                      <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
-                    </svg>
-                    {setlist.song_leader}
-                  </p>
-                )}
               </div>
-              {!isPast && (
-                <div className="flex flex-col gap-1.5 shrink-0">
-                  <button
-                    onClick={onCopyLink}
-                    className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
-                    style={{
-                      border: "1px solid var(--color-border)",
-                      color: copied ? "#16A34A" : "var(--color-text-secondary)",
-                    }}
+            </div>
+
+            <div
+              className="rounded-lg p-4 mb-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
+              style={{
+                backgroundColor: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              <div className="flex justify-between items-start gap-3">
+                <div>
+                  <p className="font-semibold" style={{ color: "var(--color-text)" }}>
+                    {formatDate(setlist.date)}
+                    {setlist.song_leader && (
+                      <span className="font-normal" style={{ color: "var(--color-text-secondary)" }}>
+                        {" "}— {setlist.song_leader}
+                      </span>
+                    )}
+                  </p>
+                  <p className="font-semibold text-[11px] mt-0.5" style={{ color: "#D84F0B" }}>
+                    {getBranchLabel(setlist.branch)}
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const sectionLabels: Record<string, string> = {
+                      worship: "Worship",
+                      praise: "Praise",
+                      tithes_offering: "Tithes and offering",
+                      special: "Special numbers",
+                    };
+                    const sectionTypes = ["worship", "praise", "tithes_offering", "special"];
+                    let text = formatDate(setlist.date);
+                    if (setlist.song_leader) text += ` — ${setlist.song_leader}`;
+                    text += `\n${getBranchLabel(setlist.branch)}`;
+                    if (setlist.title) text += `\n${setlist.title}`;
+                    if (setlist.description) text += `\n${setlist.description}`;
+                    for (const type of sectionTypes) {
+                      const sectionSongs = sections
+                        .filter((s) => s.section_type === type)
+                        .sort((a, b) => a.sort_order - b.sort_order);
+                      if (sectionSongs.length > 0) {
+                        text += `\n\n${sectionLabels[type] ?? type}`;
+                        for (const s of sectionSongs) {
+                          text += `\n• ${s.songs.title}`;
+                          if (s.songs.author) text += ` (${s.songs.author})`;
+                          if (s.notes) text += ` — "${s.notes}"`;
+                        }
+                      }
+                    }
+                    text += `\n\n${window.location.href}`;
+                    navigator.clipboard.writeText(text);
+                    setCopiedText(true);
+                    setTimeout(() => setCopiedText(false), 10000);
+                  }}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0"
+                  style={{
+                    backgroundColor: copiedText ? "#16A34A" : "#D84F0B",
+                    color: "#fff",
+                  }}
+                >
+                  {copiedText ? "Copied!" : "Copy text"}
+                </button>
+              </div>
+              {setlist.title && (
+                <p className="mt-1 font-semibold" style={{ color: "var(--color-text)" }}>
+                  {setlist.title}
+                </p>
+              )}
+              {setlist.description && (
+                <p className="italic" style={{ color: "var(--color-text-tertiary)" }}>
+                  {setlist.description}
+                </p>
+              )}
+              {sections.filter((s) => s.section_type === "worship").length > 0 && (
+                <>
+                  <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+                    Worship
+                  </p>
+                  {sections
+                    .filter((s) => s.section_type === "worship")
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                    .map((s) => (
+                      <p key={s.id} className="ml-2 break-words">
+                        • {s.songs.title}
+                        {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
+                        {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+                      </p>
+                    ))}
+                </>
+              )}
+              {sections.filter((s) => s.section_type === "praise").length > 0 && (
+                <>
+                  <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+                    Praise
+                  </p>
+                  {sections
+                    .filter((s) => s.section_type === "praise")
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                    .map((s) => (
+                      <p key={s.id} className="ml-2 break-words">
+                        • {s.songs.title}
+                        {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
+                        {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+                      </p>
+                    ))}
+                </>
+              )}
+              {sections.filter((s) => s.section_type === "tithes_offering").length > 0 && (
+                <>
+                  <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+                    Tithes and offering
+                  </p>
+                  {sections
+                    .filter((s) => s.section_type === "tithes_offering")
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                    .map((s) => (
+                      <p key={s.id} className="ml-2 break-words">
+                        • {s.songs.title}
+                        {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
+                        {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+                      </p>
+                    ))}
+                </>
+              )}
+              {sections.filter((s) => s.section_type === "special").length > 0 && (
+                <>
+                  <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "#D84F0B" }}>
+                    Special numbers
+                  </p>
+                  {sections
+                    .filter((s) => s.section_type === "special")
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                    .map((s) => (
+                      <p key={s.id} className="ml-2 break-words">
+                        • {s.songs.title}
+                        {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
+                        {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+                      </p>
+                    ))}
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+              {setlist.song_leader && (
+                <p className="text-sm flex items-center gap-1.5" style={{ color: "var(--color-text-secondary)" }}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: "#D84F0B" }}
                   >
-                    {copied ? "Copied!" : "Copy link"}
-                  </button>
+                    <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+                  </svg>
+                  {setlist.song_leader}
+                </p>
+              )}
+              {!isPast && (
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={onToggleLock}
-                    className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                    className="rounded-lg px-3 py-2 text-xs font-medium transition-colors"
                     style={{
                       border: "1px solid var(--color-border)",
                       color: "var(--color-text-secondary)",
@@ -428,7 +620,7 @@ setIsSaving(false);
                   {!isLocked && (
                     <button
                       onClick={startEditing}
-                      className="rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                      className="rounded-lg px-3 py-2 text-xs font-medium transition-colors"
                       style={{
                         border: "1px solid var(--color-border)",
                         color: "var(--color-text-secondary)",
@@ -441,7 +633,7 @@ setIsSaving(false);
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={isDeleting}
-                      className="rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+                      className="rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
                       style={{
                         border: "1px solid #FCA5A5",
                         color: "#DC2626",
@@ -770,7 +962,7 @@ setIsSaving(false);
               className="text-sm mb-6"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Are you sure you want to delete the lineup for {setlist.date}?
+              Are you sure you want to delete the lineup for {formatDate(setlist.date)}?
               This action cannot be undone.
             </p>
             <div className="flex gap-2 justify-end">

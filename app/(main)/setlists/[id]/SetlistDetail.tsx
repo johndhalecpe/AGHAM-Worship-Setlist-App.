@@ -22,7 +22,6 @@ export default function SetlistDetail({
     const stored = localStorage.getItem("setlist-lock-" + id);
     return stored !== null ? stored === "true" : true;
   });
-  const [copied, setCopied] = useState(false);
 
   const toggleLock = useCallback(() => {
     setIsLocked((prev) => {
@@ -32,23 +31,12 @@ export default function SetlistDetail({
     });
   }, [id]);
 
-  const handleCopyLink = useCallback(() => {
-    const title = initialSetlist.title
-      ? `${initialSetlist.date} — ${initialSetlist.title}`
-      : initialSetlist.date;
-    navigator.clipboard.writeText(`${title} — ${window.location.href}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [initialSetlist]);
-
   return (
     <SetlistContent
       initialSetlist={initialSetlist}
       initialSections={initialSections}
       isPast={isPast}
       isLocked={isLocked}
-      copied={copied}
-      onCopyLink={handleCopyLink}
       onToggleLock={toggleLock}
     />
   );

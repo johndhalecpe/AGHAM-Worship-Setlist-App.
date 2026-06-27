@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "@/components/setlists/DatePicker";
+import { BRANCHES } from "@/lib/branches";
 
 export default function NewSetlistPage() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function NewSetlistPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [songLeader, setSongLeader] = useState("");
+  const [branch, setBranch] = useState("carissa_1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,6 +32,7 @@ export default function NewSetlistPage() {
         title,
         description,
         song_leader: songLeader,
+        branch,
       }),
     });
 
@@ -132,6 +135,34 @@ export default function NewSetlistPage() {
                 (e.target.style.borderColor = "var(--color-border)")
               }
             />
+          </div>
+          <div>
+            <label
+              className="text-sm font-medium"
+              style={{ color: "var(--color-text)" }}
+            >
+              Branch
+            </label>
+            <select
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
+              style={{
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-surface)",
+                color: "var(--color-text)",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+              onBlur={(e) =>
+                (e.target.style.borderColor = "var(--color-border)")
+              }
+            >
+              {BRANCHES.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label

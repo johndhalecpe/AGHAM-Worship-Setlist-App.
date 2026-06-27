@@ -13,6 +13,7 @@ export type Setlist = {
   title: string | null;
   description: string | null;
   song_leader: string | null;
+  branch: string;
   created_at: string;
 };
 

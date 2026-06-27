@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       title: body.title,
       description: body.description,
       song_leader: body.song_leader,
+      branch: body.branch,
     })
     .select()
     .single();
