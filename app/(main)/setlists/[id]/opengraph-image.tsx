@@ -1,7 +1,11 @@
 import { ImageResponse } from "@vercel/og";
 import { supabase } from "@/lib/supabase";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-export const runtime = "edge";
+export const alt = "Worship Setlist";
+export const size = { width: 1200, height: 1200 };
+export const contentType = "image/png";
 
 const SECTION_LABELS: Record<string, string> = {
   worship: "Worship",
@@ -12,32 +16,50 @@ const SECTION_LABELS: Record<string, string> = {
 
 const SECTION_ORDER = ["worship", "praise", "tithes_offering", "special"];
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
+const geistFont = readFile(
+  path.join(process.cwd(), "node_modules/@vercel/og/dist/Geist-Regular.ttf")
+);
 
-  if (!id) {
-    return new Response("Missing id", { status: 400 });
-  }
+export default async function Image({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
-  const { data: setlist, error: setlistError } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [setlistResult, sectionsResult] = await Promise.all([
+    supabase.from("setlists").select("*").eq("id", id).single(),
+    supabase
+      .from("setlist_sections")
+      .select("*, songs(title, author, category)")
+      .eq("setlist_id", id)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  const { data: setlist, error: setlistError } = setlistResult;
+  const { data: sections, error: sectionsError } = sectionsResult;
 
   if (setlistError || !setlist) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  const { data: sections, error: sectionsError } = await supabase
-    .from("setlist_sections")
-    .select("*, songs(title, author, category)")
-    .eq("setlist_id", id)
-    .order("sort_order", { ascending: true });
-
-  if (sectionsError) {
-    return new Response("Error", { status: 500 });
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: 1200,
+            height: 1200,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#1A1916",
+            color: "#E8E3D8",
+            fontSize: 48,
+            fontFamily: "Geist",
+          }}
+        >
+          Setlist not found
+        </div>
+      ),
+      { width: 1200, height: 1200, fonts: [{ name: "Geist", data: await geistFont, weight: 400 }] }
+    );
   }
 
   const grouped = SECTION_ORDER.map((type) => ({
@@ -57,11 +79,10 @@ export async function GET(request: Request) {
           gap: 16,
           background: "#1A1916",
           color: "#E8E3D8",
-          fontFamily: "Geist, sans-serif",
+          fontFamily: "Geist",
           padding: 24,
         }}
       >
-        {/* Header Row */}
         <div
           style={{
             display: "flex",
@@ -78,12 +99,10 @@ export async function GET(request: Request) {
               gap: 20,
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://worship-setlist.vercel.app/transparent-logo.svg"
+              src="https://agham-worship-setlist-app.vercel.app/transparent-logo.svg"
               width={72}
               height={72}
-              alt="logo"
             />
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontSize: 72, fontWeight: 700, color: "#E8E3D8" }}>
@@ -103,7 +122,6 @@ export async function GET(request: Request) {
           </div>
         </div>
 
-        {/* Sections Area */}
         <div
           style={{
             display: "flex",
@@ -168,6 +186,16 @@ export async function GET(request: Request) {
         </div>
       </div>
     ),
-    { width: 1200, height: 1200 }
+    {
+      width: 1200,
+      height: 1200,
+      fonts: [
+        {
+          name: "Geist",
+          data: await geistFont,
+          weight: 400,
+        },
+      ],
+    }
   );
 }
