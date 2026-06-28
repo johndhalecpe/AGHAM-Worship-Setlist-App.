@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "@/components/ui/DatePicker";
 import { BRANCHES } from "@/lib/branches";
+import { todayLocalISO } from "@/lib/dates";
 
 export default function NewSetlistForm() {
   const router = useRouter();
@@ -108,7 +109,7 @@ export default function NewSetlistForm() {
             <DatePicker
               value={date}
               onChange={setDate}
-              minDate={new Date().toISOString().split("T")[0]}
+              minDate={todayLocalISO()}
             />
           </div>
 

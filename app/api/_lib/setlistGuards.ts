@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { todayLocalISO } from "@/lib/dates";
 
 export async function isSetlistDateInPast(id: string): Promise<boolean> {
   const { data } = await supabase
@@ -7,6 +8,6 @@ export async function isSetlistDateInPast(id: string): Promise<boolean> {
     .eq("id", id)
     .single();
   if (!data) return false;
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocalISO();
   return data.date < today;
 }

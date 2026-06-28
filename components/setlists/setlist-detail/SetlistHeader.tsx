@@ -56,14 +56,12 @@ export default function SetlistHeader({
           >
             {formatDate(setlist.date)}
           </h2>
-          {setlist.branch === "carissa_1" && (
-            <p
-              className="mt-0.5 text-sm font-medium"
-              style={{ color: "var(--color-accent)" }}
-            >
-              {getBranchLabel(setlist.branch)}
-            </p>
-          )}
+          <p
+            className="mt-0.5 text-sm font-medium"
+            style={{ color: "#D84F0B" }}
+          >
+            {getBranchLabel(setlist.branch)}
+          </p>
           {setlist.title && (
             <p
               className="mt-1 text-sm sm:text-base"

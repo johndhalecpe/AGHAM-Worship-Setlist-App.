@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { todayLocalISO } from "@/lib/dates";
 
 export async function GET() {
   const { data, error } = await supabase
@@ -17,7 +18,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json();
 
-  const todayISOString = new Date().toISOString().split("T")[0];
+  const todayISOString = todayLocalISO();
   if (body.date < todayISOString) {
     return NextResponse.json(
       { error: "Cannot create a setlist with a past date" },

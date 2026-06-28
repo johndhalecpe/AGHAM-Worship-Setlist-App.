@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
+import { todayLocalISO } from "@/lib/dates";
 import SetlistPreviewCard from "./_components/SetlistPreviewCard";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ async function fetchAllSetlists(): Promise<SetlistWithSections[]> {
 
 export default async function SetlistsPage() {
   const setlists = await fetchAllSetlists();
-  const todayISOString = new Date().toISOString().split("T")[0];
+  const todayISOString = todayLocalISO();
 
   const upcomingSetlists = setlists
     .filter((s) => s.date >= todayISOString)
@@ -74,36 +75,36 @@ export default async function SetlistsPage() {
         </Link>
       </div>
 
-          {upcomingSetlists.length > 0 && (
-        <>
-          <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
-            Upcoming lineups
-          </h3>
-          <div className="flex flex-col gap-3 sm:gap-4">
-            {upcomingSetlists.map((setlist) => (
-              <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
-                <SetlistPreviewCard setlist={setlist} />
-              </Link>
-            ))}
-          </div>
-        </>
+      <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
+        Upcoming lineups
+      </h3>
+      {upcomingSetlists.length > 0 ? (
+        <div className="flex flex-col gap-3 sm:gap-4">
+          {upcomingSetlists.map((setlist) => (
+            <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
+              <SetlistPreviewCard setlist={setlist} />
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p
+          className="text-sm"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          No scheduled lineups for now...
+        </p>
       )}
 
       {pastSetlists.length > 0 && (
         <>
-      {upcomingSetlists.length > 0 && (
-            <hr
-              className="my-8"
-              style={{
-                border: "none",
-                borderTop: "1px solid var(--color-border)",
-              }}
-            />
-          )}
-          <h3
-            className="text-sm font-semibold uppercase tracking-wider mb-3 opacity-60"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
+          <hr
+            className="my-16"
+            style={{
+              border: "none",
+              borderTop: "1px solid var(--color-border)",
+            }}
+          />
+          <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
             Past lineups
           </h3>
           <div className="flex flex-col gap-3 sm:gap-4">
@@ -114,15 +115,6 @@ export default async function SetlistsPage() {
             ))}
           </div>
         </>
-      )}
-
-      {upcomingSetlists.length === 0 && pastSetlists.length === 0 && (
-        <p
-          className="text-sm"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          No setlists found.
-        </p>
       )}
     </div>
   );

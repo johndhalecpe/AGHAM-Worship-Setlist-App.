@@ -22,13 +22,19 @@ export default function SetlistPreviewCard({
 }: SetlistPreviewCardProps) {
   return (
     <div
-      className={`rounded-xl p-4 sm:p-6 transition-all hover:-translate-y-0.5 ${dimmed ? "opacity-50" : ""}`}
+      className={`relative rounded-xl p-4 sm:p-6 transition-all hover:-translate-y-0.5 ${dimmed ? "opacity-50" : ""}`}
       style={{
         backgroundColor: "var(--color-surface-card)",
         border: "1px solid var(--color-border)",
         ...(dimmed ? { filter: "grayscale(0.3)" } : {}),
       }}
     >
+      <span
+        className={`absolute top-3 right-3 text-xs font-semibold ${dimmed ? "opacity-60" : ""}`}
+        style={{ color: "#D84F0B" }}
+      >
+        {getBranchLabel(setlist.branch)}
+      </span>
       <div className="flex items-start justify-between gap-4 mb-3">
         <p
           className={`font-bold text-lg ${dimmed ? "opacity-70" : ""}`}
@@ -36,14 +42,6 @@ export default function SetlistPreviewCard({
         >
           {formatDisplayDate(setlist.date)}
         </p>
-        {setlist.branch === "carissa_1" && (
-          <p
-            className={`text-sm font-medium shrink-0 ${dimmed ? "opacity-60" : ""}`}
-            style={{ color: "#D84F0B" }}
-          >
-            {getBranchLabel(setlist.branch)}
-          </p>
-        )}
       </div>
 
       {setlist.title && (
