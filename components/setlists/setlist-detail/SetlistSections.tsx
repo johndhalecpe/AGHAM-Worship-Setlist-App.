@@ -9,8 +9,6 @@ import LyricsViewer from "./LyricsViewer";
 type SetlistSectionsProps = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
-  overrides: Record<string, { override_key?: string; override_bpm?: number; override_time_signature?: string }>;
-  onOverridesChange: (overrides: Record<string, { override_key?: string; override_bpm?: number; override_time_signature?: string }>) => void;
   isPast: boolean;
   isLocked: boolean;
   onSectionsChange: (sections: SetlistSectionWithSong[] | ((prev: SetlistSectionWithSong[]) => SetlistSectionWithSong[])) => void;
@@ -26,8 +24,6 @@ const SECTION_TYPES = [
 export default function SetlistSections({
   setlist,
   sections,
-  overrides,
-  onOverridesChange,
   isPast,
   isLocked,
   onSectionsChange,
@@ -38,15 +34,7 @@ export default function SetlistSections({
   const [noteText, setNoteText] = useState("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
-  const [editingBpmId, setEditingBpmId] = useState<string | null>(null);
-  const [editingTimeSignatureId, setEditingTimeSignatureId] = useState<string | null>(null);
   const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
-
-  async function refreshSectionsFromApi() {
-    const response = await fetch(`/api/setlists/${setlist.id}/sections`);
-    const data = await response.json();
-    onSectionsChange(data);
-  }
 
   function getSectionSongs(sectionType: string) {
     return sections
@@ -55,19 +43,11 @@ export default function SetlistSections({
   }
 
   function getEffectiveKey(s: SetlistSectionWithSong) {
-    return overrides[s.id]?.override_key || s.songs.default_key || "G";
+    return s.song_key || s.songs.default_key || "G";
   }
 
-  function getEffectiveBpm(s: SetlistSectionWithSong) {
-    return overrides[s.id]?.override_bpm || s.songs.default_bpm || 120;
-  }
-
-  function getEffectiveTimeSignature(s: SetlistSectionWithSong) {
-    return overrides[s.id]?.override_time_signature || s.songs.default_time_signature || "4/4";
-  }
-
-  function handleSongAdded() {
-    refreshSectionsFromApi();
+  function handleSongAdded(newSection: SetlistSectionWithSong) {
+    onSectionsChange((prev) => [...prev, newSection]);
   }
 
   function handleDragStart(sectionId: string) {
@@ -83,7 +63,7 @@ export default function SetlistSections({
     setDragOverSectionId(null);
   }
 
-  async function handleDrop(e: React.DragEvent, sectionType: string, targetId: string) {
+  function handleDrop(e: React.DragEvent, sectionType: string, targetId: string) {
     e.preventDefault();
     setDragOverSectionId(null);
 
@@ -117,17 +97,6 @@ export default function SetlistSections({
       return [...otherSections, ...updatedSections];
     });
 
-    await fetch(`/api/setlists/${setlist.id}/sections`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: updatedSections.map((item) => ({
-          id: item.id,
-          sort_order: item.sort_order,
-        })),
-      }),
-    });
-
     setDraggedSectionId(null);
   }
 
@@ -136,7 +105,7 @@ export default function SetlistSections({
     setDragOverSectionId(null);
   }
 
-  async function handleMoveSong(sectionType: string, songId: string, direction: "up" | "down") {
+  function handleMoveSong(sectionType: string, songId: string, direction: "up" | "down") {
     const sectionSongs = getSectionSongs(sectionType);
     const currentIndex = sectionSongs.findIndex((s) => s.id === songId);
     if (currentIndex === -1) return;
@@ -157,12 +126,6 @@ export default function SetlistSections({
       }
       return next;
     });
-
-    await fetch(`/api/setlists/${setlist.id}/sections`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: updatedItems }),
-    });
   }
 
   function startEditingNote(sectionId: string, currentNotes: string | null) {
@@ -170,16 +133,14 @@ export default function SetlistSections({
     setNoteText(currentNotes ?? "");
   }
 
-  async function saveNote(sectionId: string) {
-    await fetch(`/api/setlists/${setlist.id}/sections`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: [{ id: sectionId, notes: noteText || null }],
-      }),
-    });
+  function saveNote(sectionId: string) {
+    onSectionsChange((prev: SetlistSectionWithSong[]) =>
+      prev.map((sec) =>
+        sec.id === sectionId ? { ...sec, notes: noteText || null } : sec
+      )
+    );
     setEditingNoteId(null);
-    refreshSectionsFromApi();
+    setNoteText("");
   }
 
   function cancelNote() {
@@ -187,12 +148,21 @@ export default function SetlistSections({
     setNoteText("");
   }
 
+  function handleKeyChange(s: SetlistSectionWithSong, key: string) {
+    const newSongKey = key === s.songs.default_key ? null : key;
+    onSectionsChange((prev: SetlistSectionWithSong[]) =>
+      prev.map((sec) =>
+        sec.id === s.id ? { ...sec, song_key: newSongKey } : sec
+      )
+    );
+  }
+
   async function handleRemoveSongFromSection(sectionId: string) {
     await fetch(
       `/api/setlists/${setlist.id}/sections?sectionId=${sectionId}`,
       { method: "DELETE" }
     );
-    refreshSectionsFromApi();
+    onSectionsChange((prev) => prev.filter((s) => s.id !== sectionId));
   }
 
   return (
@@ -331,147 +301,42 @@ export default function SetlistSections({
                               <KeyPicker
                                 value={getEffectiveKey(s)}
                                 onChange={(key) => {
-                                  onOverridesChange({
-                                    ...overrides,
-                                    [s.id]: { ...overrides[s.id], override_key: key === (s.songs.default_key || "G") ? undefined : key },
-                                  });
+                                  handleKeyChange(s, key);
                                   setEditingKeyId(null);
                                 }}
+                                onCancel={() => setEditingKeyId(null)}
                               />
                             ) : (
                               <button
                                 onClick={() => !isPast && !isLocked && setEditingKeyId(s.id)}
                                 className={`text-xs font-mono font-semibold rounded px-1.5 min-h-[28px] flex items-center shrink-0 ${!isPast && !isLocked ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
                                 style={{
-                                  backgroundColor: overrides[s.id]?.override_key ? "var(--color-accent)" : "var(--color-badge-key)",
-                                  color: overrides[s.id]?.override_key ? "var(--color-text-on-accent)" : "var(--color-badge-key-text)",
+                                  backgroundColor: s.song_key ? "var(--color-accent)" : "var(--color-badge-key)",
+                                  color: s.song_key ? "var(--color-text-on-accent)" : "var(--color-badge-key-text)",
                                 }}
                                 title="Tap to change key"
                               >
                                 Key: {getEffectiveKey(s)}
                               </button>
                             )}
-                            {editingBpmId === s.id ? (
-                              <div className="flex items-center gap-0.5">
-                                <button
-                                  onClick={() => {
-                                    const current = getEffectiveBpm(s);
-                                    const next = Math.max(40, current - 10);
-                                    onOverridesChange({
-                                      ...overrides,
-                                      [s.id]: { ...overrides[s.id], override_bpm: next === (s.songs.default_bpm || 120) ? undefined : next },
-                                    });
-                                  }}
-                                  className="rounded px-1 min-h-[28px] min-w-[28px] flex items-center justify-center text-xs font-mono font-bold"
-                                  style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)", backgroundColor: "var(--color-surface)" }}
-                                  title="Decrease BPM"
-                                >
-                                  −
-                                </button>
-                                <input
-                                  type="number"
-                                  defaultValue={getEffectiveBpm(s)}
-                                  inputMode="numeric"
-                                  className="w-12 rounded px-1 min-h-[28px] text-xs font-mono text-center"
-                                  style={{ border: "1px solid var(--color-border)", backgroundColor: "var(--color-surface)", color: "var(--color-text)" }}
-                                  autoFocus
-                                  onBlur={(e) => {
-                                    const val = Number(e.target.value);
-                                    if (isNaN(val) || val < 1) return;
-                                    onOverridesChange({
-                                      ...overrides,
-                                      [s.id]: { ...overrides[s.id], override_bpm: val === (s.songs.default_bpm || 120) ? undefined : val },
-                                    });
-                                    setEditingBpmId(null);
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                                    if (e.key === "Escape") setEditingBpmId(null);
-                                  }}
-                                />
-                                <button
-                                  onClick={() => {
-                                    const current = getEffectiveBpm(s);
-                                    const next = Math.min(240, current + 10);
-                                    onOverridesChange({
-                                      ...overrides,
-                                      [s.id]: { ...overrides[s.id], override_bpm: next === (s.songs.default_bpm || 120) ? undefined : next },
-                                    });
-                                  }}
-                                  className="rounded px-1 min-h-[28px] min-w-[28px] flex items-center justify-center text-xs font-mono font-bold"
-                                  style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)", backgroundColor: "var(--color-surface)" }}
-                                  title="Increase BPM"
-                                >
-                                  +
-                                </button>
-                                {[80, 120].map((preset) => (
-                                  <button
-                                    key={preset}
-                                    onClick={() => {
-                                      onOverridesChange({
-                                        ...overrides,
-                                        [s.id]: { ...overrides[s.id], override_bpm: preset === (s.songs.default_bpm || 120) ? undefined : preset },
-                                      });
-                                      setEditingBpmId(null);
-                                    }}
-                                    className="text-[10px] font-mono rounded px-1.5 min-h-[28px] flex items-center"
-                                    style={{
-                                      backgroundColor: getEffectiveBpm(s) === preset ? "var(--color-accent)" : "var(--color-badge-bpm)",
-                                      color: getEffectiveBpm(s) === preset ? "var(--color-text-on-accent)" : "var(--color-badge-bpm-text)",
-                                    }}
-                                  >
-                                    {preset}
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => !isPast && !isLocked && setEditingBpmId(s.id)}
-                                className={`text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0 ${!isPast && !isLocked ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
-                                style={{
-                                  backgroundColor: overrides[s.id]?.override_bpm ? "var(--color-accent)" : "var(--color-badge-bpm)",
-                                  color: overrides[s.id]?.override_bpm ? "var(--color-text-on-accent)" : "var(--color-badge-bpm-text)",
-                                }}
-                                title="Tap to change BPM"
-                              >
-                                Bpm: {getEffectiveBpm(s)}
-                              </button>
-                            )}
-                            {editingTimeSignatureId === s.id ? (
-                              <div className="flex items-center gap-0.5">
-                                {["4/4", "3/4", "6/8"].map((ts) => (
-                                  <button
-                                    key={ts}
-                                    onClick={() => {
-                                      onOverridesChange({
-                                        ...overrides,
-                                        [s.id]: { ...overrides[s.id], override_time_signature: ts === (s.songs.default_time_signature || "4/4") ? undefined : ts },
-                                      });
-                                      setEditingTimeSignatureId(null);
-                                    }}
-                                className={`text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center ${getEffectiveTimeSignature(s) === ts ? "font-bold" : ""}`}
-                                  style={{
-                                    backgroundColor: getEffectiveTimeSignature(s) === ts ? "var(--color-accent)" : "var(--color-badge-ts)",
-                                    color: getEffectiveTimeSignature(s) === ts ? "var(--color-text-on-accent)" : "var(--color-badge-ts-text)",
-                                  }}
-                                  >
-                                    {ts}
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => !isPast && !isLocked && setEditingTimeSignatureId(s.id)}
-                                className={`text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0 ${!isPast && !isLocked ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
-                                style={{
-                                  backgroundColor: overrides[s.id]?.override_time_signature ? "var(--color-accent)" : "var(--color-badge-ts)",
-                                  color: overrides[s.id]?.override_time_signature ? "var(--color-text-on-accent)" : "var(--color-badge-ts-text)",
-                                }}
-                                title="Tap to change time signature"
-                              >
-                                {getEffectiveTimeSignature(s)}
-                              </button>
-                            )}
+                            <span
+                              className="text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0"
+                              style={{
+                                backgroundColor: "var(--color-badge-bpm)",
+                                color: "var(--color-badge-bpm-text)",
+                              }}
+                            >
+                              Bpm: {s.songs.default_bpm || 120}
+                            </span>
+                            <span
+                              className="text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0"
+                              style={{
+                                backgroundColor: "var(--color-badge-ts)",
+                                color: "var(--color-badge-ts-text)",
+                              }}
+                            >
+                              {s.songs.default_time_signature || "4/4"}
+                            </span>
                             <button
                               onClick={() => setLyricsView({ sectionType: section.key, songId: s.id })}
                               className="text-xs font-medium rounded px-2 min-h-[28px] flex items-center whitespace-nowrap hover:opacity-80"

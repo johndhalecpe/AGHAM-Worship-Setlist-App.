@@ -31,6 +31,10 @@ export default function LyricsViewer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  function getEffectiveLyrics(s: SetlistSectionWithSong) {
+    return s.override_lyrics ?? s.songs.lyrics ?? "";
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
@@ -45,7 +49,7 @@ export default function LyricsViewer({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="sticky top-0 z-10 flex items-center justify-between mb-6" style={{ backgroundColor: "var(--color-surface)" }}>
           <h2
             className="text-lg font-semibold capitalize"
             style={{ color: "var(--color-text)" }}
@@ -73,52 +77,69 @@ export default function LyricsViewer({
           </button>
         </div>
 
-        <div className="flex flex-col gap-6">
-          {filtered.map((s) => (
-            <div
-              key={s.id}
-              ref={s.id === activeSongId ? activeRef : undefined}
-              className="rounded-lg p-4 transition-colors"
-              style={{
-                backgroundColor:
-                  s.id === activeSongId
-                    ? "var(--color-surface-muted)"
-                    : "transparent",
-                border:
-                  s.id === activeSongId
-                    ? "1px solid var(--color-border)"
-                    : "1px solid transparent",
-              }}
-            >
-              <h3
-                className="text-base font-semibold mb-1"
-                style={{ color: "var(--color-text)" }}
+        <div className="flex flex-col">
+          {filtered.map((s, i) => (
+            <div key={s.id}>
+              {i > 0 && (
+                <hr
+                  className="my-6"
+                  style={{ borderColor: "var(--color-border)" }}
+                />
+              )}
+              <div
+                ref={s.id === activeSongId ? activeRef : undefined}
+                className="rounded-lg p-4 transition-colors"
+                style={{
+                  backgroundColor:
+                    s.id === activeSongId
+                      ? "var(--color-surface-muted)"
+                      : "transparent",
+                  border:
+                    s.id === activeSongId
+                      ? "1px solid var(--color-border)"
+                      : "1px solid transparent",
+                }}
               >
-                {s.songs.title}
-              </h3>
-              {s.songs.author && (
-                <p
-                  className="text-xs mb-3"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  {s.songs.author}
-                </p>
-              )}
-              {s.songs.lyrics ? (
-                <pre
-                  className="text-sm leading-relaxed whitespace-pre-wrap font-sans"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {s.songs.lyrics}
-                </pre>
-              ) : (
-                <p
-                  className="text-sm italic"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  No lyrics available for this song.
-                </p>
-              )}
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h3
+                    className="text-base font-semibold"
+                    style={{ color: "var(--color-text)" }}
+                  >
+                    {s.songs.title}
+                  </h3>
+                  {s.songs.author && (
+                    <p
+                      className="text-xs"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      {s.songs.author}
+                    </p>
+                  )}
+                </div>
+                {s.override_lyrics && (
+                  <span
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: "var(--color-accent)",
+                      color: "var(--color-text-on-accent)",
+                    }}
+                  >
+                    Edited
+                  </span>
+                )}
+              </div>
+              <pre
+                className="w-full rounded-lg px-3 py-2 text-sm leading-relaxed font-sans whitespace-pre-wrap"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "var(--color-surface-card)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                {getEffectiveLyrics(s) || "No lyrics available."}
+              </pre>
+              </div>
             </div>
           ))}
           {filtered.length === 0 && (

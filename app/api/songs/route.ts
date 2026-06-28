@@ -11,7 +11,9 @@ export async function GET(request: Request) {
     .order("title", { ascending: true });
 
   if (searchTitle) {
-    supabaseQuery = supabaseQuery.ilike("title", `%${searchTitle}%`);
+    supabaseQuery = supabaseQuery.or(
+      `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,lyrics.ilike.%${searchTitle}%`
+    );
   }
 
   const { data, error } = await supabaseQuery;

@@ -129,38 +129,48 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  if (await isSetlistDateInPast(id)) {
-    return NextResponse.json(
-      { error: "Cannot modify a past setlist" },
-      { status: 403 }
-    );
-  }
-
-  const body = await request.json();
-
-  for (const sectionUpdate of body.items as {
-    id: string;
-    sort_order?: number;
-    notes?: string | null;
-  }[]) {
-    const updatePayload: Record<string, unknown> = {};
-    if (sectionUpdate.sort_order !== undefined) updatePayload.sort_order = sectionUpdate.sort_order;
-    if ("notes" in sectionUpdate) updatePayload.notes = sectionUpdate.notes;
-
-    if (Object.keys(updatePayload).length === 0) continue;
-
-    const { error } = await supabase
-      .from("setlist_sections")
-      .update(updatePayload)
-      .eq("id", sectionUpdate.id)
-      .eq("setlist_id", id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (await isSetlistDateInPast(id)) {
+      return NextResponse.json(
+        { error: "Cannot modify a past setlist" },
+        { status: 403 }
+      );
     }
-  }
 
-  return NextResponse.json({ message: "Order updated" });
+    const body = await request.json();
+
+    if (!body.items || !Array.isArray(body.items)) {
+      return NextResponse.json(
+        { error: "Invalid request body: items must be an array" },
+        { status: 400 }
+      );
+    }
+
+    for (const sectionUpdate of body.items) {
+      const updatePayload: Record<string, unknown> = {};
+      if (sectionUpdate.sort_order !== undefined) updatePayload.sort_order = sectionUpdate.sort_order;
+      if ("notes" in sectionUpdate && sectionUpdate.notes !== undefined) updatePayload.notes = sectionUpdate.notes;
+      if ("song_key" in sectionUpdate && sectionUpdate.song_key !== undefined) updatePayload.song_key = sectionUpdate.song_key;
+      if ("override_lyrics" in sectionUpdate && sectionUpdate.override_lyrics !== undefined) updatePayload.override_lyrics = sectionUpdate.override_lyrics;
+
+      if (Object.keys(updatePayload).length === 0) continue;
+
+      const { error } = await supabase
+        .from("setlist_sections")
+        .update(updatePayload)
+        .eq("id", sectionUpdate.id)
+        .eq("setlist_id", id);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({ message: "Order updated" });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

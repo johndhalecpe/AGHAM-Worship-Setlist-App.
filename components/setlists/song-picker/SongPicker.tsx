@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Song } from "@/lib/type";
+import { Song, SetlistSectionWithSong } from "@/lib/type";
 import SongSearchList from "@/components/setlists/song-picker/SongSearchList";
 import NewSongForm from "@/components/setlists/song-picker/NewSongForm";
 
 type SongPickerProps = {
   setlistId: string;
   sectionType: string;
-  onSongAdded: () => void;
+  onSongAdded: (newSection: SetlistSectionWithSong) => void;
   onCancel: () => void;
 };
 
@@ -56,7 +56,7 @@ export default function SongPicker({
   async function handleSelectSong(songId: string) {
     setLoading(true);
 
-    await fetch(`/api/setlists/${setlistId}/sections`, {
+    const res = await fetch(`/api/setlists/${setlistId}/sections`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -64,10 +64,11 @@ export default function SongPicker({
         section_type: sectionType,
       }),
     });
+    const newSection: SetlistSectionWithSong = await res.json();
 
     setLoading(false);
     setSearch("");
-    onSongAdded();
+    onSongAdded(newSection);
   }
 
   return (
@@ -134,10 +135,10 @@ export default function SongPicker({
           initialTitle={search}
           sectionType={sectionType}
           setlistId={setlistId}
-          onCreated={() => {
+          onCreated={(newSection) => {
             setSearch("");
             setShowNewSongForm(false);
-            onSongAdded();
+            onSongAdded(newSection);
           }}
           onCancel={() => setShowNewSongForm(false)}
         />

@@ -7,7 +7,6 @@ import { getBranchLabel } from "@/lib/branches";
 type SetlistHeaderProps = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
-  overrides: Record<string, { override_key?: string; override_bpm?: number; override_time_signature?: string }>;
   isLocked: boolean;
   isPast: boolean;
   onEdit: () => void;
@@ -29,7 +28,6 @@ function formatDate(dateStr: string) {
 export default function SetlistHeader({
   setlist,
   sections,
-  overrides,
   isLocked,
   isPast,
   onEdit,
@@ -37,6 +35,10 @@ export default function SetlistHeader({
   onDeleteRequest,
 }: SetlistHeaderProps) {
   const [copiedText, setCopiedText] = useState(false);
+
+  function getKey(s: SetlistSectionWithSong) {
+    return s.song_key || s.songs.default_key || "G";
+  }
 
   return (
     <div
@@ -54,12 +56,14 @@ export default function SetlistHeader({
           >
             {formatDate(setlist.date)}
           </h2>
-          <p
-            className="mt-0.5 text-sm font-medium"
-            style={{ color: "var(--color-accent)" }}
-          >
-            {getBranchLabel(setlist.branch)}
-          </p>
+          {setlist.branch === "carissa_1" && (
+            <p
+              className="mt-0.5 text-sm font-medium"
+              style={{ color: "var(--color-accent)" }}
+            >
+              {getBranchLabel(setlist.branch)}
+            </p>
+          )}
           {setlist.title && (
             <p
               className="mt-1 text-sm sm:text-base"
@@ -97,9 +101,11 @@ export default function SetlistHeader({
                 </span>
               )}
             </p>
-            <p className="font-semibold text-[11px] mt-0.5" style={{ color: "var(--color-accent)" }}>
-              {getBranchLabel(setlist.branch)}
-            </p>
+            {setlist.branch === "carissa_1" && (
+              <p className="font-semibold text-[11px] mt-0.5" style={{ color: "var(--color-accent)" }}>
+                {getBranchLabel(setlist.branch)}
+              </p>
+            )}
           </div>
           <button
             onClick={(e) => {
@@ -112,7 +118,7 @@ export default function SetlistHeader({
               };
               let text = formatDate(setlist.date);
               if (setlist.song_leader) text += ` — ${setlist.song_leader}`;
-              text += `\n${getBranchLabel(setlist.branch)}`;
+              if (setlist.branch === "carissa_1") text += `\n${getBranchLabel(setlist.branch)}`;
               if (setlist.title) text += `\n${setlist.title}`;
               if (setlist.description) text += `\n${setlist.description}`;
               for (const type of SECTION_TYPES_FOR_COPY) {
@@ -122,7 +128,7 @@ export default function SetlistHeader({
                 if (sectionSongs.length > 0) {
                   text += `\n\n${sectionLabels[type] ?? type}`;
                   for (const s of sectionSongs) {
-                    const key = overrides[s.id]?.override_key || s.songs.default_key || "G";
+                    const key = getKey(s);
                     text += `\n• [${key}] ${s.songs.title}`;
                     if (s.songs.author) text += ` (${s.songs.author})`;
                     if (s.notes) text += ` — "${s.notes}"`;
@@ -163,7 +169,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
+                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -180,7 +186,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
+                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -197,7 +203,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
+                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>
@@ -214,7 +220,7 @@ export default function SetlistHeader({
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((s) => (
                 <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{overrides[s.id]?.override_key || s.songs.default_key || "G"}]</span> {s.songs.title}
+                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
                   {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
                   {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
                 </p>

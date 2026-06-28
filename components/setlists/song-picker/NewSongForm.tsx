@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { SetlistSectionWithSong } from "@/lib/type";
 
 type NewSongFormProps = {
   initialTitle: string;
   sectionType: string;
   setlistId: string;
-  onCreated: () => void;
+  onCreated: (newSection: SetlistSectionWithSong) => void;
   onCancel: () => void;
 };
 
@@ -45,7 +46,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
 
     const newSong = await songResponse.json();
 
-    await fetch(`/api/setlists/${setlistId}/sections`, {
+    const sectionRes = await fetch(`/api/setlists/${setlistId}/sections`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -53,9 +54,10 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         section_type: sectionType,
       }),
     });
+    const newSection: SetlistSectionWithSong = await sectionRes.json();
 
     setLoading(false);
-    onCreated();
+    onCreated(newSection);
   }
 
   return (

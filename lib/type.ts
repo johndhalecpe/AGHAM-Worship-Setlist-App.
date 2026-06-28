@@ -28,6 +28,8 @@ export type SetlistSection = {
   section_type: string;
   sort_order: number;
   notes: string | null;
+  song_key: string | null;
+  override_lyrics: string | null;
   created_at: string;
 };
 
@@ -38,6 +40,8 @@ export type SetlistSectionWithSong = {
   section_type: string;
   sort_order: number;
   notes: string | null;
+  song_key: string | null;
+  override_lyrics: string | null;
   created_at: string;
   songs: {
     id: string;

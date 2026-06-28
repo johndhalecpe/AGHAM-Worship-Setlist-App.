@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Song } from "@/lib/type";
 import SongCard from "@/components/songs/SongCard";
-import SongEditForm from "@/components/songs/SongEditForm";
+import SongsSearchBar from "./SongsSearchBar";
+import EditSongModal from "./EditSongModal";
 
 const PRIORITY_CATEGORIES = ["worship", "praise"];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -63,8 +64,32 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
   const [isLocked, setIsLocked] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const groups = groupSongsByCategoryAndLanguage(songs);
+  const searchMatches = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return null;
+    const title: Song[] = [];
+    const author: Song[] = [];
+    const lyrics: Song[] = [];
+    for (const song of songs) {
+      const lowerTitle = song.title.toLowerCase();
+      const lowerAuthor = (song.author ?? "").toLowerCase();
+      const lowerLyrics = (song.lyrics ?? "").toLowerCase();
+      if (lowerTitle.includes(query)) {
+        title.push(song);
+      } else if (lowerAuthor.includes(query)) {
+        author.push(song);
+      } else if (lowerLyrics.includes(query)) {
+        lyrics.push(song);
+      }
+    }
+    return { title, author, lyrics };
+  }, [songs, searchQuery]);
+
+  const editingSong = useMemo(() => songs.find((s) => s.id === editingId) ?? null, [songs, editingId]);
+  const hasSearch = searchMatches !== null;
+  const groups = hasSearch ? [] : groupSongsByCategoryAndLanguage(songs);
 
   async function handleSave(songId: string, data: { title: string; author: string; category: string; language: string; default_key: string; default_bpm: number; default_time_signature: string; lyrics: string }) {
     setIsSaving(true);
@@ -117,57 +142,99 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
         </button>
       </div>
 
-      {groups.map((group) => (
-        <div key={group.category}>
-          <h3
-            className="text-base font-bold mb-3"
-            style={{ color: "var(--color-text)" }}
-          >
-            {CATEGORY_LABELS[group.category] ?? group.category}
-          </h3>
-          <div className="flex flex-col gap-4">
-            {SORTED_LANGUAGES
-              .filter((lang) => group.songs[lang])
-              .map((lang) => (
-                <div key={lang}>
-                  <h4
-                    className="text-xs uppercase tracking-wider font-semibold mb-1.5"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    {LANGUAGE_LABELS[lang] ?? lang}
-                  </h4>
-                  <div className="flex flex-col gap-0.5">
-                    {group.songs[lang].map((song) => (
-                      editingId === song.id ? (
-                        <SongEditForm
-                          key={song.id}
-                          song={song}
-                          onSave={(data) => handleSave(song.id, data)}
-                          onCancel={() => setEditingId(null)}
-                          isSaving={isSaving}
-                        />
-                      ) : (
-                        <SongCard
-                          key={song.id}
-                          song={song}
-                          isLocked={isLocked}
-                          onEditRequest={(id) => setEditingId(id)}
-                        />
-                      )
-                    ))}
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      ))}
-      {groups.length === 0 && (
-        <p
-          className="text-sm"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          No songs yet. Add one above.
+      <SongsSearchBar value={searchQuery} onChange={setSearchQuery} />
+
+      {hasSearch && (
+        <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+          Found {searchMatches.title.length + searchMatches.author.length + searchMatches.lyrics.length} song{(searchMatches.title.length + searchMatches.author.length + searchMatches.lyrics.length) !== 1 ? "s" : ""}
+          {" "}matching &quot;{searchQuery.trim()}&quot;
         </p>
+      )}
+
+      {hasSearch ? (
+        <>
+          {searchMatches.title.length > 0 && (
+            <div>
+              <h3 className="text-base font-bold mb-3" style={{ color: "var(--color-text)" }}>
+                Found a song match
+              </h3>
+              <div className="flex flex-col gap-0.5">
+                {searchMatches.title.map((song) => (
+                  <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                ))}
+              </div>
+            </div>
+          )}
+          {searchMatches.author.length > 0 && (
+            <div>
+              <h3 className="text-base font-bold mb-3" style={{ color: "var(--color-text)" }}>
+                Found an author match
+              </h3>
+              <div className="flex flex-col gap-0.5">
+                {searchMatches.author.map((song) => (
+                  <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                ))}
+              </div>
+            </div>
+          )}
+          {searchMatches.lyrics.length > 0 && (
+            <div>
+              <h3 className="text-base font-bold mb-3" style={{ color: "var(--color-text)" }}>
+                Found a lyrics match
+              </h3>
+              <div className="flex flex-col gap-0.5">
+                {searchMatches.lyrics.map((song) => (
+                  <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                ))}
+              </div>
+            </div>
+          )}
+          {searchMatches.title.length + searchMatches.author.length + searchMatches.lyrics.length === 0 && (
+            <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+              No songs match your search.
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          {groups.map((group) => (
+            <div key={group.category}>
+              <h3 className="text-base font-bold mb-3" style={{ color: "var(--color-text)" }}>
+                {CATEGORY_LABELS[group.category] ?? group.category}
+              </h3>
+              <div className="flex flex-col gap-4">
+                {SORTED_LANGUAGES
+                  .filter((lang) => group.songs[lang])
+                  .map((lang) => (
+                    <div key={lang}>
+                      <h4 className="text-xs uppercase tracking-wider font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
+                        {LANGUAGE_LABELS[lang] ?? lang}
+                      </h4>
+                      <div className="flex flex-col gap-0.5">
+                        {group.songs[lang].map((song) => (
+                          <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+          {groups.length === 0 && (
+            <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+              No songs yet. Add one above.
+            </p>
+          )}
+        </>
+      )}
+
+      {editingSong && (
+        <EditSongModal
+          song={editingSong}
+          onSave={(data) => handleSave(editingSong.id, data)}
+          onCancel={() => setEditingId(null)}
+          isSaving={isSaving}
+        />
       )}
     </div>
   );

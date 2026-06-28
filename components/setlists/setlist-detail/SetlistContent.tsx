@@ -31,7 +31,6 @@ export default function SetlistContent({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [overrides, setOverrides] = useState<Record<string, { override_key?: string; override_bpm?: number; override_time_signature?: string }>>({});
 
   function startEditing() {
     setEditing(true);
@@ -40,6 +39,25 @@ export default function SetlistContent({
   async function handleSaveAndExit(editData: { date: string; title: string; description: string; song_leader: string; branch: string }) {
     if (!editData.date) return;
     setIsSaving(true);
+
+    const sectionsPayload = sections.map((s) => ({
+      id: s.id,
+      sort_order: s.sort_order,
+      ...(s.notes !== undefined ? { notes: s.notes } : {}),
+      ...(s.song_key !== undefined ? { song_key: s.song_key } : {}),
+    }));
+    const sectionsRes = await fetch(`/api/setlists/${setlist.id}/sections`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: sectionsPayload }),
+    });
+    if (!sectionsRes.ok) {
+      setIsSaving(false);
+      const text = await sectionsRes.text();
+      alert("Failed to save lineup changes. Server response:\n\n" + text.slice(0, 500));
+      return;
+    }
+
     const response = await fetch(`/api/setlists/${setlist.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -119,7 +137,6 @@ export default function SetlistContent({
           <SetlistHeader
             setlist={setlist}
             sections={sections}
-            overrides={overrides}
             isLocked={isLocked}
             isPast={isPast}
             onEdit={startEditing}
@@ -131,8 +148,6 @@ export default function SetlistContent({
       <SetlistSections
         setlist={setlist}
         sections={sections}
-        overrides={overrides}
-        onOverridesChange={setOverrides}
         isPast={isPast}
         isLocked={isLocked}
         onSectionsChange={setSections}

@@ -36,12 +36,14 @@ export default function SetlistPreviewCard({
         >
           {formatDisplayDate(setlist.date)}
         </p>
-        <p
-          className={`text-sm font-medium shrink-0 ${dimmed ? "opacity-60" : ""}`}
-          style={{ color: "#D84F0B" }}
-        >
-          {getBranchLabel(setlist.branch)}
-        </p>
+        {setlist.branch === "carissa_1" && (
+          <p
+            className={`text-sm font-medium shrink-0 ${dimmed ? "opacity-60" : ""}`}
+            style={{ color: "#D84F0B" }}
+          >
+            {getBranchLabel(setlist.branch)}
+          </p>
+        )}
       </div>
 
       {setlist.title && (
