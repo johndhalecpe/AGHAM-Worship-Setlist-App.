@@ -3,13 +3,15 @@
 type ChordsViewerProps = {
   chords: string;
   editable?: boolean;
+  onChange?: (value: string) => void;
 };
 
-export default function ChordsViewer({ chords, editable }: ChordsViewerProps) {
+export default function ChordsViewer({ chords, editable, onChange }: ChordsViewerProps) {
   if (editable) {
     return (
       <textarea
-        defaultValue={chords}
+        value={chords}
+        onChange={(e) => onChange?.(e.target.value)}
         placeholder="Enter chords..."
         rows={6}
         className="w-full rounded-lg px-3 py-2 text-sm mt-1.5"

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import MusicalDataSection from "@/components/songs/MusicalDataSection";
 
 export default function NewSongForm() {
@@ -76,12 +77,12 @@ export default function NewSongForm() {
     });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      setError("Something went wrong. Try again. If the problem persists, contact the developer.");
+      toast.error("Something went wrong. Try again.");
       setLoading(false);
       return;
     }
 
+    toast.success("Song added successfully!");
     setSuccess(true);
     setTimeout(() => router.push("/songs"), 1500);
   }

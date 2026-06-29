@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geist = Geist({
@@ -39,7 +40,19 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={geist.className}>{children}</body>
+      <body className={geist.className}>
+        {children}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: "var(--color-surface-card)",
+              color: "var(--color-text)",
+              border: "1px solid var(--color-border)",
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }

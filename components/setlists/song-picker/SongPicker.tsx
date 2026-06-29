@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Song, SetlistSectionWithSong } from "@/lib/type";
 import SongSearchList from "@/components/setlists/song-picker/SongSearchList";
 import NewSongForm from "@/components/setlists/song-picker/NewSongForm";
@@ -64,8 +65,16 @@ export default function SongPicker({
         section_type: sectionType,
       }),
     });
+
+    if (!res.ok) {
+      toast.error("Failed to add song to lineup");
+      setLoading(false);
+      return;
+    }
+
     const newSection: SetlistSectionWithSong = await res.json();
 
+    toast.success("Song added to lineup");
     setLoading(false);
     setSearch("");
     onSongAdded(newSection);

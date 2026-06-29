@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Song } from "@/lib/type";
 import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
@@ -164,11 +165,17 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
     chords: string;
   }) {
     setIsSaving(true);
-    await fetch(`/api/songs/${songId}`, {
+    const res = await fetch(`/api/songs/${songId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!res.ok) {
+      toast.error("Failed to save song");
+      setIsSaving(false);
+      return;
+    }
+    toast.success("Song saved");
     setIsSaving(false);
     setEditingId(null);
     router.refresh();

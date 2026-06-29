@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import SongPicker from "@/components/setlists/song-picker/SongPicker";
 import KeyPicker from "@/components/ui/KeyPicker";
@@ -158,10 +159,15 @@ export default function SetlistSections({
   }
 
   async function handleRemoveSongFromSection(sectionId: string) {
-    await fetch(
+    const res = await fetch(
       `/api/setlists/${setlist.id}/sections?sectionId=${sectionId}`,
       { method: "DELETE" }
     );
+    if (!res.ok) {
+      toast.error("Failed to remove song from lineup");
+      return;
+    }
+    toast.success("Song removed from lineup");
     onSectionsChange((prev) => prev.filter((s) => s.id !== sectionId));
   }
 

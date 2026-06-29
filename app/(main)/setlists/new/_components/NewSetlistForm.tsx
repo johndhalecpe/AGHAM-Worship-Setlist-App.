@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import DatePicker from "@/components/ui/DatePicker";
 import { BRANCHES } from "@/lib/branches";
 import { todayLocalISO } from "@/lib/dates";
@@ -38,11 +39,12 @@ export default function NewSetlistForm() {
     });
 
     if (!response.ok) {
-      setError("Something went wrong. Try again.");
+      toast.error("Something went wrong. Try again.");
       setLoading(false);
       return;
     }
 
+    toast.success("Setlist created!");
     const createdSetlist = await response.json();
     router.push(`/setlists/${createdSetlist.id}`);
   }

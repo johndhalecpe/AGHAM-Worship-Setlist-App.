@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Song } from "@/lib/type";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import ChordsViewer from "@/components/chords/ChordsViewer";
@@ -40,17 +41,29 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
   async function handleDeleteConfirm() {
     setIsDeleting(true);
     setShowDeleteConfirm(false);
-    await fetch(`/api/songs/${song.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/songs/${song.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      toast.error("Failed to delete song");
+      setIsDeleting(false);
+      return;
+    }
+    toast.success("Song deleted");
     router.refresh();
   }
 
   async function saveChords() {
     setSaving(true);
-    await fetch(`/api/songs/${song.id}`, {
+    const res = await fetch(`/api/songs/${song.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chords: chordsDraft }),
     });
+    if (!res.ok) {
+      toast.error("Failed to save chords");
+      setSaving(false);
+      return;
+    }
+    toast.success("Chords saved");
     setSaving(false);
     setEditingChords(false);
     router.refresh();
@@ -202,7 +215,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
         <div className="mt-1.5">
           {!isLocked && editingChords ? (
             <div className="flex flex-col gap-1.5">
-              <ChordsViewer chords={chordsDraft} editable />
+              <ChordsViewer chords={chordsDraft} editable onChange={setChordsDraft} />
               <div className="flex gap-1.5 justify-end">
                 <button
                   onClick={() => {

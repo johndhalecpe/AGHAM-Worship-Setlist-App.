@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import SetlistEditForm from "@/components/setlists/setlist-detail/SetlistEditForm";
 import SetlistHeader from "@/components/setlists/setlist-detail/SetlistHeader";
@@ -52,9 +53,8 @@ export default function SetlistContent({
       body: JSON.stringify({ items: sectionsPayload }),
     });
     if (!sectionsRes.ok) {
+      toast.error("Failed to save lineup changes");
       setIsSaving(false);
-      const text = await sectionsRes.text();
-      alert("Failed to save lineup changes. Server response:\n\n" + text.slice(0, 500));
       return;
     }
 
@@ -70,9 +70,11 @@ export default function SetlistContent({
       }),
     });
     if (!response.ok) {
+      toast.error("Failed to save lineup metadata");
       setIsSaving(false);
       return;
     }
+    toast.success("Lineup saved");
     setIsSaving(false);
     router.push("/setlists");
   }
@@ -82,9 +84,11 @@ export default function SetlistContent({
     setShowDeleteConfirm(false);
     const response = await fetch(`/api/setlists/${setlist.id}`, { method: "DELETE" });
     if (!response.ok) {
+      toast.error("Failed to delete lineup");
       setIsDeleting(false);
       return;
     }
+    toast.success("Lineup deleted");
     router.push("/setlists");
     router.refresh();
   }

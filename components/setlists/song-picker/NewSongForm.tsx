@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { SetlistSectionWithSong } from "@/lib/type";
 import KeyPicker from "@/components/ui/KeyPicker";
 
@@ -51,6 +52,12 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
       }),
     });
 
+    if (!songResponse.ok) {
+      toast.error("Failed to create song");
+      setLoading(false);
+      return;
+    }
+
     const newSong = await songResponse.json();
 
     const sectionRes = await fetch(`/api/setlists/${setlistId}/sections`, {
@@ -61,8 +68,16 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         section_type: sectionType,
       }),
     });
+
+    if (!sectionRes.ok) {
+      toast.error("Failed to add song to lineup");
+      setLoading(false);
+      return;
+    }
+
     const newSection: SetlistSectionWithSong = await sectionRes.json();
 
+    toast.success("Song added");
     setLoading(false);
     onCreated(newSection);
   }
