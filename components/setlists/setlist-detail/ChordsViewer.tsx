@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SetlistSectionWithSong } from "@/lib/type";
+
+const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
 
 type Props = {
   sections: SetlistSectionWithSong[];
@@ -18,6 +20,7 @@ export default function ChordsViewer({
 }: Props) {
   const activeRef = useRef<HTMLDivElement>(null);
   const filtered = sections.filter((s) => s.section_type === sectionType);
+  const [zoomIndex, setZoomIndex] = useState(3);
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -30,6 +33,8 @@ export default function ChordsViewer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  const fontSize = ZOOM_STEPS[zoomIndex];
 
   return (
     <div
@@ -45,32 +50,51 @@ export default function ChordsViewer({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between mb-6" style={{ backgroundColor: "var(--color-surface)" }}>
+        <div className="flex items-center justify-between mb-6">
           <h2
-            className="text-lg font-semibold capitalize"
+            className="text-xl font-bold capitalize"
             style={{ color: "var(--color-text)" }}
           >
             {sectionType}
           </h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 transition-colors hover:opacity-80 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            style={{
-              backgroundColor: "var(--color-surface-muted)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text)",
-            }}
-            aria-label="Close chords viewer"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-5 h-5"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
+              disabled={zoomIndex === 0}
+              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[32px] flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--color-surface-muted)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text)",
+              }}
+              aria-label="Zoom out"
             >
-              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-            </svg>
-          </button>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M2 10a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Z" />
+              </svg>
+            </button>
+            <span
+              className="text-xs font-medium tabular-nums min-w-[2.5rem] text-center"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              {fontSize}px
+            </span>
+            <button
+              onClick={() => setZoomIndex(Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1))}
+              disabled={zoomIndex === ZOOM_STEPS.length - 1}
+              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[32px] flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--color-surface-muted)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text)",
+              }}
+              aria-label="Zoom in"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M10.75 3.25a.75.75 0 0 0-1.5 0v6h-6a.75.75 0 0 0 0 1.5h6v6a.75.75 0 0 0 1.5 0v-6h6a.75.75 0 0 0 0-1.5h-6v-6Z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col">
@@ -115,12 +139,15 @@ export default function ChordsViewer({
                 </div>
               </div>
               <pre
-                className="w-full rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap"
+                className="w-full rounded-lg px-3 py-2 leading-relaxed whitespace-pre-wrap"
                 style={{
                   fontFamily: "'Courier New', Courier, monospace",
+                  fontSize,
+                  fontWeight: "bold",
+                  textShadow: "0 0 10px rgba(214, 79, 11, 0.6)",
                   border: "1px solid var(--color-border)",
                   backgroundColor: "var(--color-surface-card)",
-                  color: "var(--color-text-secondary)",
+                  color: "var(--color-accent)",
                 }}
               >
                 {s.songs.chords || "No chords available."}
