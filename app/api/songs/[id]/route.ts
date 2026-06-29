@@ -26,18 +26,27 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
 
+  const updateFields: Record<string, unknown> = {};
+  if (body.title !== undefined) updateFields.title = body.title;
+  if (body.author !== undefined) updateFields.author = body.author;
+  if (body.category !== undefined) updateFields.category = body.category;
+  if (body.language !== undefined) updateFields.language = body.language;
+  if (body.default_key !== undefined) updateFields.default_key = body.default_key;
+  if (body.default_bpm !== undefined) updateFields.default_bpm = body.default_bpm;
+  if (body.default_time_signature !== undefined) updateFields.default_time_signature = body.default_time_signature;
+  if (body.lyrics !== undefined) updateFields.lyrics = body.lyrics;
+  if (body.chords !== undefined) updateFields.chords = body.chords;
+
+  const hasAllDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);
+  if (body.status !== undefined) {
+    updateFields.status = body.status;
+  } else if (hasAllDetails) {
+    updateFields.status = "published";
+  }
+
   const { data, error } = await supabase
     .from("songs")
-    .update({
-      title: body.title,
-      author: body.author,
-      category: body.category,
-      language: body.language,
-      default_key: body.default_key ?? "G",
-      default_bpm: body.default_bpm ?? 120,
-      default_time_signature: body.default_time_signature ?? "4/4",
-      lyrics: body.lyrics ?? "",
-    })
+    .update(updateFields)
     .eq("id", id)
     .select()
     .single();

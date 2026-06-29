@@ -43,7 +43,7 @@ export default function SetlistSections({
   }
 
   function getEffectiveKey(s: SetlistSectionWithSong) {
-    return s.song_key || s.songs.default_key || "G";
+    return s.song_key ?? s.songs.default_key ?? "G";
   }
 
   function handleSongAdded(newSection: SetlistSectionWithSong) {
@@ -149,7 +149,7 @@ export default function SetlistSections({
   }
 
   function handleKeyChange(s: SetlistSectionWithSong, key: string) {
-    const newSongKey = key === s.songs.default_key ? null : key;
+    const newSongKey = key === (s.songs.default_key ?? "G") ? null : key;
     onSectionsChange((prev: SetlistSectionWithSong[]) =>
       prev.map((sec) =>
         sec.id === s.id ? { ...sec, song_key: newSongKey } : sec
@@ -326,7 +326,7 @@ export default function SetlistSections({
                                 color: "var(--color-badge-bpm-text)",
                               }}
                             >
-                              Bpm: {s.songs.default_bpm || 120}
+                              Bpm: {s.songs.default_bpm ?? 120}
                             </span>
                             <span
                               className="text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0"
@@ -335,7 +335,7 @@ export default function SetlistSections({
                                 color: "var(--color-badge-ts-text)",
                               }}
                             >
-                              {s.songs.default_time_signature || "4/4"}
+                              {s.songs.default_time_signature ?? "4/4"}
                             </span>
                             <button
                               onClick={() => setLyricsView({ sectionType: section.key, songId: s.id })}

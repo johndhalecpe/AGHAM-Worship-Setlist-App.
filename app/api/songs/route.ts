@@ -28,6 +28,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json();
 
+  const hasDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);
+  const status = hasDetails ? "published" : "draft";
+
   const { data, error } = await supabase
     .from("songs")
     .insert({
@@ -35,10 +38,12 @@ export async function POST(request: Request) {
       author: body.author,
       category: body.category,
       language: body.language,
-      default_key: body.default_key ?? "G",
-      default_bpm: body.default_bpm ?? 120,
-      default_time_signature: body.default_time_signature ?? "4/4",
-      lyrics: body.lyrics ?? "",
+      default_key: body.default_key ?? null,
+      default_bpm: body.default_bpm ?? null,
+      default_time_signature: body.default_time_signature ?? null,
+      lyrics: body.lyrics ?? null,
+      chords: body.chords ?? null,
+      status,
     })
     .select()
     .single();

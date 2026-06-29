@@ -4,10 +4,12 @@ export type Song = {
   author: string | null;
   category: string | null;
   language: string | null;
-  default_key: string;
-  default_bpm: number;
-  default_time_signature: string;
-  lyrics: string;
+  default_key: string | null;
+  default_bpm: number | null;
+  default_time_signature: string | null;
+  lyrics: string | null;
+  chords: string | null;
+  status: string;
   created_at: string;
 };
 
@@ -37,10 +39,12 @@ export type SetlistSectionWithSong = {
     author: string | null;
     category: string | null;
     language: string | null;
-    default_key: string;
-    default_bpm: number;
-    default_time_signature: string;
-    lyrics: string;
+    default_key: string | null;
+    default_bpm: number | null;
+    default_time_signature: string | null;
+    lyrics: string | null;
+    chords: string | null;
+    status: string;
   };
 };
 

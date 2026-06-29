@@ -12,9 +12,10 @@ type EditSongModalProps = {
     category: string;
     language: string;
     default_key: string;
-    default_bpm: number;
+    default_bpm: number | null;
     default_time_signature: string;
     lyrics: string;
+    chords: string;
   }) => void;
   onCancel: () => void;
   isSaving: boolean;

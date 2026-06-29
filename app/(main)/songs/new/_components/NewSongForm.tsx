@@ -1,17 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import MusicalDataSection from "@/components/songs/MusicalDataSection";
 
 export default function NewSongForm() {
   const router = useRouter();
+  const titleRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [category, setCategory] = useState("worship");
   const [language, setLanguage] = useState("english");
   const [customCategory, setCustomCategory] = useState("");
+  const [defaultKey, setDefaultKey] = useState("");
+  const [defaultBpm, setDefaultBpm] = useState<number | null>(null);
+  const [defaultTimeSignature, setDefaultTimeSignature] = useState("");
+  const [lyrics, setLyrics] = useState("");
+  const [chords, setChords] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
+
+  async function checkDuplicate(query: string): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/songs?search=${encodeURIComponent(query)}`);
+      const songs = await res.json();
+      const match = songs.find(
+        (s: { title: string }) => s.title.toLowerCase() === query.toLowerCase()
+      );
+      return match ? match.title : null;
+    } catch {
+      return null;
+    }
+  }
 
   async function handleFormSubmit() {
     if (!title) {
@@ -19,8 +45,17 @@ export default function NewSongForm() {
       return;
     }
 
+    if (!duplicateWarning) {
+      const existing = await checkDuplicate(title);
+      if (existing) {
+        setDuplicateWarning(existing);
+        return;
+      }
+    }
+
     setLoading(true);
     setError("");
+    setDuplicateWarning(null);
 
     const resolvedCategory = category === "other" ? customCategory : category;
 
@@ -32,16 +67,55 @@ export default function NewSongForm() {
         author,
         category: resolvedCategory,
         language,
+        default_key: defaultKey || null,
+        default_bpm: defaultBpm,
+        default_time_signature: defaultTimeSignature || null,
+        lyrics: lyrics || null,
+        chords: chords || null,
       }),
     });
 
     if (!response.ok) {
-      setError("Something went wrong. Try again.");
+      const err = await response.json().catch(() => ({}));
+      setError("Something went wrong. Try again. If the problem persists, contact the developer.");
       setLoading(false);
       return;
     }
 
-    router.push("/songs");
+    setSuccess(true);
+    setTimeout(() => router.push("/songs"), 1500);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !(e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleFormSubmit();
+    }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleFormSubmit();
+    }
+  }
+
+  if (success) {
+    return (
+      <div className="flex-1 flex items-center justify-center -my-4">
+        <div
+          className="rounded-xl p-8 text-center"
+          style={{
+            backgroundColor: "var(--color-surface-card)",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <p className="text-base font-medium" style={{ color: "var(--color-text)" }}>
+            Song added successfully!
+          </p>
+          <p className="text-sm mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+            Redirecting to song library...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -79,9 +153,14 @@ export default function NewSongForm() {
             Title
           </label>
           <input
+            ref={titleRef}
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setDuplicateWarning(null);
+            }}
+            onKeyDown={handleKeyDown}
             placeholder="e.g. Lihim"
             className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
             style={{
@@ -96,6 +175,11 @@ export default function NewSongForm() {
               (e.target.style.borderColor = "var(--color-border)")
             }
           />
+          {duplicateWarning && (
+            <p className="text-xs mt-1" style={{ color: "#D84F0B" }}>
+              A song named &ldquo;{duplicateWarning}&rdquo; already exists. Save anyway?
+            </p>
+          )}
         </div>
         <div>
           <label
@@ -108,6 +192,7 @@ export default function NewSongForm() {
             type="text"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="e.g. Kenneth Acebuche"
             className="w-full rounded-lg px-3 py-2 text-sm mt-1.5 transition-colors"
             style={{
@@ -186,55 +271,109 @@ export default function NewSongForm() {
           </div>
         )}
         <div>
-          <label
-            className="text-sm font-medium"
-            style={{ color: "var(--color-text)" }}
-          >
+          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
             Language
-          </label>
-          <div className="flex gap-4 mt-1.5">
-            <label
-              className="flex items-center gap-2 text-sm"
-              style={{ color: "var(--color-text)" }}
-            >
-              <input
-                type="radio"
-                name="language"
-                value="english"
-                checked={language === "english"}
-                onChange={(e) => setLanguage(e.target.value)}
-                style={{ accentColor: "#D84F0B" }}
-              />
-              English
-            </label>
-            <label
-              className="flex items-center gap-2 text-sm"
-              style={{ color: "var(--color-text)" }}
-            >
-              <input
-                type="radio"
-                name="language"
-                value="filipino"
-                checked={language === "filipino"}
-                onChange={(e) => setLanguage(e.target.value)}
-                style={{ accentColor: "#D84F0B" }}
-              />
-              Filipino
-            </label>
+          </span>
+          <div className="flex gap-4 mt-1">
+            {(["english", "filipino"] as const).map((lang) => (
+              <label
+                key={lang}
+                className="flex items-center gap-2 text-sm"
+                style={{ color: "var(--color-text)" }}
+              >
+                <input
+                  type="radio"
+                  name="language"
+                  value={lang}
+                  checked={language === lang}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  style={{ accentColor: "#D84F0B" }}
+                />
+                {lang === "english" ? "English" : "Filipino"}
+              </label>
+            ))}
           </div>
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
-          onClick={handleFormSubmit}
-          disabled={loading}
-          className="rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
-          style={{
-            backgroundColor: "#D84F0B",
-            color: "var(--color-surface-card)",
-          }}
-        >
-          {loading ? "Saving..." : "Save song"}
-        </button>
+        <div>
+          <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+            Lyrics
+          </label>
+          <textarea
+            value={lyrics}
+            onChange={(e) => setLyrics(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                handleFormSubmit();
+              }
+            }}
+            placeholder="Enter song lyrics..."
+            rows={8}
+            className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface)",
+              color: "var(--color-text)",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+        <div className="border-t pt-3" style={{ borderColor: "var(--color-border)" }}>
+          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-text-tertiary)" }}>
+            Musical Data <span className="font-normal normal-case opacity-70">· leave this to a staff or admin (optional)</span>
+          </p>
+        </div>
+        <div>
+          <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+            Chords
+          </label>
+          <textarea
+            value={chords}
+            onChange={(e) => setChords(e.target.value)}
+            placeholder="Enter chord chart..."
+            rows={8}
+            className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface)",
+              color: "var(--color-text)",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+        <MusicalDataSection
+          defaultKey={defaultKey}
+          defaultBpm={defaultBpm}
+          defaultTimeSignature={defaultTimeSignature}
+          onKeyChange={setDefaultKey}
+          onBpmChange={(bpm) => setDefaultBpm(bpm)}
+          onTimeSignatureChange={setDefaultTimeSignature}
+        />
+        {error && <p className="text-sm" style={{ color: "#DC2626" }}>{error}</p>}
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => router.back()}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium"
+            style={{
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleFormSubmit}
+            disabled={loading || !title}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            style={{
+              backgroundColor: "#D84F0B",
+              color: "var(--color-surface-card)",
+            }}
+          >
+            {loading ? "Saving..." : "Save song"}
+          </button>
+        </div>
         </div>
       </div>
       </div>

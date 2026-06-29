@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SetlistSectionWithSong } from "@/lib/type";
+import KeyPicker from "@/components/ui/KeyPicker";
 
 type NewSongFormProps = {
   initialTitle: string;
@@ -24,6 +25,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
   const [newCategory, setNewCategory] = useState("worship");
   const [newLanguage, setNewLanguage] = useState("english");
   const [customCategory, setCustomCategory] = useState("");
+  const [defaultKey, setDefaultKey] = useState("");
+  const [defaultBpm, setDefaultBpm] = useState<number | null>(null);
+  const [defaultTimeSignature, setDefaultTimeSignature] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleCreateAndAddNewSong() {
@@ -41,6 +45,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         author: newAuthor,
         category: resolvedCategory,
         language: newLanguage,
+        default_key: defaultKey || null,
+        default_bpm: defaultBpm,
+        default_time_signature: defaultTimeSignature || null,
       }),
     });
 
@@ -98,26 +105,52 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           (e.target.style.borderColor = "var(--color-border)")
         }
       />
-      <select
-        value={newCategory}
-        onChange={(e) => setNewCategory(e.target.value)}
-        className="rounded-lg px-3 py-2 text-sm transition-colors"
-        style={{
-          border: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-surface-card)",
-          color: "var(--color-text)",
-        }}
-        onFocus={(e) =>
-          (e.target.style.borderColor = "#D84F0B")
-        }
-        onBlur={(e) =>
-          (e.target.style.borderColor = "var(--color-border)")
-        }
-      >
-        <option value="worship">Worship</option>
-        <option value="praise">Praise</option>
-        <option value="other">Other (specify)</option>
-      </select>
+      <div className="flex gap-2">
+        {(["worship", "praise", "other"] as const).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => setNewCategory(opt)}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all flex-1"
+            style={{
+              backgroundColor:
+                newCategory === opt
+                  ? "#D84F0B"
+                  : "var(--color-surface)",
+              color:
+                newCategory === opt
+                  ? "#fff"
+                  : "var(--color-text-secondary)",
+              border:
+                newCategory === opt
+                  ? "1px solid #D84F0B"
+                  : "1px solid var(--color-border)",
+            }}
+          >
+            {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : "Other"}
+          </button>
+        ))}
+      </div>
+      {newCategory === "other" && (
+        <input
+          type="text"
+          value={customCategory}
+          onChange={(e) => setCustomCategory(e.target.value)}
+          placeholder="Describe the category"
+          className="rounded-lg px-3 py-2 text-sm transition-colors"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-surface-card)",
+            color: "var(--color-text)",
+          }}
+          onFocus={(e) =>
+            (e.target.style.borderColor = "#D84F0B")
+          }
+          onBlur={(e) =>
+            (e.target.style.borderColor = "var(--color-border)")
+          }
+        />
+      )}
       <div>
         <span
           className="text-sm"
@@ -156,26 +189,68 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           </label>
         </div>
       </div>
-      {newCategory === "other" && (
-        <input
-          type="text"
-          value={customCategory}
-          onChange={(e) => setCustomCategory(e.target.value)}
-          placeholder="Describe the category"
-          className="rounded-lg px-3 py-2 text-sm transition-colors"
-          style={{
-            border: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-surface-card)",
-            color: "var(--color-text)",
-          }}
-          onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
-          }
-          onBlur={(e) =>
-            (e.target.style.borderColor = "var(--color-border)")
-          }
-        />
-      )}
+      <div className="border-t" style={{ borderColor: "var(--color-border)" }} />
+      <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-text-tertiary)" }}>
+        Details <span className="font-normal normal-case opacity-70">(optional)</span>
+      </p>
+      <div>
+        <label className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
+          Key
+        </label>
+        <KeyPicker value={defaultKey} onChange={setDefaultKey} />
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <label className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
+            BPM
+          </label>
+          <input
+            type="number"
+            value={defaultBpm ?? ""}
+            onChange={(e) => setDefaultBpm(e.target.value ? Number(e.target.value) : null)}
+            placeholder="120"
+            className="w-full rounded-lg px-3 py-1.5 text-sm mt-1 transition-colors"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface-card)",
+              color: "var(--color-text)",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
+            Time
+          </label>
+          <div className="flex gap-1 mt-1">
+            {["4/4", "3/4", "6/8"].map((ts) => (
+              <button
+                key={ts}
+                type="button"
+                onClick={() => setDefaultTimeSignature(ts === defaultTimeSignature ? "" : ts)}
+                className="rounded-lg px-2 py-1.5 text-xs font-medium transition-all flex-1"
+                style={{
+                  backgroundColor:
+                    defaultTimeSignature === ts
+                      ? "#D84F0B"
+                      : "var(--color-surface)",
+                  color:
+                    defaultTimeSignature === ts
+                      ? "#fff"
+                      : "var(--color-text-secondary)",
+                  border:
+                    defaultTimeSignature === ts
+                      ? "1px solid #D84F0B"
+                      : "1px solid var(--color-border)",
+                }}
+              >
+                {ts}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       <button
         onClick={handleCreateAndAddNewSong}
         disabled={loading}

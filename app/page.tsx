@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import WhatsNewModal from "@/components/ui/WhatsNewModal";
 
 function HomePageSkeleton() {
   return (
@@ -35,6 +36,7 @@ function HomePageSkeleton() {
 
 export default function Home() {
   return (
+    <>
     <div className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0" aria-hidden="true">
         <HomePageSkeleton />
@@ -72,7 +74,7 @@ export default function Home() {
             className="mt-3 text-sm leading-relaxed"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            Plan your lineups, organize your songs, and lead worship together.
+            Schedule lineups, organize songs, and lead worship together.
           </p>
           <Link
             href="/setlists"
@@ -95,9 +97,11 @@ export default function Home() {
                 clipRule="evenodd"
               />
             </svg>
-          </Link>
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+      <WhatsNewModal />
+    </>
   );
 }

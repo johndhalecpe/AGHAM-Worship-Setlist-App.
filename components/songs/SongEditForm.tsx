@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { Song } from "@/lib/type";
-import KeyPicker from "@/components/ui/KeyPicker";
+import MusicalDataSection from "@/components/songs/MusicalDataSection";
+
 
 type SongEditFormProps = {
   song: Song;
-  onSave: (data: { title: string; author: string; category: string; language: string; default_key: string; default_bpm: number; default_time_signature: string; lyrics: string }) => void;
+  onSave: (data: {
+    title: string;
+    author: string;
+    category: string;
+    language: string;
+    default_key: string;
+    default_bpm: number | null;
+    default_time_signature: string;
+    lyrics: string;
+    chords: string;
+  }) => void;
   onCancel: () => void;
   isSaving: boolean;
 };
@@ -36,15 +47,26 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
     isPredefinedCategory(song.category) ? "" : (song.category ?? "")
   );
   const [language, setLanguage] = useState(song.language ?? "english");
-  const [defaultKey, setDefaultKey] = useState(song.default_key ?? "G");
-  const [defaultBpm, setDefaultBpm] = useState(song.default_bpm ?? 120);
-  const [defaultTimeSignature, setDefaultTimeSignature] = useState(song.default_time_signature ?? "4/4");
+  const [defaultKey, setDefaultKey] = useState(song.default_key ?? "");
+  const [defaultBpm, setDefaultBpm] = useState(song.default_bpm);
+  const [defaultTimeSignature, setDefaultTimeSignature] = useState(song.default_time_signature ?? "");
   const [lyrics, setLyrics] = useState(song.lyrics ?? "");
+  const [chords, setChords] = useState(song.chords ?? "");
 
   function handleSave() {
     if (!title) return;
     const resolvedCategory = category === "other" ? customCategory : category;
-    onSave({ title, author, category: resolvedCategory, language, default_key: defaultKey, default_bpm: defaultBpm, default_time_signature: defaultTimeSignature, lyrics });
+    onSave({
+      title,
+      author,
+      category: resolvedCategory,
+      language,
+      default_key: defaultKey,
+      default_bpm: defaultBpm,
+      default_time_signature: defaultTimeSignature,
+      lyrics,
+      chords,
+    });
   }
 
   return (
@@ -120,81 +142,6 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
         />
       )}
       <div>
-        <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-          Default Key
-        </label>
-        <KeyPicker value={defaultKey} onChange={setDefaultKey} />
-      </div>
-      <div>
-        <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-          Default BPM
-        </label>
-        <input
-          type="number"
-          value={defaultBpm}
-          onChange={(e) => setDefaultBpm(Number(e.target.value))}
-          placeholder="120"
-          className="w-full rounded-lg px-3 py-2 text-sm mt-1.5"
-          style={{
-            border: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-surface)",
-            color: "var(--color-text)",
-          }}
-          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
-          onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-          Time Signature
-        </label>
-        <div className="flex gap-2 mt-1.5">
-          {["4/4", "3/4", "6/8"].map((ts) => (
-            <button
-              key={ts}
-              type="button"
-              onClick={() => setDefaultTimeSignature(ts)}
-              className="rounded-lg px-4 py-2 text-sm font-medium transition-all flex-1"
-              style={{
-                backgroundColor:
-                  defaultTimeSignature === ts
-                    ? "#D84F0B"
-                    : "var(--color-surface)",
-                color:
-                  defaultTimeSignature === ts
-                    ? "#fff"
-                    : "var(--color-text-secondary)",
-                border:
-                  defaultTimeSignature === ts
-                    ? "1px solid #D84F0B"
-                    : "1px solid var(--color-border)",
-              }}
-            >
-              {ts}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-          Lyrics
-        </label>
-        <textarea
-          value={lyrics}
-          onChange={(e) => setLyrics(e.target.value)}
-          placeholder="Enter song lyrics..."
-          rows={8}
-          className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
-          style={{
-            border: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-surface)",
-            color: "var(--color-text)",
-          }}
-          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
-          onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-        />
-      </div>
-      <div>
         <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
           Language
         </span>
@@ -218,6 +165,57 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           ))}
         </div>
       </div>
+      <div>
+        <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+          Lyrics
+        </label>
+        <textarea
+          value={lyrics}
+          onChange={(e) => setLyrics(e.target.value)}
+          placeholder="Enter song lyrics..."
+          rows={8}
+          className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-surface)",
+            color: "var(--color-text)",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+          onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+        />
+      </div>
+      <div className="border-t pt-3" style={{ borderColor: "var(--color-border)" }}>
+        <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-text-tertiary)" }}>
+          Musical Data <span className="font-normal normal-case opacity-70">· leave this to a staff or admin (optional)</span>
+        </p>
+      </div>
+      <div>
+        <label className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+          Chords
+        </label>
+        <textarea
+          value={chords}
+          onChange={(e) => setChords(e.target.value)}
+          placeholder="Enter chord chart..."
+          rows={8}
+          className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-surface)",
+            color: "var(--color-text)",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+          onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+        />
+      </div>
+      <MusicalDataSection
+        defaultKey={defaultKey}
+        defaultBpm={defaultBpm}
+        defaultTimeSignature={defaultTimeSignature}
+        onKeyChange={setDefaultKey}
+        onBpmChange={setDefaultBpm}
+        onTimeSignatureChange={setDefaultTimeSignature}
+      />
       <div className="flex gap-2 justify-end">
         <button
           onClick={onCancel}
