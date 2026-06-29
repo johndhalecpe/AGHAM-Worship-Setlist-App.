@@ -6,6 +6,7 @@ import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import SongPicker from "@/components/setlists/song-picker/SongPicker";
 import KeyPicker from "@/components/ui/KeyPicker";
 import LyricsViewer from "./LyricsViewer";
+import ChordsViewer from "./ChordsViewer";
 
 type SetlistSectionsProps = {
   setlist: Setlist;
@@ -36,6 +37,7 @@ export default function SetlistSections({
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
+  const [chordsView, setChordsView] = useState<{ sectionType: string; songId: string } | null>(null);
 
   function getSectionSongs(sectionType: string) {
     return sections
@@ -344,6 +346,16 @@ export default function SetlistSections({
                               {s.songs.default_time_signature ?? "4/4"}
                             </span>
                             <button
+                              onClick={() => setChordsView({ sectionType: section.key, songId: s.id })}
+                              className="text-xs font-medium rounded px-2 min-h-[28px] flex items-center whitespace-nowrap hover:opacity-80"
+                              style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
+                                <path fillRule="evenodd" d="M4 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4Zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V4Zm-6 6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2Zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2Z" clipRule="evenodd" />
+                              </svg>
+                              Show Chords
+                            </button>
+                            <button
                               onClick={() => setLyricsView({ sectionType: section.key, songId: s.id })}
                               className="text-xs font-medium rounded px-2 min-h-[28px] flex items-center whitespace-nowrap hover:opacity-80"
                               style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
@@ -399,6 +411,14 @@ export default function SetlistSections({
           </div>
         );
       })}
+      {chordsView && (
+        <ChordsViewer
+          sections={sections}
+          sectionType={chordsView.sectionType}
+          activeSongId={chordsView.songId}
+          onClose={() => setChordsView(null)}
+        />
+      )}
       {lyricsView && (
         <LyricsViewer
           sections={sections}
