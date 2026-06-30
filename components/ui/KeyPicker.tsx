@@ -51,6 +51,8 @@ export default function KeyPicker({
     <div ref={ref} className="relative inline-flex items-center gap-0">
       <input
         type="text"
+        name="key-picker"
+        autoComplete="off"
         value={inputValue}
         onChange={handleInputChange}
         onFocus={(e) => {

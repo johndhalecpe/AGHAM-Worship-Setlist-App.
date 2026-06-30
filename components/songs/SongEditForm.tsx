@@ -142,6 +142,8 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
     <div className="w-full flex flex-col gap-3">
       <input
         type="text"
+        name="song-edit-title"
+        autoComplete="off"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="e.g. Lihim"
@@ -158,6 +160,8 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
         <input
           ref={authorRef}
           type="text"
+          name="song-edit-author"
+          autoComplete="off"
           value={author}
           onChange={(e) => {
             setAuthor(e.target.value);
@@ -239,6 +243,8 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
       {category === "other" && (
         <input
           type="text"
+          name="song-edit-category"
+          autoComplete="off"
           value={customCategory}
           onChange={(e) => setCustomCategory(e.target.value)}
           placeholder="Specify category"

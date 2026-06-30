@@ -36,6 +36,8 @@ export default function SongsSearchBar({ value, onChange }: SongsSearchBarProps)
       <input
         ref={inputRef}
         type="text"
+        name="songs-search"
+        autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search by title, author, or lyrics..."

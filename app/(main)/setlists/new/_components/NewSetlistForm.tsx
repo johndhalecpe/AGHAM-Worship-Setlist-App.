@@ -85,6 +85,8 @@ export default function NewSetlistForm() {
             </label>
             <input
               type="text"
+              name="new-setlist-title"
+              autoComplete="off"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Sunday Morning Service"
@@ -124,6 +126,8 @@ export default function NewSetlistForm() {
             </label>
             <input
               type="text"
+              name="new-setlist-song-leader"
+              autoComplete="off"
               value={songLeader}
               onChange={(e) => setSongLeader(e.target.value)}
               placeholder="e.g. Kevin Acebuche"

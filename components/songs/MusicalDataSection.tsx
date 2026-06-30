@@ -279,6 +279,8 @@ export default function MusicalDataSection({
           </button>
           <input
             type="text"
+            name="song-bpm"
+            autoComplete="off"
             value={displayBpm}
             onChange={(e) => handleBpmInputChange(e.target.value)}
             onBlur={handleBpmInputBlur}

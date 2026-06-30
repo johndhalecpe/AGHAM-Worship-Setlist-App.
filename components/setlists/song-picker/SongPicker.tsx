@@ -30,7 +30,6 @@ export default function SongPicker({
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [showNewSongForm, setShowNewSongForm] = useState(false);
-  const [composedOnly, setComposedOnly] = useState(false);
 
   useEffect(() => {
     fetch("/api/songs")
@@ -49,7 +48,6 @@ export default function SongPicker({
     for (const song of allSongs) {
       if (categoryFilter !== null && song.category !== categoryFilter)
         continue;
-      if (composedOnly && (song.author ?? "").toLowerCase() !== "kenneth acebuche") continue;
       const lowerTitle = song.title.toLowerCase();
       const lowerAuthor = (song.author ?? "").toLowerCase();
       const lowerLyrics = (song.lyrics ?? "").toLowerCase();
@@ -126,6 +124,8 @@ export default function SongPicker({
       </div>
       <input
         type="text"
+        name="song-picker-search"
+        autoComplete="off"
         value={search}
         onChange={(e) => handleSearchInput(e.target.value)}
         placeholder="Search by title, author, or lyrics..."
@@ -142,27 +142,7 @@ export default function SongPicker({
           (e.target.style.borderColor = "var(--color-border)")
         }
       />
-      <div className="mt-2 flex items-center gap-2">
-        <button
-          onClick={() => setComposedOnly(!composedOnly)}
-          className={`text-xs font-medium rounded-lg px-2.5 py-1 transition-all ${
-            composedOnly
-              ? "bg-[#D84F0B] text-white"
-              : ""
-          }`}
-          style={
-            composedOnly
-              ? undefined
-              : {
-                  color: "var(--color-text-secondary)",
-                  border: "1px solid var(--color-border)",
-                  backgroundColor: "var(--color-surface-card)",
-                }
-          }
-        >
-          Composed
-        </button>
-      </div>
+
       {hasMatches && searchMatches && (
         <SongSearchList
           searchMatches={searchMatches}

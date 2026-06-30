@@ -47,6 +47,8 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
         </label>
         <input
           type="text"
+          name="setlist-edit-title"
+          autoComplete="off"
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           placeholder="e.g. Sunday Morning Service"
@@ -82,6 +84,8 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
         </label>
         <input
           type="text"
+          name="setlist-edit-song-leader"
+          autoComplete="off"
           value={editSongLeader}
           onChange={(e) => setEditSongLeader(e.target.value)}
           placeholder="e.g. Kevin Acebuche"

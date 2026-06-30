@@ -136,14 +136,24 @@ export default function ChordsViewer({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDrummer(!showDrummer)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors shrink-0"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
               style={{
                 backgroundColor: showDrummer ? "#D84F0B" : "var(--color-surface-card)",
                 color: showDrummer ? "#fff" : "var(--color-text-secondary)",
                 border: showDrummer ? "none" : "1px solid var(--color-border)",
               }}
             >
-              {showDrummer ? "Chord notes" : "Drummer notes"}
+              {showDrummer ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                  <path fillRule="evenodd" d="M9.401 3.003c1.155-2.256 3.45-2.412 4.51-2.438.22-.006.396.143.399.362.008 1.07.2 2.915.787 3.976.637 1.16 1.674 1.754 2.222 1.998.15.067.248.216.246.377a15.118 15.118 0 0 1-.252 3.052c-1.39 6.635-6.87 8.12-10.404 8.12-2.273 0-6.392-.855-6.392-4.035 0-1.523.734-2.964 2.178-3.491 1.385-.504 2.292.22 2.73.802.583.776.646 1.787.646 2.381v.01a3.598 3.598 0 0 0 3.02 3.452c1.608.213 3.28-.034 4.607-1.11 1.592-1.29 2.226-3.529 2.226-5.756 0-1.09-.163-2.204-.506-3.238.197-.067.325-.24.375-.43.108-.415.02-1.003-.188-1.558a4.587 4.587 0 0 0-.582-1.102l-.01-.013c-.145-.194-.329-.424-.574-.618-.199-.158-.476-.31-.799-.411a3.616 3.616 0 0 0-.675-.137c-.327-.039-.83-.055-1.36-.011-1.52.126-2.755.64-2.755.64z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M5.5 2.5a.5.5 0 0 1 .5.5v5.5l4-3v9l-4-3V17a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-14a.5.5 0 0 1 .5-.5h2.5Z" />
+                  <path d="M14.5 2.5a.5.5 0 0 1 .5.5v5.5l4-3v9l-4-3V17a.5.5 0 0 1-.5.5H12a.5.5 0 0 1-.5-.5v-14a.5.5 0 0 1 .5-.5h2.5Z" />
+                </svg>
+              )}
+              {showDrummer ? "Chords" : "Drums"}
             </button>
             <button
                   onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
@@ -198,7 +208,14 @@ export default function ChordsViewer({
                 <h3 className="text-base font-semibold mb-2" style={{ color: "var(--color-text)" }}>
                   {s.songs.title}
                 </h3>
+                {s.songs.author && (
+                  <p className="text-xs mb-2" style={{ color: "var(--color-text-tertiary)" }}>
+                    {s.songs.author}
+                  </p>
+                )}
                 <textarea
+                  name={`${s.id}-drummer_notes`}
+                  autoComplete="off"
                   ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                   value={notes[`${s.id}-drummer_notes`] ?? ""}
                   onChange={(e) => {
@@ -233,6 +250,8 @@ export default function ChordsViewer({
               <div key={s.id}>
                 {i === 0 && (
                   <input
+                    name={`${s.id}-intro`}
+                    autoComplete="off"
                     value={notes[`${s.id}-intro`] ?? ""}
                     onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-intro`]: e.target.value }))}
                     readOnly={isPast}
@@ -301,6 +320,8 @@ export default function ChordsViewer({
                 </pre>
                 </div>
                 <input
+                  name={`${s.id}-outro`}
+                  autoComplete="off"
                   value={notes[`${s.id}-outro`] ?? ""}
                   onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-outro`]: e.target.value }))}
                   readOnly={isPast}
@@ -318,6 +339,8 @@ export default function ChordsViewer({
                 />
                 {i < filtered.length - 1 && (
                   <input
+                    name={`${s.id}-transition`}
+                    autoComplete="off"
                     value={notes[`${s.id}-transition`] ?? ""}
                     onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-transition`]: e.target.value }))}
                     readOnly={isPast}

@@ -155,6 +155,8 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
     <div className="flex flex-col gap-3 mt-3">
       <input
         type="text"
+        name="inline-new-song-title"
+        autoComplete="off"
         value={newTitle}
         onChange={(e) => setNewTitle(e.target.value)}
         placeholder="Title"
@@ -175,6 +177,8 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         <input
           ref={authorRef}
           type="text"
+          name="inline-new-song-author"
+          autoComplete="off"
           value={newAuthor}
           onChange={(e) => {
             setNewAuthor(e.target.value);
@@ -256,6 +260,8 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
       {newCategory === "other" && (
         <input
           type="text"
+          name="inline-new-song-category"
+          autoComplete="off"
           value={customCategory}
           onChange={(e) => setCustomCategory(e.target.value)}
           placeholder="Describe the category"
@@ -315,6 +321,8 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           </label>
           <input
             type="number"
+            name="inline-new-song-bpm"
+            autoComplete="off"
             value={defaultBpm ?? ""}
             onChange={(e) => setDefaultBpm(e.target.value ? Number(e.target.value) : null)}
             placeholder="120"

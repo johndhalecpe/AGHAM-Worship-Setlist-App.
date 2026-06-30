@@ -226,6 +226,8 @@ export default function NewSongForm() {
           <input
             ref={titleRef}
             type="text"
+            name="new-song-title"
+            autoComplete="off"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
@@ -263,6 +265,8 @@ export default function NewSongForm() {
             <input
               ref={authorRef}
               type="text"
+              name="new-song-author"
+              autoComplete="off"
               value={author}
               onChange={(e) => {
                 setAuthor(e.target.value);
@@ -360,6 +364,8 @@ export default function NewSongForm() {
             </label>
             <input
               type="text"
+              name="new-song-category"
+              autoComplete="off"
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
               placeholder="e.g. Hymn"
