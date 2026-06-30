@@ -177,7 +177,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
             backgroundColor: "#D84F0B",
-            color: "var(--color-surface-card)",
+            color: "var(--color-text-on-accent)",
           }}
         >
           {isSaving ? "Saving..." : "Save"}

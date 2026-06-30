@@ -316,7 +316,10 @@ export default function SetlistSections({
                               />
                             ) : (
                               <button
-                                onClick={() => !isPast && !isLocked && setEditingKeyId(s.id)}
+                                onClick={() => {
+                                  if (isPast) { toast.error("Can't edit past lineups"); return; }
+                                  if (!isLocked) setEditingKeyId(s.id);
+                                }}
                                 className={`text-xs font-mono font-semibold rounded px-1.5 min-h-[28px] flex items-center shrink-0 ${!isPast && !isLocked ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
                                 style={{
                                   backgroundColor: s.song_key ? "var(--color-accent)" : "var(--color-badge-key)",
@@ -413,10 +416,13 @@ export default function SetlistSections({
       })}
       {chordsView && (
         <ChordsViewer
+          setlist={setlist}
           sections={sections}
           sectionType={chordsView.sectionType}
           activeSongId={chordsView.songId}
+          isPast={isPast}
           onClose={() => setChordsView(null)}
+          onSectionsChange={onSectionsChange}
         />
       )}
       {lyricsView && (

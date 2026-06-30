@@ -40,9 +40,17 @@ function buildCalendarWeeks(year: number, month: number) {
 export default function DatePicker({ value, onChange, minDate }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() =>
-    value ? new Date(value + "T00:00:00") : new Date()
+    value ? new Date(value + "T00:00:00") : new Date(2000, 0, 1)
   );
+  const [todayDate, setTodayDate] = useState(new Date(2000, 0, 1));
   const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTodayDate(new Date());
+    if (!value) {
+      setViewDate(new Date());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -57,8 +65,6 @@ export default function DatePicker({ value, onChange, minDate }: DatePickerProps
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const weeks = buildCalendarWeeks(year, month);
-
-  const todayDate = new Date();
   const selectedDate = value ? new Date(value + "T00:00:00") : null;
 
   function formatDisplayDate() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Song } from "@/lib/type";
 import MusicalDataSection from "@/components/songs/MusicalDataSection";
 
@@ -52,6 +52,75 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
   const [defaultTimeSignature, setDefaultTimeSignature] = useState(song.default_time_signature ?? "");
   const [lyrics, setLyrics] = useState(song.lyrics ?? "");
   const [chords, setChords] = useState(song.chords ?? "");
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [showAuthorSuggestions, setShowAuthorSuggestions] = useState(false);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
+  const authorRef = useRef<HTMLInputElement>(null);
+  const suggestionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/songs")
+      .then((res) => res.json())
+      .then((songs: Song[]) => {
+        const unique = new Set<string>();
+        for (const song of songs) {
+          if (song.author) unique.add(song.author);
+        }
+        setAuthors(Array.from(unique).sort());
+      });
+  }, []);
+
+  const authorSuggestions = author.trim()
+    ? authors.filter((a) =>
+        a.toLowerCase().includes(author.toLowerCase())
+      )
+    : authors;
+
+  function pickAuthor(name: string) {
+    setAuthor(name);
+    setShowAuthorSuggestions(false);
+    setHighlightedSuggestion(-1);
+  }
+
+  function handleAuthorKeyDown(e: React.KeyboardEvent) {
+    if (!showAuthorSuggestions || authorSuggestions.length === 0) {
+      if (e.key === "Enter") handleSave();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedSuggestion((prev) =>
+        prev < authorSuggestions.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedSuggestion((prev) =>
+        prev > 0 ? prev - 1 : authorSuggestions.length - 1
+      );
+    } else if (e.key === "Enter" && highlightedSuggestion >= 0) {
+      e.preventDefault();
+      pickAuthor(authorSuggestions[highlightedSuggestion]);
+    } else if (e.key === "Escape") {
+      setShowAuthorSuggestions(false);
+      setHighlightedSuggestion(-1);
+    }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        authorRef.current &&
+        !authorRef.current.contains(e.target as Node) &&
+        suggestionRef.current &&
+        !suggestionRef.current.contains(e.target as Node)
+      ) {
+        setShowAuthorSuggestions(false);
+        setHighlightedSuggestion(-1);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function handleSave() {
     if (!title) return;
@@ -85,20 +154,62 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
         onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
         onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
       />
-      <input
-        type="text"
-        value={author}
-        onChange={(e) => setAuthor(e.target.value)}
-        placeholder="e.g. Kenneth Acebuche"
-        className="w-full rounded-lg px-3 py-2 text-sm"
-        style={{
-          border: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-surface)",
-          color: "var(--color-text)",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
-        onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-      />
+      <div className="relative">
+        <input
+          ref={authorRef}
+          type="text"
+          value={author}
+          onChange={(e) => {
+            setAuthor(e.target.value);
+            setShowAuthorSuggestions(true);
+            setHighlightedSuggestion(-1);
+          }}
+          onFocus={(e) => {
+            setShowAuthorSuggestions(true);
+            e.target.style.borderColor = "#D84F0B";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "var(--color-border)";
+          }}
+          onKeyDown={handleAuthorKeyDown}
+          placeholder="e.g. Kenneth Acebuche"
+          className="w-full rounded-lg px-3 py-2 text-sm"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-surface)",
+            color: "var(--color-text)",
+          }}
+        />
+        {showAuthorSuggestions && authorSuggestions.length > 0 && (
+          <div
+            ref={suggestionRef}
+            className="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg overflow-hidden shadow-lg"
+            style={{
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-surface-card)",
+            }}
+          >
+            {authorSuggestions.map((name, i) => (
+              <button
+                key={name}
+                type="button"
+                onMouseDown={() => pickAuthor(name)}
+                onMouseEnter={() => setHighlightedSuggestion(i)}
+                className="w-full text-left px-3 py-2 text-sm transition-colors"
+                style={{
+                  backgroundColor:
+                    i === highlightedSuggestion
+                      ? "var(--color-surface-elevated)"
+                      : "transparent",
+                  color: "var(--color-text)",
+                }}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="flex gap-2">
         {(["worship", "praise", "other"] as const).map((opt) => (
           <button
@@ -145,23 +256,21 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
         <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
           Language
         </span>
-        <div className="flex gap-4 mt-1">
+        <div className="grid grid-cols-2 gap-2 mt-1">
           {languageOptions.map((lang) => (
-            <label
+            <button
               key={lang}
-              className="flex items-center gap-2 text-sm"
-              style={{ color: "var(--color-text)" }}
+              type="button"
+              onClick={() => setLanguage(lang)}
+              className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
+              style={{
+                backgroundColor: language === lang ? "#D84F0B" : "var(--color-surface)",
+                color: language === lang ? "#fff" : "var(--color-text-secondary)",
+                border: language === lang ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+              }}
             >
-              <input
-                type="radio"
-                name={`lang-${song.id}`}
-                value={lang}
-                checked={language === lang}
-                onChange={(e) => setLanguage(e.target.value)}
-                style={{ accentColor: "#D84F0B" }}
-              />
               {languageLabels[lang]}
-            </label>
+            </button>
           ))}
         </div>
       </div>
@@ -233,7 +342,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
             backgroundColor: "#D84F0B",
-            color: "var(--color-surface-card)",
+            color: "var(--color-text-on-accent)",
           }}
         >
           {isSaving ? "Saving..." : "Save"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import SetlistContent from "@/components/setlists/setlist-detail/SetlistContent";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 
@@ -17,11 +17,12 @@ export default function SetlistDetail({
   initialSections,
   isPast,
 }: SetlistDetailProps) {
-  const [isLocked, setIsLocked] = useState(() => {
-    if (typeof window === "undefined") return true;
+  const [isLocked, setIsLocked] = useState(isPast);
+
+  useEffect(() => {
     const stored = localStorage.getItem("setlist-lock-" + id);
-    return stored !== null ? stored === "true" : true;
-  });
+    setIsLocked(stored !== null ? stored === "true" : isPast);
+  }, [id, isPast]);
 
   const toggleLock = useCallback(() => {
     setIsLocked((prev) => {

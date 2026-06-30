@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SetlistWithSections } from "@/lib/type";
 import SetlistPreviewCard from "./SetlistPreviewCard";
@@ -9,16 +10,22 @@ type SetlistListProps = {
 };
 
 export default function SetlistList({ setlists }: SetlistListProps) {
-  const now = new Date();
-  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const [todayLocal, setTodayLocal] = useState("");
 
-  const upcomingSetlists = setlists
-    .filter((s) => s.date >= todayLocal)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  useEffect(() => {
+    const now = new Date();
+    setTodayLocal(
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+    );
+  }, []);
 
-  const pastSetlists = setlists
-    .filter((s) => s.date < todayLocal)
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const upcomingSetlists = todayLocal
+    ? setlists.filter((s) => s.date >= todayLocal).sort((a, b) => a.date.localeCompare(b.date))
+    : [];
+
+  const pastSetlists = todayLocal
+    ? setlists.filter((s) => s.date < todayLocal).sort((a, b) => b.date.localeCompare(a.date))
+    : [];
 
   return (
     <div>
@@ -34,10 +41,10 @@ export default function SetlistList({ setlists }: SetlistListProps) {
           className="rounded-lg px-4 py-2 text-sm font-medium text-center transition-all hover:-translate-y-0.5 w-full sm:w-auto"
           style={{
             backgroundColor: "#D84F0B",
-            color: "var(--color-surface-card)",
+            color: "var(--color-text-on-accent)",
           }}
         >
-          Add a Lineup
+          Schedule a lineup
         </Link>
       </div>
 

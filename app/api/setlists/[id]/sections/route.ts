@@ -156,6 +156,7 @@ export async function PATCH(
       if ("notes" in sectionUpdate && sectionUpdate.notes !== undefined) updatePayload.notes = sectionUpdate.notes;
       if ("song_key" in sectionUpdate && sectionUpdate.song_key !== undefined) updatePayload.song_key = sectionUpdate.song_key;
       if ("override_lyrics" in sectionUpdate && sectionUpdate.override_lyrics !== undefined) updatePayload.override_lyrics = sectionUpdate.override_lyrics;
+      if ("chord_notes" in sectionUpdate && sectionUpdate.chord_notes !== undefined) updatePayload.chord_notes = sectionUpdate.chord_notes;
 
       if (Object.keys(updatePayload).length === 0) continue;
 

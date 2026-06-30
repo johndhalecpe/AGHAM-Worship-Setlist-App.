@@ -30,6 +30,7 @@ export default function SongPicker({
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [showNewSongForm, setShowNewSongForm] = useState(false);
+  const [composedOnly, setComposedOnly] = useState(false);
 
   useEffect(() => {
     fetch("/api/songs")
@@ -39,15 +40,35 @@ export default function SongPicker({
 
   const categoryFilter = SECTION_TO_CATEGORY[sectionType];
 
-  const filteredSongs = allSongs.filter((song) => {
-    if (search.trim() === "") return false;
-    const matchesSearch = song.title
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesCategory =
-      categoryFilter === null || song.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const searchMatches = (() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return null;
+    const title: Song[] = [];
+    const author: Song[] = [];
+    const lyrics: Song[] = [];
+    for (const song of allSongs) {
+      if (categoryFilter !== null && song.category !== categoryFilter)
+        continue;
+      if (composedOnly && (song.author ?? "").toLowerCase() !== "kenneth acebuche") continue;
+      const lowerTitle = song.title.toLowerCase();
+      const lowerAuthor = (song.author ?? "").toLowerCase();
+      const lowerLyrics = (song.lyrics ?? "").toLowerCase();
+      if (lowerTitle.includes(query)) {
+        title.push(song);
+      } else if (lowerAuthor.includes(query)) {
+        author.push(song);
+      } else if (lowerLyrics.includes(query)) {
+        lyrics.push(song);
+      }
+    }
+    return { title, author, lyrics };
+  })();
+
+  const hasMatches =
+    searchMatches !== null &&
+    (searchMatches.title.length > 0 ||
+      searchMatches.author.length > 0 ||
+      searchMatches.lyrics.length > 0);
 
   function handleSearchInput(value: string) {
     setSearch(value);
@@ -107,7 +128,7 @@ export default function SongPicker({
         type="text"
         value={search}
         onChange={(e) => handleSearchInput(e.target.value)}
-        placeholder="Search song title..."
+        placeholder="Search by title, author, or lyrics..."
         className="w-full rounded-lg px-3 py-2 text-sm transition-colors"
         style={{
           border: "1px solid var(--color-border)",
@@ -121,14 +142,35 @@ export default function SongPicker({
           (e.target.style.borderColor = "var(--color-border)")
         }
       />
-      {filteredSongs.length > 0 && (
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          onClick={() => setComposedOnly(!composedOnly)}
+          className={`text-xs font-medium rounded-lg px-2.5 py-1 transition-all ${
+            composedOnly
+              ? "bg-[#D84F0B] text-white"
+              : ""
+          }`}
+          style={
+            composedOnly
+              ? undefined
+              : {
+                  color: "var(--color-text-secondary)",
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "var(--color-surface-card)",
+                }
+          }
+        >
+          Composed
+        </button>
+      </div>
+      {hasMatches && searchMatches && (
         <SongSearchList
-          songs={filteredSongs}
+          searchMatches={searchMatches}
           loading={loading}
           onSelect={handleSelectSong}
         />
       )}
-      {search.trim() !== "" && filteredSongs.length === 0 && !showNewSongForm && (
+      {search.trim() !== "" && !hasMatches && !showNewSongForm && (
         <button
           onClick={() => {
             setShowNewSongForm(true);

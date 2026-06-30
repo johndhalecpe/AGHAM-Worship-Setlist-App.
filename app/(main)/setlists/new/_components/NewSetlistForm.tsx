@@ -74,7 +74,7 @@ export default function NewSetlistForm() {
             className="text-xl font-bold"
             style={{ color: "var(--color-text)" }}
           >
-            Add a setlist
+            Schedule a lineup
           </h2>
           <div>
             <label
@@ -204,10 +204,10 @@ export default function NewSetlistForm() {
             className="rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
             style={{
               backgroundColor: "#D84F0B",
-              color: "var(--color-surface-card)",
+              color: "var(--color-text-on-accent)",
             }}
           >
-            {loading ? "Saving..." : "Save setlist"}
+            {loading ? "Saving..." : "Save lineup"}
           </button>
         </div>
       </div>

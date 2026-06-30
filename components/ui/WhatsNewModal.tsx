@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 
-const RELEASE_DATE = new Date("2026-06-29");
-const VERSION = "0.1.1";
+const RELEASE_DATE = new Date("2026-06-30");
+const VERSION = "0.1.2";
 
-const changes = [
+const whatsNew = [
   {
-    title: "Chords",
+    title: "Chords notes",
     description: "Add chord charts to any song. View or edit them right on the song card.",
   },
   {
@@ -25,6 +25,29 @@ const changes = [
   {
     title: "Better song creation",
     description: "Improved form design makes adding new songs faster and easier.",
+  },
+];
+
+const whatsNewer = [
+  {
+    title: "Drummer notes",
+    description: "Attach per-song notes for the drummer directly in the chords notes viewer.",
+  },
+  {
+    title: "Chords notes overhaul",
+    description: "Zoom controls, per-song chord notes (intro, outro, transition), and auto-save on close.",
+  },
+  {
+    title: "Smarter lineup search",
+    description: "Search by title, author, or lyrics with grouped results that prioritize song name matches.",
+  },
+  {
+    title: "Composed filter",
+    description: "Quickly filter to songs by Kenneth Acebuche, both in the song library and when adding to a lineup.",
+  },
+  {
+    title: "Author suggestions",
+    description: "Get autocomplete suggestions from existing authors when typing in any song form.",
   },
 ];
 
@@ -101,25 +124,60 @@ export default function WhatsNewModal() {
         </button>
       </div>
 
-      <div className="max-h-60 overflow-y-auto px-4 pb-4 flex flex-col gap-3">
-        {changes.map((item) => (
-          <div key={item.title} className="flex gap-2.5">
-            <span
-              className="mt-0.5 w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ backgroundColor: "#D84F0B" }}
-            />
-            <div>
-              <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                {item.title}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>
-                {item.description}
-              </p>
+      <div className="max-h-80 overflow-y-auto px-4 pb-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
+          <h3
+            className="text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            What&rsquo;s New
+          </h3>
+          {whatsNew.map((item) => (
+            <div key={item.title} className="flex gap-2.5">
+              <span
+                className="mt-0.5 w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: "#D84F0B" }}
+              />
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                  {item.title}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>
+                  {item.description}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
+        <div
+          className="border-t pt-3 flex flex-col gap-3"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          <h3
+            className="text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: "#D84F0B" }}
+          >
+            What&rsquo;s Newer
+          </h3>
+          {whatsNewer.map((item) => (
+            <div key={item.title} className="flex gap-2.5">
+              <span
+                className="mt-0.5 w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: "#D84F0B" }}
+              />
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                  {item.title}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

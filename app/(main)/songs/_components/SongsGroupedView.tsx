@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 import { Song } from "@/lib/type";
 import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
@@ -74,6 +75,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<Set<string>>(new Set());
   const [selectedTimeSigs, setSelectedTimeSigs] = useState<Set<string>>(new Set());
+  const [composedOnly, setComposedOnly] = useState(false);
 
   const searchMatches = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -105,6 +107,10 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
       result = result.filter((s) => s.category === selectedCategory);
     }
 
+    if (composedOnly) {
+      result = result.filter((s) => (s.author ?? "").toLowerCase() === "kenneth acebuche");
+    }
+
     if (selectedLanguages.size > 0) {
       result = result.filter((s) => s.language && selectedLanguages.has(s.language));
     }
@@ -114,7 +120,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
     }
 
     return result;
-  }, [songs, selectedCategory, selectedLanguages, selectedTimeSigs]);
+  }, [songs, selectedCategory, composedOnly, selectedLanguages, selectedTimeSigs]);
 
   const editingSong = useMemo(() => songs.find((s) => s.id === editingId) ?? null, [songs, editingId]);
   const hasSearch = searchMatches !== null;
@@ -150,6 +156,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
     setSelectedCategory(null);
     setSelectedLanguages(new Set());
     setSelectedTimeSigs(new Set());
+    setComposedOnly(false);
     setShowFilters(false);
   }
 
@@ -181,7 +188,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
     router.refresh();
   }
 
-  const hasActiveFilters = selectedCategory !== null || selectedLanguages.size > 0 || selectedTimeSigs.size > 0;
+  const hasActiveFilters = selectedCategory !== null || composedOnly || selectedLanguages.size > 0 || selectedTimeSigs.size > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -209,17 +216,32 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
             {isLocked ? "Unlock to edit or delete songs" : "Lock to prevent accidental changes"}
           </p>
         </div>
-        <button
-          onClick={() => setIsLocked(!isLocked)}
-          className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 shrink-0 w-full sm:w-auto min-h-[40px]"
-          style={{
-            backgroundColor: isLocked ? "#D84F0B" : "var(--color-surface-card)",
-            color: isLocked ? "#fff" : "var(--color-text-secondary)",
-            border: isLocked ? "none" : "1px solid var(--color-border)",
-          }}
-        >
-          {isLocked ? "Unlock" : "Lock"}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/songs/new"
+            className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[40px] flex items-center"
+            style={{
+              backgroundColor: "#D84F0B",
+              color: "var(--color-text-on-accent)",
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
+              <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+            </svg>
+            Add a song
+          </Link>
+          <button
+            onClick={() => setIsLocked(!isLocked)}
+            className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[40px]"
+            style={{
+              backgroundColor: isLocked ? "#D84F0B" : "var(--color-surface-card)",
+              color: isLocked ? "#fff" : "var(--color-text-secondary)",
+              border: isLocked ? "none" : "1px solid var(--color-border)",
+            }}
+          >
+            {isLocked ? "Unlock" : "Lock"}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -306,6 +328,25 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
                   {LANGUAGE_LABELS[lang]}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-text-tertiary)" }}>
+              Author
+            </span>
+            <div className="flex gap-1.5 mt-1">
+              <button
+                onClick={() => setComposedOnly(!composedOnly)}
+                className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
+                style={{
+                  backgroundColor: composedOnly ? "#D84F0B" : "var(--color-surface-card)",
+                  color: composedOnly ? "#fff" : "var(--color-text-secondary)",
+                  border: composedOnly ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                }}
+              >
+                Composed
+              </button>
             </div>
           </div>
 
