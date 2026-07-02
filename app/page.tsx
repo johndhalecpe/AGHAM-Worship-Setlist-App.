@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import WhatsNewModal from "@/components/ui/WhatsNewModal";
+
 
 function HomePageSkeleton() {
   return (
@@ -101,7 +101,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <WhatsNewModal />
     </>
   );
 }

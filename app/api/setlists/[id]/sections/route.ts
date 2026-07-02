@@ -22,7 +22,8 @@ export async function GET(
         default_bpm,
         default_time_signature,
         lyrics,
-        chords
+        chords,
+        status
       )
     `,
     )
@@ -81,7 +82,8 @@ export async function POST(
         default_bpm,
         default_time_signature,
         lyrics,
-        chords
+        chords,
+        status
       )
     `,
     )

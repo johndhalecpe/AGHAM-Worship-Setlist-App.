@@ -73,7 +73,8 @@ async function fetchSectionsBySetlistId(id: string) {
         default_bpm,
         default_time_signature,
         lyrics,
-        chords
+        chords,
+        status
       )
     `
     )

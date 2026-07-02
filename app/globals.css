@@ -50,6 +50,10 @@
   --color-badge-lyrics-text: #9333EA;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 html.dark {
   --color-surface: #1A1916;
   --color-surface-card: #252320;
@@ -79,6 +83,7 @@ body {
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 ::selection {

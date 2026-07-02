@@ -205,14 +205,47 @@ export default function ChordsViewer({
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <h3 className="text-base font-semibold mb-2" style={{ color: "var(--color-text)" }}>
-                  {s.songs.title}
-                </h3>
-                {s.songs.author && (
-                  <p className="text-xs mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                    {s.songs.author}
-                  </p>
-                )}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="text-base font-semibold truncate" style={{ color: "var(--color-text)" }}>
+                      {s.songs.title}
+                    </h3>
+                    {s.songs.author && (
+                      <p className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
+                        {s.songs.author}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span
+                      className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center"
+                      style={{
+                        backgroundColor: "var(--color-badge-key)",
+                        color: "var(--color-badge-key-text)",
+                      }}
+                    >
+                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                    </span>
+                    <span
+                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
+                      style={{
+                        backgroundColor: "var(--color-badge-bpm)",
+                        color: "var(--color-badge-bpm-text)",
+                      }}
+                    >
+                      Bpm: {s.songs.default_bpm ?? 120}
+                    </span>
+                    <span
+                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
+                      style={{
+                        backgroundColor: "var(--color-badge-ts)",
+                        color: "var(--color-badge-ts-text)",
+                      }}
+                    >
+                      {s.songs.default_time_signature ?? "4/4"}
+                    </span>
+                  </div>
+                </div>
                 <textarea
                   name={`${s.id}-drummer_notes`}
                   autoComplete="off"
@@ -287,21 +320,50 @@ export default function ChordsViewer({
                   }}
                 >
                 <div className="flex items-center justify-between mb-2">
-                  <div>
+                  <div className="flex items-center gap-2 min-w-0">
                     <h3
-                      className="text-base font-semibold"
+                      className="text-base font-semibold truncate"
                       style={{ color: "var(--color-text)" }}
                     >
                       {s.songs.title}
                     </h3>
                     {s.songs.author && (
                       <p
-                        className="text-xs"
+                        className="text-xs shrink-0"
                         style={{ color: "var(--color-text-tertiary)" }}
                       >
                         {s.songs.author}
                       </p>
                     )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span
+                      className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center"
+                      style={{
+                        backgroundColor: "var(--color-badge-key)",
+                        color: "var(--color-badge-key-text)",
+                      }}
+                    >
+                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                    </span>
+                    <span
+                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
+                      style={{
+                        backgroundColor: "var(--color-badge-bpm)",
+                        color: "var(--color-badge-bpm-text)",
+                      }}
+                    >
+                      Bpm: {s.songs.default_bpm ?? 120}
+                    </span>
+                    <span
+                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
+                      style={{
+                        backgroundColor: "var(--color-badge-ts)",
+                        color: "var(--color-badge-ts-text)",
+                      }}
+                    >
+                      {s.songs.default_time_signature ?? "4/4"}
+                    </span>
                   </div>
                 </div>
                 <pre
@@ -310,7 +372,6 @@ export default function ChordsViewer({
                     fontFamily: "'Courier New', Courier, monospace",
                     fontSize,
                     fontWeight: "bold",
-                    textShadow: "0 0 10px rgba(214, 79, 11, 0.6)",
                     border: "1px solid var(--color-border)",
                     backgroundColor: "var(--color-surface-card)",
                     color: "var(--color-accent)",

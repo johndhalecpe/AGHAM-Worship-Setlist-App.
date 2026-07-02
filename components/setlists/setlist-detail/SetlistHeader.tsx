@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { getBranchLabel } from "@/lib/branches";
 
@@ -136,15 +137,31 @@ export default function SetlistHeader({
               text += `\n\n${window.location.href}`;
               navigator.clipboard.writeText(text);
               setCopiedText(true);
+              toast.success("Lineup preview copied to clipboard");
               setTimeout(() => setCopiedText(false), 10000);
             }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0"
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0 flex items-center gap-1.5"
             style={{
               backgroundColor: copiedText ? "var(--color-success)" : "var(--color-accent)",
               color: "var(--color-text-on-accent)",
             }}
           >
-            {copiedText ? "Copied!" : "Copy text"}
+            {copiedText ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                </svg>
+                Copied!
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z" />
+                  <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
+                </svg>
+                Copy text
+              </>
+            )}
           </button>
         </div>
         {setlist.title && (
@@ -245,13 +262,28 @@ export default function SetlistHeader({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={onToggleLock}
-              className="rounded-lg px-3 py-2 text-xs font-medium transition-colors"
+              className="rounded-lg px-3 py-2 text-xs font-medium transition-all hover:-translate-y-0.5"
               style={{
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-secondary)",
+                backgroundColor: isLocked ? "var(--color-accent)" : "var(--color-surface-card)",
+                color: isLocked ? "var(--color-text-on-accent)" : "var(--color-text-secondary)",
+                border: isLocked ? "none" : "1px solid var(--color-border)",
               }}
             >
-              {isLocked ? "Unlock" : "Lock"}
+              {isLocked ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 mr-1 inline-block align-text-bottom">
+                    <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+                  </svg>
+                  Unlock
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 mr-1 inline-block align-text-bottom">
+                    <path fillRule="evenodd" d="M14.5 1A4.5 4.5 0 0 0 10 5.5V9H3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 14.5 1Zm-3 8V5.5a3 3 0 1 1 6 0V9h-6Z" clipRule="evenodd" />
+                  </svg>
+                  Lock
+                </>
+              )}
             </button>
             {!isLocked && (
               <button

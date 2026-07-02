@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { SetlistSectionWithSong } from "@/lib/type";
 
 type Props = {
@@ -18,6 +19,7 @@ export default function LyricsViewer({
 }: Props) {
   const activeRef = useRef<HTMLDivElement>(null);
   const filtered = sections.filter((s) => s.section_type === sectionType);
+  const [copiedSongId, setCopiedSongId] = useState<string | null>(null);
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -31,8 +33,24 @@ export default function LyricsViewer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  function getEffectiveLyrics(s: SetlistSectionWithSong) {
-    return s.override_lyrics ?? s.songs.lyrics ?? "";
+  function getLyrics(s: SetlistSectionWithSong) {
+    return s.songs.lyrics ?? "";
+  }
+
+  async function copyLyrics(lyrics: string, songId: string) {
+    try {
+      await navigator.clipboard.writeText(lyrics);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = lyrics;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+    setCopiedSongId(songId);
+    setTimeout(() => setCopiedSongId(null), 2000);
+    toast.success("Lyrics copied to clipboard");
   }
 
   return (
@@ -49,14 +67,12 @@ export default function LyricsViewer({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-center mb-6">
-          <h2
-            className="text-xl font-bold capitalize"
-            style={{ color: "var(--color-text)" }}
-          >
-            {sectionType}
-          </h2>
-        </div>
+        <h2
+          className="text-lg font-semibold capitalize mb-6"
+          style={{ color: "var(--color-text)" }}
+        >
+          {sectionType}
+        </h2>
 
         <div className="flex flex-col">
           {filtered.map((s, i) => (
@@ -81,45 +97,72 @@ export default function LyricsViewer({
                       : "1px solid transparent",
                 }}
               >
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h3
-                    className="text-base font-semibold"
-                    style={{ color: "var(--color-text)" }}
-                  >
-                    {s.songs.title}
-                  </h3>
-                  {s.songs.author && (
-                    <p
-                      className="text-xs"
-                      style={{ color: "var(--color-text-tertiary)" }}
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <div className="min-w-0 flex-1 flex items-center gap-2">
+                    <h3
+                      className="text-base font-semibold truncate"
+                      style={{ color: "var(--color-text)" }}
                     >
-                      {s.songs.author}
-                    </p>
-                  )}
+                      {s.songs.title}
+                    </h3>
+                    {s.songs.author && (
+                      <p
+                        className="text-xs truncate shrink-0"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      >
+                        {s.songs.author}
+                      </p>
+                    )}
+                    <span
+                      className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center shrink-0"
+                      style={{
+                        backgroundColor: "var(--color-badge-key)",
+                        color: "var(--color-badge-key-text)",
+                      }}
+                    >
+                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => copyLyrics(getLyrics(s), s.id)}
+                      className="rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 min-h-[32px] flex items-center gap-1.5"
+                      style={{
+                        backgroundColor: copiedSongId === s.id ? "var(--color-success)" : "var(--color-accent)",
+                        color: "var(--color-text-on-accent)",
+                      }}
+                      aria-label="Copy lyrics"
+                    >
+                      {copiedSongId === s.id ? (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                          </svg>
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z" />
+                            <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
+                          </svg>
+                          Copy
+                        </>
+                      )}
+                    </button>
+
+                  </div>
                 </div>
-                {s.override_lyrics && (
-                  <span
-                    className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                <pre
+                    className="w-full rounded-lg px-3 py-2 text-sm leading-relaxed font-sans whitespace-pre-wrap"
                     style={{
-                      backgroundColor: "var(--color-accent)",
-                      color: "var(--color-text-on-accent)",
+                      border: "1px solid var(--color-border)",
+                      backgroundColor: "var(--color-surface-card)",
+                      color: "var(--color-text-secondary)",
                     }}
                   >
-                    Edited
-                  </span>
-                )}
-              </div>
-              <pre
-                className="w-full rounded-lg px-3 py-2 text-sm leading-relaxed font-sans whitespace-pre-wrap"
-                style={{
-                  border: "1px solid var(--color-border)",
-                  backgroundColor: "var(--color-surface-card)",
-                  color: "var(--color-text-secondary)",
-                }}
-              >
-                {getEffectiveLyrics(s) || "No lyrics available."}
-              </pre>
+                    {getLyrics(s) || "No lyrics available."}
+                  </pre>
               </div>
             </div>
           ))}

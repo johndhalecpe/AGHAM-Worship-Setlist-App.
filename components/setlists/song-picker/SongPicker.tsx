@@ -150,7 +150,7 @@ export default function SongPicker({
           onSelect={handleSelectSong}
         />
       )}
-      {search.trim() !== "" && !hasMatches && !showNewSongForm && (
+      {search.trim() !== "" && !showNewSongForm && (
         <button
           onClick={() => {
             setShowNewSongForm(true);
