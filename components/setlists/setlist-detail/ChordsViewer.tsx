@@ -6,6 +6,13 @@ import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
 
+const SECTION_LABELS: Record<string, string> = {
+  worship: "Worship songs",
+  praise: "Praise songs",
+  tithes_offering: "Tithes and offering",
+  special: "Special numbers",
+};
+
 type Props = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
@@ -128,10 +135,10 @@ export default function ChordsViewer({
       >
         <div className="flex items-center justify-between mb-6">
           <h2
-            className="text-xl font-bold capitalize"
+            className="text-xl font-bold"
             style={{ color: "var(--color-text)" }}
           >
-            {sectionType}
+            {SECTION_LABELS[sectionType] || sectionType}
           </h2>
           <div className="flex items-center gap-2">
             <button
@@ -246,6 +253,11 @@ export default function ChordsViewer({
                     </span>
                   </div>
                 </div>
+                {s.notes && (
+                  <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
+                    &ldquo;{s.notes}&rdquo;
+                  </p>
+                )}
                 <textarea
                   name={`${s.id}-drummer_notes`}
                   autoComplete="off"
@@ -366,6 +378,11 @@ export default function ChordsViewer({
                     </span>
                   </div>
                 </div>
+                {s.notes && (
+                  <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
+                    &ldquo;{s.notes}&rdquo;
+                  </p>
+                )}
                 <pre
                   className="w-full rounded-lg px-3 py-2 leading-relaxed whitespace-pre-wrap"
                   style={{

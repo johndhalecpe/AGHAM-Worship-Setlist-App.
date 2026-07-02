@@ -104,9 +104,9 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
               <button
                 onClick={() => onEditRequest?.(song.id)}
                 className="p-1 rounded transition-colors min-h-[28px] min-w-[28px] flex items-center justify-center"
-                style={{ color: "var(--color-text-tertiary)" }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "var(--color-text)")}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "var(--color-text-tertiary)")}
+                style={{ color: "var(--color-accent)", opacity: 0.6 }}
+                onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "1")}
+                onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = "0.6")}
                 aria-label="Edit song"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">

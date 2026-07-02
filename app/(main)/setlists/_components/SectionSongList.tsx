@@ -3,6 +3,8 @@ import { SetlistWithSections } from "@/lib/type";
 const SECTION_LABELS: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
+  tithes_offering: "Tithes and offering",
+  special: "Special numbers",
 };
 
 export default function SectionSongList({

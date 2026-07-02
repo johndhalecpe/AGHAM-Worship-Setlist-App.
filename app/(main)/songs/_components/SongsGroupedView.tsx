@@ -9,10 +9,12 @@ import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
 import EditSongModal from "./EditSongModal";
 
-const PRIORITY_CATEGORIES = ["worship", "praise"];
+const PRIORITY_CATEGORIES = ["worship", "praise", "tithes_offering", "special"];
 const CATEGORY_LABELS: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
+  tithes_offering: "Tithes and offering",
+  special: "Special numbers",
   other: "Other",
 };
 const LANGUAGE_LABELS: Record<string, string> = {
