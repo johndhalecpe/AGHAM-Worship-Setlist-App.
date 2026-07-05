@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { getBranchLabel } from "@/lib/branches";
+import { getEffectiveSongKey } from "@/lib/setlistHelpers";
 
 type SetlistHeaderProps = {
   setlist: Setlist;
@@ -36,10 +37,6 @@ export default function SetlistHeader({
   onDeleteRequest,
 }: SetlistHeaderProps) {
   const [copiedText, setCopiedText] = useState(false);
-
-  function getKey(s: SetlistSectionWithSong) {
-    return s.song_key ?? s.songs.default_key ?? "G";
-  }
 
   return (
     <div
@@ -122,15 +119,15 @@ export default function SetlistHeader({
               if (setlist.description) text += `\n${setlist.description}`;
               for (const type of SECTION_TYPES_FOR_COPY) {
                 const sectionSongs = sections
-                  .filter((s) => s.section_type === type)
+                  .filter((section) => section.section_type === type)
                   .sort((a, b) => a.sort_order - b.sort_order);
                 if (sectionSongs.length > 0) {
                   text += `\n\n${sectionLabels[type] ?? type}`;
-                  for (const s of sectionSongs) {
-                    const key = getKey(s);
-                    text += `\n• [${key}] ${s.songs.title}`;
-                    if (s.songs.author) text += ` (${s.songs.author})`;
-                    if (s.notes) text += ` — "${s.notes}"`;
+                  for (const section of sectionSongs) {
+                    const key = getEffectiveSongKey(section);
+                    text += `\n• [${key}] ${section.songs.title}`;
+                    if (section.songs.author) text += ` (${section.songs.author})`;
+                    if (section.notes) text += ` — "${section.notes}"`;
                   }
                 }
               }
@@ -174,70 +171,70 @@ export default function SetlistHeader({
             {setlist.description}
           </p>
         )}
-        {sections.filter((s) => s.section_type === "worship").length > 0 && (
+        {sections.filter((section) => section.section_type === "worship").length > 0 && (
           <>
             <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Worship
             </p>
             {sections
-              .filter((s) => s.section_type === "worship")
+              .filter((section) => section.section_type === "worship")
               .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+              .map((section) => (
+                <p key={section.id} className="ml-2 break-words">
+                  • <span className="opacity-70">[{getEffectiveSongKey(section)}]</span> {section.songs.title}
+                  {section.songs.author && <span className="opacity-60"> ({section.songs.author})</span>}
+                  {section.notes && <span className="italic opacity-60"> — &ldquo;{section.notes}&rdquo;</span>}
                 </p>
               ))}
           </>
         )}
-        {sections.filter((s) => s.section_type === "praise").length > 0 && (
+        {sections.filter((section) => section.section_type === "praise").length > 0 && (
           <>
             <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Praise
             </p>
             {sections
-              .filter((s) => s.section_type === "praise")
+              .filter((section) => section.section_type === "praise")
               .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+              .map((section) => (
+                <p key={section.id} className="ml-2 break-words">
+                  • <span className="opacity-70">[{getEffectiveSongKey(section)}]</span> {section.songs.title}
+                  {section.songs.author && <span className="opacity-60"> ({section.songs.author})</span>}
+                  {section.notes && <span className="italic opacity-60"> — &ldquo;{section.notes}&rdquo;</span>}
                 </p>
               ))}
           </>
         )}
-        {sections.filter((s) => s.section_type === "tithes_offering").length > 0 && (
+        {sections.filter((section) => section.section_type === "tithes_offering").length > 0 && (
           <>
             <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Tithes and offering
             </p>
             {sections
-              .filter((s) => s.section_type === "tithes_offering")
+              .filter((section) => section.section_type === "tithes_offering")
               .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+              .map((section) => (
+                <p key={section.id} className="ml-2 break-words">
+                  • <span className="opacity-70">[{getEffectiveSongKey(section)}]</span> {section.songs.title}
+                  {section.songs.author && <span className="opacity-60"> ({section.songs.author})</span>}
+                  {section.notes && <span className="italic opacity-60"> — &ldquo;{section.notes}&rdquo;</span>}
                 </p>
               ))}
           </>
         )}
-        {sections.filter((s) => s.section_type === "special").length > 0 && (
+        {sections.filter((section) => section.section_type === "special").length > 0 && (
           <>
             <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
               Special numbers
             </p>
             {sections
-              .filter((s) => s.section_type === "special")
+              .filter((section) => section.section_type === "special")
               .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
+              .map((section) => (
+                <p key={section.id} className="ml-2 break-words">
+                  • <span className="opacity-70">[{getEffectiveSongKey(section)}]</span> {section.songs.title}
+                  {section.songs.author && <span className="opacity-60"> ({section.songs.author})</span>}
+                  {section.notes && <span className="italic opacity-60"> — &ldquo;{section.notes}&rdquo;</span>}
                 </p>
               ))}
           </>

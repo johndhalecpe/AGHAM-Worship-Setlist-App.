@@ -179,24 +179,24 @@ export default function MusicalDataSection({
           </span>
         </div>
         <div className="flex flex-wrap gap-1 mt-1.5">
-          {LETTERS.map((l) => (
+          {LETTERS.map((keyLetter) => (
             <button
-              key={l}
+              key={keyLetter}
               type="button"
-              onClick={() => handleLetterClick(l)}
+              onClick={() => handleLetterClick(keyLetter)}
               className="rounded-lg font-medium transition-all min-w-[36px] px-2 py-1.5 text-sm leading-none"
               style={{
                 backgroundColor:
-                  letter === l ? "#D84F0B" : "var(--color-surface)",
+                  letter === keyLetter ? "#D84F0B" : "var(--color-surface)",
                 color:
-                  letter === l ? "#fff" : "var(--color-text-secondary)",
+                  letter === keyLetter ? "#fff" : "var(--color-text-secondary)",
                 border:
-                  letter === l
+                  letter === keyLetter
                     ? "1px solid #D84F0B"
                     : "1px solid var(--color-border)",
               }}
             >
-              {l}
+              {keyLetter}
             </button>
           ))}
         </div>

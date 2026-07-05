@@ -41,11 +41,11 @@ export default function SetlistContent({
     if (!editData.date) return;
     setIsSaving(true);
 
-    const sectionsPayload = sections.map((s) => ({
-      id: s.id,
-      sort_order: s.sort_order,
-      ...(s.notes !== undefined ? { notes: s.notes } : {}),
-      ...(s.song_key !== undefined ? { song_key: s.song_key } : {}),
+    const sectionsPayload = sections.map((section) => ({
+      id: section.id,
+      sort_order: section.sort_order,
+      ...(section.notes !== undefined ? { notes: section.notes } : {}),
+      ...(section.song_key !== undefined ? { song_key: section.song_key } : {}),
     }));
     const sectionsRes = await fetch(`/api/setlists/${setlist.id}/sections`, {
       method: "PATCH",

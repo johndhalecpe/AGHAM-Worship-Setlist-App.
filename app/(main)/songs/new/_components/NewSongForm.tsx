@@ -42,8 +42,8 @@ export default function NewSongForm() {
   }, []);
 
   const authorSuggestions = author.trim()
-    ? authors.filter((a) =>
-        a.toLowerCase().includes(author.toLowerCase())
+    ? authors.filter((authorName) =>
+        authorName.toLowerCase().includes(author.toLowerCase())
       )
     : authors;
 
@@ -55,7 +55,7 @@ export default function NewSongForm() {
 
   function handleAuthorKeyDown(e: React.KeyboardEvent) {
     if (!showAuthorSuggestions || authorSuggestions.length === 0) {
-      if (e.key === "Enter") handleFormSubmit();
+      if (e.key === "Enter") handleSubmit();
       return;
     }
     if (e.key === "ArrowDown") {
@@ -110,7 +110,7 @@ export default function NewSongForm() {
     }
   }
 
-  async function handleFormSubmit() {
+  async function handleSubmit() {
     if (!title) {
       setError("Title is required");
       return;
@@ -160,11 +160,11 @@ export default function NewSongForm() {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !(e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      handleFormSubmit();
+      handleSubmit();
     }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      handleFormSubmit();
+      handleSubmit();
     }
   }
 
@@ -415,7 +415,7 @@ export default function NewSongForm() {
             onChange={(e) => setLyrics(e.target.value)}
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                handleFormSubmit();
+                handleSubmit();
               }
             }}
             placeholder="Enter song lyrics..."
@@ -475,7 +475,7 @@ export default function NewSongForm() {
             Cancel
           </button>
           <button
-            onClick={handleFormSubmit}
+            onClick={handleSubmit}
             disabled={loading || !title}
             className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             style={{

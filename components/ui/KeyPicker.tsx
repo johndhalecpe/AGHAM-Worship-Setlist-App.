@@ -83,24 +83,24 @@ export default function KeyPicker({
     <div className="inline-flex items-start gap-2">
       <div className="flex flex-col gap-1.5">
         <div className="flex flex-wrap gap-1">
-          {LETTERS.map((l) => (
+          {LETTERS.map((keyLetter) => (
             <button
-              key={l}
+              key={keyLetter}
               type="button"
-              onClick={() => handleLetterClick(l)}
+              onClick={() => handleLetterClick(keyLetter)}
               className="rounded-lg font-medium transition-all min-w-[32px] px-1.5 py-1 text-xs leading-none"
               style={{
                 backgroundColor:
-                  letter === l ? "#D84F0B" : "var(--color-surface)",
+                  letter === keyLetter ? "#D84F0B" : "var(--color-surface)",
                 color:
-                  letter === l ? "#fff" : "var(--color-text-secondary)",
+                  letter === keyLetter ? "#fff" : "var(--color-text-secondary)",
                 border:
-                  letter === l
+                  letter === keyLetter
                     ? "1px solid #D84F0B"
                     : "1px solid var(--color-border)",
               }}
             >
-              {l}
+              {keyLetter}
             </button>
           ))}
         </div>

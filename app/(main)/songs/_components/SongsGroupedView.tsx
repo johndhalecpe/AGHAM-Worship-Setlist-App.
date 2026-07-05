@@ -104,27 +104,27 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
     let result = songs;
 
     if (selectedCategory === "draft") {
-      result = result.filter((s) => s.status === "draft");
+      result = result.filter((song) => song.status === "draft");
     } else if (selectedCategory) {
-      result = result.filter((s) => s.category === selectedCategory);
+      result = result.filter((song) => song.category === selectedCategory);
     }
 
     if (composedOnly) {
-      result = result.filter((s) => (s.author ?? "").toLowerCase() === "kenneth acebuche");
+      result = result.filter((song) => (song.author ?? "").toLowerCase() === "kenneth acebuche");
     }
 
     if (selectedLanguages.size > 0) {
-      result = result.filter((s) => s.language && selectedLanguages.has(s.language));
+      result = result.filter((song) => song.language && selectedLanguages.has(song.language));
     }
 
     if (selectedTimeSigs.size > 0) {
-      result = result.filter((s) => s.default_time_signature && selectedTimeSigs.has(s.default_time_signature));
+      result = result.filter((song) => song.default_time_signature && selectedTimeSigs.has(song.default_time_signature));
     }
 
     return result;
   }, [songs, selectedCategory, composedOnly, selectedLanguages, selectedTimeSigs]);
 
-  const editingSong = useMemo(() => songs.find((s) => s.id === editingId) ?? null, [songs, editingId]);
+  const editingSong = useMemo(() => songs.find((song) => song.id === editingId) ?? null, [songs, editingId]);
   const hasSearch = searchMatches !== null;
   const groups = hasSearch ? [] : groupSongsByCategoryAndLanguage(filteredSongs);
 
@@ -404,7 +404,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
         <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
           {filteredSongs.length} song{filteredSongs.length !== 1 ? "s" : ""}
           {selectedCategory ? ` in ${CATEGORY_LABELS[selectedCategory] ?? selectedCategory}` : ""}
-          {selectedLanguages.size > 0 ? ` (${[...selectedLanguages].map((l) => LANGUAGE_LABELS[l]).join(", ")})` : ""}
+          {selectedLanguages.size > 0 ? ` (${[...selectedLanguages].map((lang) => LANGUAGE_LABELS[lang]).join(", ")})` : ""}
           {selectedTimeSigs.size > 0 ? ` (${[...selectedTimeSigs].join(", ")} time)` : ""}
         </p>
       )}

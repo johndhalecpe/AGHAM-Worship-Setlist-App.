@@ -1,22 +1,19 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSongById, updateSong, deleteSong } from "@/lib/services/songsService";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { data, error } = await supabase
-    .from("songs")
-    .select("*")
-    .eq("id", id)
-    .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
+  const song = await getSongById(id);
+
+  if (!song) {
+    return NextResponse.json({ error: "Song not found" }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(song);
 }
 
 export async function PATCH(
@@ -26,48 +23,26 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
 
-  const updateFields: Record<string, unknown> = {};
-  if (body.title !== undefined) updateFields.title = body.title;
-  if (body.author !== undefined) updateFields.author = body.author;
-  if (body.category !== undefined) updateFields.category = body.category;
-  if (body.language !== undefined) updateFields.language = body.language;
-  if (body.default_key !== undefined) updateFields.default_key = body.default_key;
-  if (body.default_bpm !== undefined) updateFields.default_bpm = body.default_bpm;
-  if (body.default_time_signature !== undefined) updateFields.default_time_signature = body.default_time_signature;
-  if (body.lyrics !== undefined) updateFields.lyrics = body.lyrics;
-  if (body.chords !== undefined) updateFields.chords = body.chords;
-
-  const hasAllDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);
-  if (body.status !== undefined) {
-    updateFields.status = body.status;
-  } else if (hasAllDetails) {
-    updateFields.status = "published";
+  try {
+    const song = await updateSong(id, body);
+    return NextResponse.json(song);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const { data, error } = await supabase
-    .from("songs")
-    .update(updateFields)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { error } = await supabase.from("songs").delete().eq("id", id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await deleteSong(id);
+    return NextResponse.json({ message: "Song deleted" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ message: "Song deleted" });
 }

@@ -71,8 +71,8 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
   }, []);
 
   const authorSuggestions = author.trim()
-    ? authors.filter((a) =>
-        a.toLowerCase().includes(author.toLowerCase())
+    ? authors.filter((authorName) =>
+        authorName.toLowerCase().includes(author.toLowerCase())
       )
     : authors;
 
@@ -84,7 +84,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
 
   function handleAuthorKeyDown(e: React.KeyboardEvent) {
     if (!showAuthorSuggestions || authorSuggestions.length === 0) {
-      if (e.key === "Enter") handleSave();
+      if (e.key === "Enter") handleSubmit();
       return;
     }
     if (e.key === "ArrowDown") {
@@ -122,7 +122,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function handleSave() {
+  function handleSubmit() {
     if (!title) return;
     const resolvedCategory = category === "other" ? customCategory : category;
     onSave({
@@ -343,7 +343,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           Cancel
         </button>
         <button
-          onClick={handleSave}
+          onClick={handleSubmit}
           disabled={isSaving || !title}
           className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{

@@ -1,24 +1,10 @@
-import { supabase } from "@/lib/supabase";
-import { Song } from "@/lib/type";
+import { getAllSongs } from "@/lib/services/songsService";
 import SongsGroupedView from "./_components/SongsGroupedView";
 
 export const dynamic = "force-dynamic";
 
-async function fetchAllSongs(): Promise<Song[]> {
-  const { data, error } = await supabase
-    .from("songs")
-    .select("*")
-    .order("title", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
 export default async function SongsPage() {
-  const songs = await fetchAllSongs();
+  const songs = await getAllSongs();
 
   return (
     <div>

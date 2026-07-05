@@ -17,7 +17,7 @@ export default function NewSetlistForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleFormSubmit() {
+  async function handleSubmit() {
     if (!date) {
       setError("Date is required");
       return;
@@ -151,28 +151,28 @@ export default function NewSetlistForm() {
               Branch
             </label>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
-              {BRANCHES.map((b) => (
+              {BRANCHES.map((branchOption) => (
                 <button
-                  key={b.value}
+                  key={branchOption.value}
                   type="button"
-                  onClick={() => setBranch(b.value)}
+                  onClick={() => setBranch(branchOption.value)}
                   className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
                   style={{
                     backgroundColor:
-                      branch === b.value
+                      branch === branchOption.value
                         ? "#D84F0B"
                         : "var(--color-surface)",
                     color:
-                      branch === b.value
+                      branch === branchOption.value
                         ? "#fff"
                         : "var(--color-text-secondary)",
                     border:
-                      branch === b.value
+                      branch === branchOption.value
                         ? "1px solid #D84F0B"
                         : "1px solid var(--color-border)",
                   }}
                 >
-                  {b.label}
+                  {branchOption.label}
                 </button>
               ))}
             </div>
@@ -203,7 +203,7 @@ export default function NewSetlistForm() {
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
-            onClick={handleFormSubmit}
+            onClick={handleSubmit}
             disabled={loading}
             className="rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
             style={{

@@ -1,23 +1,19 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
-import { isSetlistDateInPast } from "@/app/api/_lib/setlistGuards";
+import { getSetlistById, updateSetlist, deleteSetlist, isSetlistDateInPast } from "@/lib/services/setlistsService";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { data, error } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
+  const setlist = await getSetlistById(id);
+
+  if (!setlist) {
+    return NextResponse.json({ error: "Setlist not found" }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(setlist);
 }
 
 export async function PATCH(
@@ -35,28 +31,17 @@ export async function PATCH(
 
   const body = await request.json();
 
-  const { data, error } = await supabase
-    .from("setlists")
-    .update({
-      date: body.date,
-      title: body.title,
-      description: body.description,
-      song_leader: body.song_leader,
-      branch: body.branch,
-    })
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const setlist = await updateSetlist(id, body);
+    return NextResponse.json(setlist);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json(data);
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -68,14 +53,11 @@ export async function DELETE(
     );
   }
 
-  const { error } = await supabase
-    .from("setlists")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await deleteSetlist(id);
+    return NextResponse.json({ message: "Setlist deleted" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ message: "Setlist deleted" });
 }

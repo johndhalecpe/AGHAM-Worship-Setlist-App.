@@ -3,15 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import { SECTION_TYPE_LABELS } from "@/lib/sectionLabels";
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
-
-const SECTION_LABELS: Record<string, string> = {
-  worship: "Worship songs",
-  praise: "Praise songs",
-  tithes_offering: "Tithes and offering",
-  special: "Special numbers",
-};
 
 type Props = {
   setlist: Setlist;
@@ -33,7 +27,7 @@ export default function ChordsViewer({
   onSectionsChange,
 }: Props) {
   const activeRef = useRef<HTMLDivElement>(null);
-  const filtered = sections.filter((s) => s.section_type === sectionType);
+  const filtered = sections.filter((section) => section.section_type === sectionType);
   const [zoomIndex, setZoomIndex] = useState(3);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const initialNotesRef = useRef<Record<string, string>>({});
@@ -41,10 +35,10 @@ export default function ChordsViewer({
 
   useEffect(() => {
     const initial: Record<string, string> = {};
-    for (const s of filtered) {
-      if (s.chord_notes) {
-        for (const [key, val] of Object.entries(s.chord_notes)) {
-          if (val) initial[`${s.id}-${key}`] = val;
+    for (const section of filtered) {
+      if (section.chord_notes) {
+        for (const [key, val] of Object.entries(section.chord_notes)) {
+          if (val) initial[`${section.id}-${key}`] = val;
         }
       }
     }
@@ -61,7 +55,7 @@ export default function ChordsViewer({
     activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
-  const handleClose = useCallback(async () => {
+  const handleSaveAndClose = useCallback(async () => {
     if (isPast) {
       toast.error("Can't edit past lineups");
       onClose();
@@ -75,14 +69,14 @@ export default function ChordsViewer({
       return;
     }
 
-    const items = filtered.map((s) => {
+    const items = filtered.map((section) => {
       const chordNotes: Record<string, string> = {};
       for (const suffix of ["intro", "outro", "transition", "drummer_notes"]) {
-        const val = notes[`${s.id}-${suffix}`];
+        const val = notes[`${section.id}-${suffix}`];
         if (val) chordNotes[suffix] = val;
       }
       return {
-        id: s.id,
+        id: section.id,
         chord_notes: Object.keys(chordNotes).length > 0 ? chordNotes : null,
       };
     });
@@ -111,11 +105,11 @@ export default function ChordsViewer({
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") handleSaveAndClose();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClose]);
+  }, [handleSaveAndClose]);
 
   const fontSize = ZOOM_STEPS[zoomIndex];
 
@@ -123,7 +117,7 @@ export default function ChordsViewer({
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
-      onClick={handleClose}
+      onClick={handleSaveAndClose}
     >
       <div
         className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 backdrop-blur-xl"
@@ -138,7 +132,7 @@ export default function ChordsViewer({
             className="text-xl font-bold"
             style={{ color: "var(--color-text)" }}
           >
-            {SECTION_LABELS[sectionType] || sectionType}
+            {SECTION_TYPE_LABELS[sectionType] || sectionType}
           </h2>
           <div className="flex items-center gap-2">
             <button
@@ -203,9 +197,9 @@ export default function ChordsViewer({
 
         {showDrummer ? (
           <div className="flex flex-col gap-3">
-            {filtered.map((s) => (
+            {filtered.map((section) => (
               <div
-                key={s.id}
+                key={section.id}
                 className="rounded-lg p-4"
                 style={{
                   backgroundColor: "var(--color-surface-card)",
@@ -215,11 +209,11 @@ export default function ChordsViewer({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <h3 className="text-base font-semibold truncate" style={{ color: "var(--color-text)" }}>
-                      {s.songs.title}
+                      {section.songs.title}
                     </h3>
-                    {s.songs.author && (
+                    {section.songs.author && (
                       <p className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
-                        {s.songs.author}
+                        {section.songs.author}
                       </p>
                     )}
                   </div>
@@ -231,7 +225,7 @@ export default function ChordsViewer({
                         color: "var(--color-badge-key-text)",
                       }}
                     >
-                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                      Key: {section.song_key ?? section.songs.default_key ?? "G"}
                     </span>
                     <span
                       className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
@@ -240,7 +234,7 @@ export default function ChordsViewer({
                         color: "var(--color-badge-bpm-text)",
                       }}
                     >
-                      Bpm: {s.songs.default_bpm ?? 120}
+                      Bpm: {section.songs.default_bpm ?? 120}
                     </span>
                     <span
                       className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
@@ -249,22 +243,22 @@ export default function ChordsViewer({
                         color: "var(--color-badge-ts-text)",
                       }}
                     >
-                      {s.songs.default_time_signature ?? "4/4"}
+                      {section.songs.default_time_signature ?? "4/4"}
                     </span>
                   </div>
                 </div>
-                {s.notes && (
+                {section.notes && (
                   <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                    &ldquo;{s.notes}&rdquo;
+                    &ldquo;{section.notes}&rdquo;
                   </p>
                 )}
                 <textarea
-                  name={`${s.id}-drummer_notes`}
+                  name={`${section.id}-drummer_notes`}
                   autoComplete="off"
                   ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                  value={notes[`${s.id}-drummer_notes`] ?? ""}
+                  value={notes[`${section.id}-drummer_notes`] ?? ""}
                   onChange={(e) => {
-                    setNotes((prev) => ({ ...prev, [`${s.id}-drummer_notes`]: e.target.value }));
+                    setNotes((prev) => ({ ...prev, [`${section.id}-drummer_notes`]: e.target.value }));
                     e.target.style.height = "auto";
                     e.target.style.height = e.target.scrollHeight + "px";
                   }}
@@ -291,14 +285,14 @@ export default function ChordsViewer({
           </div>
         ) : (
           <div className="flex flex-col">
-            {filtered.map((s, i) => (
-              <div key={s.id}>
+            {filtered.map((section, i) => (
+              <div key={section.id}>
                 {i === 0 && (
                   <input
-                    name={`${s.id}-intro`}
+                    name={`${section.id}-intro`}
                     autoComplete="off"
-                    value={notes[`${s.id}-intro`] ?? ""}
-                    onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-intro`]: e.target.value }))}
+                    value={notes[`${section.id}-intro`] ?? ""}
+                    onChange={(e) => setNotes((prev) => ({ ...prev, [`${section.id}-intro`]: e.target.value }))}
                     readOnly={isPast}
                     onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
                     placeholder="add intro"
@@ -318,15 +312,15 @@ export default function ChordsViewer({
                   style={{ borderColor: "var(--color-border)" }}
                 />
                 <div
-                  ref={s.id === activeSongId ? activeRef : undefined}
+                  ref={section.id === activeSongId ? activeRef : undefined}
                   className="rounded-lg p-4 transition-colors"
                   style={{
                     backgroundColor:
-                      s.id === activeSongId
+                      section.id === activeSongId
                         ? "var(--color-surface-muted)"
                         : "transparent",
                     border:
-                      s.id === activeSongId
+                      section.id === activeSongId
                         ? "1px solid var(--color-border)"
                         : "1px solid transparent",
                   }}
@@ -337,14 +331,14 @@ export default function ChordsViewer({
                       className="text-base font-semibold truncate"
                       style={{ color: "var(--color-text)" }}
                     >
-                      {s.songs.title}
+                      {section.songs.title}
                     </h3>
-                    {s.songs.author && (
+                    {section.songs.author && (
                       <p
                         className="text-xs shrink-0"
                         style={{ color: "var(--color-text-tertiary)" }}
                       >
-                        {s.songs.author}
+                        {section.songs.author}
                       </p>
                     )}
                   </div>
@@ -356,7 +350,7 @@ export default function ChordsViewer({
                         color: "var(--color-badge-key-text)",
                       }}
                     >
-                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                      Key: {section.song_key ?? section.songs.default_key ?? "G"}
                     </span>
                     <span
                       className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
@@ -365,7 +359,7 @@ export default function ChordsViewer({
                         color: "var(--color-badge-bpm-text)",
                       }}
                     >
-                      Bpm: {s.songs.default_bpm ?? 120}
+                      Bpm: {section.songs.default_bpm ?? 120}
                     </span>
                     <span
                       className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
@@ -374,13 +368,13 @@ export default function ChordsViewer({
                         color: "var(--color-badge-ts-text)",
                       }}
                     >
-                      {s.songs.default_time_signature ?? "4/4"}
+                      {section.songs.default_time_signature ?? "4/4"}
                     </span>
                   </div>
                 </div>
-                {s.notes && (
+                {section.notes && (
                   <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                    &ldquo;{s.notes}&rdquo;
+                    &ldquo;{section.notes}&rdquo;
                   </p>
                 )}
                 <pre
@@ -394,14 +388,14 @@ export default function ChordsViewer({
                     color: "var(--color-accent)",
                   }}
                 >
-                  {s.songs.chords || "No chords available."}
+                  {section.songs.chords || "No chords available."}
                 </pre>
                 </div>
                 <input
-                  name={`${s.id}-outro`}
+                  name={`${section.id}-outro`}
                   autoComplete="off"
-                  value={notes[`${s.id}-outro`] ?? ""}
-                  onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-outro`]: e.target.value }))}
+                  value={notes[`${section.id}-outro`] ?? ""}
+                  onChange={(e) => setNotes((prev) => ({ ...prev, [`${section.id}-outro`]: e.target.value }))}
                   readOnly={isPast}
                   onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
                   placeholder="add outro"
@@ -417,10 +411,10 @@ export default function ChordsViewer({
                 />
                 {i < filtered.length - 1 && (
                   <input
-                    name={`${s.id}-transition`}
+                    name={`${section.id}-transition`}
                     autoComplete="off"
-                    value={notes[`${s.id}-transition`] ?? ""}
-                    onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-transition`]: e.target.value }))}
+                    value={notes[`${section.id}-transition`] ?? ""}
+                    onChange={(e) => setNotes((prev) => ({ ...prev, [`${section.id}-transition`]: e.target.value }))}
                     readOnly={isPast}
                     onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
                     placeholder="add transition"

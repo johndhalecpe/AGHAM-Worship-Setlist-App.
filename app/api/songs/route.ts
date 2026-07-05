@@ -1,56 +1,27 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getAllSongs, createSong } from "@/lib/services/songsService";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const searchTitle = searchParams.get("search");
 
-  let supabaseQuery = supabase
-    .from("songs")
-    .select("*")
-    .order("title", { ascending: true });
-
-  if (searchTitle) {
-    supabaseQuery = supabaseQuery.or(
-      `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,lyrics.ilike.%${searchTitle}%`
-    );
+  try {
+    const songs = await getAllSongs(searchTitle ?? undefined);
+    return NextResponse.json(songs);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const { data, error } = await supabaseQuery;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
 
-  const hasDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);
-  const status = hasDetails ? "published" : "draft";
-
-  const { data, error } = await supabase
-    .from("songs")
-    .insert({
-      title: body.title,
-      author: body.author,
-      category: body.category,
-      language: body.language,
-      default_key: body.default_key ?? null,
-      default_bpm: body.default_bpm ?? null,
-      default_time_signature: body.default_time_signature ?? null,
-      lyrics: body.lyrics ?? null,
-      chords: body.chords ?? null,
-      status,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const song = await createSong(body);
+    return NextResponse.json(song, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json(data, { status: 201 });
 }

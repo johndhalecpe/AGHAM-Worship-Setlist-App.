@@ -49,8 +49,8 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
   }, []);
 
   const authorSuggestions = newAuthor.trim()
-    ? authors.filter((a) =>
-        a.toLowerCase().includes(newAuthor.toLowerCase())
+    ? authors.filter((authorName) =>
+        authorName.toLowerCase().includes(newAuthor.toLowerCase())
       )
     : authors;
 
@@ -62,7 +62,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
 
   function handleAuthorKeyDown(e: React.KeyboardEvent) {
     if (!showAuthorSuggestions || authorSuggestions.length === 0) {
-      if (e.key === "Enter") handleCreateAndAddNewSong();
+      if (e.key === "Enter") handleSubmit();
       return;
     }
     if (e.key === "ArrowDown") {
@@ -100,7 +100,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  async function handleCreateAndAddNewSong() {
+  async function handleSubmit() {
     if (!newTitle) return;
     setLoading(true);
 
@@ -369,7 +369,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         </div>
       </div>
       <button
-        onClick={handleCreateAndAddNewSong}
+        onClick={handleSubmit}
         disabled={loading}
         className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
         style={{

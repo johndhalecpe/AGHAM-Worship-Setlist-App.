@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { supabase } from "@/lib/supabase";
-import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import { getSetlistById } from "@/lib/services/setlistsService";
+import { getSectionsBySetlistIdForPage } from "@/lib/services/setlistSectionsService";
 import { getBranchLabel } from "@/lib/branches";
 import SetlistDetail from "./SetlistDetail";
 
@@ -11,11 +11,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
 
-  const { data: setlist } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const setlist = await getSetlistById(id);
 
   if (!setlist) {
     return { title: "Setlist not found" };
@@ -46,45 +42,6 @@ export async function generateMetadata({
   };
 }
 
-async function fetchSetlistById(id: string) {
-  const { data, error } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-  return data as Setlist;
-}
-
-async function fetchSectionsBySetlistId(id: string) {
-  const { data, error } = await supabase
-    .from("setlist_sections")
-    .select(
-      `
-      *,
-      songs (
-        id,
-        title,
-        author,
-        category,
-        language,
-        default_key,
-        default_bpm,
-        default_time_signature,
-        lyrics,
-        chords,
-        status
-      )
-    `
-    )
-    .eq("setlist_id", id)
-    .order("sort_order", { ascending: true });
-
-  if (error) return [];
-  return data as unknown as SetlistSectionWithSong[];
-}
-
 export default async function SetlistDetailPage({
   params,
 }: {
@@ -93,8 +50,8 @@ export default async function SetlistDetailPage({
   const { id } = await params;
 
   const [setlist, sections] = await Promise.all([
-    fetchSetlistById(id),
-    fetchSectionsBySetlistId(id),
+    getSetlistById(id),
+    getSectionsBySetlistIdForPage(id),
   ]);
 
   if (!setlist) {

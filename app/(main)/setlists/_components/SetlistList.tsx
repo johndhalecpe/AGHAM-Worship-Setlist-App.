@@ -20,11 +20,11 @@ export default function SetlistList({ setlists }: SetlistListProps) {
   }, []);
 
   const upcomingSetlists = todayLocal
-    ? setlists.filter((s) => s.date >= todayLocal).sort((a, b) => a.date.localeCompare(b.date))
+    ? setlists.filter((setlist) => setlist.date >= todayLocal).sort((a, b) => a.date.localeCompare(b.date))
     : [];
 
   const pastSetlists = todayLocal
-    ? setlists.filter((s) => s.date < todayLocal).sort((a, b) => b.date.localeCompare(a.date))
+    ? setlists.filter((setlist) => setlist.date < todayLocal).sort((a, b) => b.date.localeCompare(a.date))
     : [];
 
   return (

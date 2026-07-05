@@ -3,19 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SetlistSectionWithSong } from "@/lib/type";
+import { SECTION_TYPE_LABELS } from "@/lib/sectionLabels";
 
 type Props = {
   sections: SetlistSectionWithSong[];
   sectionType: string;
   activeSongId: string;
   onClose: () => void;
-};
-
-const SECTION_LABELS: Record<string, string> = {
-  worship: "Worship songs",
-  praise: "Praise songs",
-  tithes_offering: "Tithes and offering",
-  special: "Special numbers",
 };
 
 export default function LyricsViewer({
@@ -25,7 +19,7 @@ export default function LyricsViewer({
   onClose,
 }: Props) {
   const activeRef = useRef<HTMLDivElement>(null);
-  const filtered = sections.filter((s) => s.section_type === sectionType);
+  const filtered = sections.filter((section) => section.section_type === sectionType);
   const [copiedSongId, setCopiedSongId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,8 +34,8 @@ export default function LyricsViewer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  function getLyrics(s: SetlistSectionWithSong) {
-    return s.songs.lyrics ?? "";
+  function getLyrics(section: SetlistSectionWithSong) {
+    return section.songs.lyrics ?? "";
   }
 
   async function copyLyrics(lyrics: string, songId: string) {
@@ -78,12 +72,12 @@ export default function LyricsViewer({
           className="text-lg font-semibold mb-6"
           style={{ color: "var(--color-text)" }}
         >
-          {SECTION_LABELS[sectionType] || sectionType}
+          {SECTION_TYPE_LABELS[sectionType] || sectionType}
         </h2>
 
         <div className="flex flex-col">
-          {filtered.map((s, i) => (
-            <div key={s.id}>
+          {filtered.map((section, i) => (
+            <div key={section.id}>
               {i > 0 && (
                 <hr
                   className="my-6"
@@ -91,15 +85,15 @@ export default function LyricsViewer({
                 />
               )}
               <div
-                ref={s.id === activeSongId ? activeRef : undefined}
+                ref={section.id === activeSongId ? activeRef : undefined}
                 className="rounded-lg p-4 transition-colors"
                 style={{
                   backgroundColor:
-                    s.id === activeSongId
+                    section.id === activeSongId
                       ? "var(--color-surface-muted)"
                       : "transparent",
                   border:
-                    s.id === activeSongId
+                    section.id === activeSongId
                       ? "1px solid var(--color-border)"
                       : "1px solid transparent",
                 }}
@@ -110,14 +104,14 @@ export default function LyricsViewer({
                       className="text-base font-semibold truncate"
                       style={{ color: "var(--color-text)" }}
                     >
-                      {s.songs.title}
+                      {section.songs.title}
                     </h3>
-                    {s.songs.author && (
+                    {section.songs.author && (
                       <p
                         className="text-xs truncate shrink-0"
                         style={{ color: "var(--color-text-tertiary)" }}
                       >
-                        {s.songs.author}
+                        {section.songs.author}
                       </p>
                     )}
                     <span
@@ -127,20 +121,20 @@ export default function LyricsViewer({
                         color: "var(--color-badge-key-text)",
                       }}
                     >
-                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                      Key: {section.song_key ?? section.songs.default_key ?? "G"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => copyLyrics(getLyrics(s), s.id)}
+                      onClick={() => copyLyrics(getLyrics(section), section.id)}
                       className="rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 min-h-[32px] flex items-center gap-1.5"
                       style={{
-                        backgroundColor: copiedSongId === s.id ? "var(--color-success)" : "var(--color-accent)",
+                        backgroundColor: copiedSongId === section.id ? "var(--color-success)" : "var(--color-accent)",
                         color: "var(--color-text-on-accent)",
                       }}
                       aria-label="Copy lyrics"
                     >
-                      {copiedSongId === s.id ? (
+                      {copiedSongId === section.id ? (
                         <>
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                             <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
@@ -160,9 +154,9 @@ export default function LyricsViewer({
 
                   </div>
                 </div>
-                {s.notes && (
+                {section.notes && (
                   <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                    &ldquo;{s.notes}&rdquo;
+                    &ldquo;{section.notes}&rdquo;
                   </p>
                 )}
                 <pre
@@ -173,7 +167,7 @@ export default function LyricsViewer({
                       color: "var(--color-text-secondary)",
                     }}
                   >
-                    {getLyrics(s) || "No lyrics available."}
+                    {getLyrics(section) || "No lyrics available."}
                   </pre>
               </div>
             </div>

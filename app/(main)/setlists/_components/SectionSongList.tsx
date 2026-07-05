@@ -1,11 +1,5 @@
 import { SetlistWithSections } from "@/lib/type";
-
-const SECTION_LABELS: Record<string, string> = {
-  worship: "Worship",
-  praise: "Praise",
-  tithes_offering: "Tithes and offering",
-  special: "Special numbers",
-};
+import { SECTION_TYPE_LABELS } from "@/lib/sectionLabels";
 
 export default function SectionSongList({
   sectionType,
@@ -17,7 +11,7 @@ export default function SectionSongList({
   dimmed?: boolean;
 }) {
   const sectionSongs = sections
-    .filter((s) => s.section_type === sectionType)
+    .filter((section) => section.section_type === sectionType)
     .sort((a, b) => a.sort_order - b.sort_order);
 
   if (sectionSongs.length === 0) return null;
@@ -28,31 +22,31 @@ export default function SectionSongList({
         className={`text-xs uppercase tracking-wider font-semibold mb-2 ${dimmed ? "opacity-60" : ""}`}
         style={{ color: "var(--color-text-tertiary)" }}
       >
-        {SECTION_LABELS[sectionType] ?? sectionType}
+        {SECTION_TYPE_LABELS[sectionType] ?? sectionType}
       </h4>
       <div className="flex flex-col gap-1.5">
-        {sectionSongs.map((s) => (
-          <div key={s.id}>
+        {sectionSongs.map((section) => (
+          <div key={section.id}>
             <p
               className={`text-sm break-words ${dimmed ? "opacity-60" : ""}`}
               style={{ color: "var(--color-text)" }}
             >
-              {s.songs.title}
-              {s.songs.author && (
+              {section.songs.title}
+              {section.songs.author && (
                 <span
                   className="ml-1.5"
                   style={{ color: "var(--color-text-tertiary)" }}
                 >
-                  ({s.songs.author})
+                  ({section.songs.author})
                 </span>
               )}
             </p>
-            {s.notes && (
+            {section.notes && (
               <p
                 className={`text-xs mt-0.5 ml-2 italic ${dimmed ? "opacity-60" : ""}`}
                 style={{ color: "var(--color-text-tertiary)" }}
               >
-                &ldquo;{s.notes}&rdquo;
+                &ldquo;{section.notes}&rdquo;
               </p>
             )}
           </div>

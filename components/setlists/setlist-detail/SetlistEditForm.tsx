@@ -19,7 +19,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
   const [editSongLeader, setEditSongLeader] = useState(setlist.song_leader ?? "");
   const [editBranch, setEditBranch] = useState(setlist.branch);
 
-  function handleSave() {
+  function handleSubmit() {
     if (!editDate) return;
     onSave({
       date: editDate,
@@ -137,28 +137,28 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           Branch
         </label>
         <div className="grid grid-cols-2 gap-2 mt-1.5">
-          {BRANCHES.map((b) => (
+          {BRANCHES.map((branch) => (
             <button
-              key={b.value}
+              key={branch.value}
               type="button"
-              onClick={() => setEditBranch(b.value)}
+              onClick={() => setEditBranch(branch.value)}
               className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
               style={{
                 backgroundColor:
-                  editBranch === b.value
+                  editBranch === branch.value
                     ? "#D84F0B"
                     : "var(--color-surface)",
                 color:
-                  editBranch === b.value
+                  editBranch === branch.value
                     ? "#fff"
                     : "var(--color-text-secondary)",
                 border:
-                  editBranch === b.value
+                  editBranch === branch.value
                     ? "1px solid #D84F0B"
                     : "1px solid var(--color-border)",
               }}
             >
-              {b.label}
+              {branch.label}
             </button>
           ))}
         </div>
@@ -176,7 +176,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           Cancel
         </button>
         <button
-          onClick={handleSave}
+          onClick={handleSubmit}
           disabled={isSaving}
           className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
