@@ -44,10 +44,11 @@ export default function SongSearchList({ searchMatches, loading, onSelect }: Son
             {searchMatches[key].map((song) => (
               <div
                 key={song.id}
-                className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 transition-colors cursor-pointer"
                 style={{
                   borderColor: "var(--color-border)",
                 }}
+                onClick={() => onSelect(song.id)}
                 onMouseEnter={(e) =>
                   ((e.currentTarget as HTMLElement).style.backgroundColor =
                     "var(--color-surface-elevated)")
@@ -57,10 +58,7 @@ export default function SongSearchList({ searchMatches, loading, onSelect }: Son
                     "transparent")
                 }
               >
-                <div
-                  className="flex-1 min-w-0 cursor-pointer"
-                  onClick={() => onSelect(song.id)}
-                >
+                <div className="flex-1 min-w-0">
                   <span className="font-medium">{song.title}</span>
                   {song.author && (
                     <span

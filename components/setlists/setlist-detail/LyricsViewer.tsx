@@ -62,7 +62,7 @@ export default function LyricsViewer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center cursor-pointer"
       style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
       onClick={onClose}
     >
@@ -75,11 +75,14 @@ export default function LyricsViewer({
         onClick={(e) => e.stopPropagation()}
       >
         <h2
-          className="text-lg font-semibold mb-6"
+          className="text-lg font-semibold"
           style={{ color: "var(--color-text)" }}
         >
           {SECTION_LABELS[sectionType] || sectionType}
         </h2>
+        <p className="text-[10px] italic mb-6 mt-0.5" style={{ color: "var(--color-text-tertiary)", opacity: 0.4 }}>
+          Tap outside to close
+        </p>
 
         <div className="flex flex-col">
           {filtered.map((s, i) => (

@@ -101,79 +101,68 @@ export default function SongPicker({
 
   return (
     <div
-      className="mt-3 rounded-xl p-4"
+      className="rounded-xl p-4 flex flex-col"
       style={{
         backgroundColor: "var(--color-surface-muted)",
         border: "1px solid var(--color-border)",
       }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span
-          className="text-sm font-medium"
-          style={{ color: "var(--color-text)" }}
-        >
-          Add a song
-        </span>
-        <button
-          onClick={onCancel}
-          className="text-lg leading-none transition-colors"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          ✕
-        </button>
+      <div className="shrink-0">
+        <input
+          type="text"
+          name="song-picker-search"
+          autoComplete="off"
+          value={search}
+          onChange={(e) => handleSearchInput(e.target.value)}
+          placeholder="Search by title, author, or lyrics..."
+          className="w-full rounded-lg px-3 py-2 text-sm transition-colors"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-surface-card)",
+            color: "var(--color-text)",
+          }}
+          onFocus={(e) =>
+            (e.target.style.borderColor = "#D84F0B")
+          }
+          onBlur={(e) =>
+            (e.target.style.borderColor = "var(--color-border)")
+          }
+        />
       </div>
-      <input
-        type="text"
-        name="song-picker-search"
-        autoComplete="off"
-        value={search}
-        onChange={(e) => handleSearchInput(e.target.value)}
-        placeholder="Search by title, author, or lyrics..."
-        className="w-full rounded-lg px-3 py-2 text-sm transition-colors"
-        style={{
-          border: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-surface-card)",
-          color: "var(--color-text)",
-        }}
-        onFocus={(e) =>
-          (e.target.style.borderColor = "#D84F0B")
-        }
-        onBlur={(e) =>
-          (e.target.style.borderColor = "var(--color-border)")
-        }
-      />
 
-      {hasMatches && searchMatches && (
-        <SongSearchList
-          searchMatches={searchMatches}
-          loading={loading}
-          onSelect={handleSelectSong}
-        />
-      )}
-      {search.trim() !== "" && !showNewSongForm && (
-        <button
-          onClick={() => {
-            setShowNewSongForm(true);
-          }}
-          className="mt-2 text-sm font-medium w-full text-left px-3 py-2 rounded-lg transition-colors"
-          style={{ color: "#D84F0B" }}
-        >
-          + Add &ldquo;{search}&rdquo; as a new song
-        </button>
-      )}
-      {showNewSongForm && (
-        <NewSongForm
-          initialTitle={search}
-          sectionType={sectionType}
-          setlistId={setlistId}
-          onCreated={(newSection) => {
-            setSearch("");
-            setShowNewSongForm(false);
-            onSongAdded(newSection);
-          }}
-          onCancel={() => setShowNewSongForm(false)}
-        />
-      )}
+      <div className="flex flex-col overflow-y-auto" style={{ maxHeight: "35vh" }}>
+        {hasMatches && searchMatches && (
+          <SongSearchList
+            searchMatches={searchMatches}
+            loading={loading}
+            onSelect={handleSelectSong}
+          />
+        )}
+        {search.trim() !== "" && !showNewSongForm && (
+          <button
+            onClick={() => {
+              setShowNewSongForm(true);
+            }}
+            className="mt-2 text-sm font-medium w-full text-left px-3 py-2 rounded-lg transition-colors shrink-0"
+            style={{ color: "#D84F0B" }}
+          >
+            + Add &ldquo;{search}&rdquo; as a new song
+          </button>
+        )}
+        {showNewSongForm && (
+          <NewSongForm
+            initialTitle={search}
+            sectionType={sectionType}
+            setlistId={setlistId}
+            onCreated={(newSection) => {
+              setSearch("");
+              setShowNewSongForm(false);
+              onSongAdded(newSection);
+            }}
+            onCancel={() => setShowNewSongForm(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

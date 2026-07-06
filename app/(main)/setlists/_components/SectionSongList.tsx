@@ -25,16 +25,16 @@ export default function SectionSongList({
   return (
     <div>
       <h4
-        className={`text-xs uppercase tracking-wider font-semibold mb-2 ${dimmed ? "opacity-60" : ""}`}
+        className={`text-[11px] uppercase tracking-wider font-semibold mb-1 ${dimmed ? "opacity-60" : ""}`}
         style={{ color: "var(--color-text-tertiary)" }}
       >
         {SECTION_LABELS[sectionType] ?? sectionType}
       </h4>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1">
         {sectionSongs.map((s) => (
           <div key={s.id}>
             <p
-              className={`text-sm break-words ${dimmed ? "opacity-60" : ""}`}
+              className={`text-xs break-words ${dimmed ? "opacity-60" : ""}`}
               style={{ color: "var(--color-text)" }}
             >
               {s.songs.title}

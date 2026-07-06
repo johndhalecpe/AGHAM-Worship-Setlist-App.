@@ -22,7 +22,7 @@ export default function SetlistPreviewCard({
 }: SetlistPreviewCardProps) {
   return (
     <div
-      className={`relative rounded-xl p-4 sm:p-6 transition-all hover:-translate-y-0.5 ${dimmed ? "opacity-50" : ""}`}
+      className={`relative rounded-xl p-3 sm:p-4 transition-all cursor-pointer hover:-translate-y-0.5 ${dimmed ? "opacity-50" : ""}`}
       style={{
         backgroundColor: "var(--color-surface-card)",
         border: "1px solid var(--color-border)",
@@ -35,10 +35,10 @@ export default function SetlistPreviewCard({
       >
         {getBranchLabel(setlist.branch)}
       </span>
-      <div className="flex items-start justify-between gap-4 mb-3">
+      <div className="flex items-start justify-between gap-4 mb-2">
         <p
-          className={`font-bold text-lg ${dimmed ? "opacity-70" : ""}`}
-          style={{ color: "var(--color-text)" }}
+          className={`font-bold text-base ${dimmed ? "opacity-70" : ""}`}
+          style={{ color: "var(--color-accent)" }}
         >
           {formatDisplayDate(setlist.date)}
         </p>
@@ -46,8 +46,8 @@ export default function SetlistPreviewCard({
 
       {setlist.title && (
         <p
-          className={`text-sm ${dimmed ? "opacity-60" : ""}`}
-          style={{ color: "var(--color-text-secondary)" }}
+          className={`text-sm font-medium ${dimmed ? "opacity-60" : ""}`}
+          style={{ color: "var(--color-text)" }}
         >
           {setlist.title}
         </p>
@@ -61,7 +61,7 @@ export default function SetlistPreviewCard({
         </p>
       )}
 
-      <div className="flex flex-col gap-3 mt-3">
+      <div className="flex flex-col gap-2 mt-2">
         <SectionSongList
           sectionType="worship"
           sections={setlist.sections}
@@ -78,7 +78,7 @@ export default function SetlistPreviewCard({
         (s) => s.section_type !== "worship" && s.section_type !== "praise"
       ).length > 0 && (
         <p
-          className={`mt-2 text-xs ${dimmed ? "opacity-60" : ""}`}
+          className={`mt-1 text-xs ${dimmed ? "opacity-60" : ""}`}
           style={{ color: "var(--color-text-tertiary)" }}
         >
           + more sections &rarr;
@@ -86,8 +86,8 @@ export default function SetlistPreviewCard({
       )}
 
       {setlist.song_leader && (
-        <div className={`mt-3 ${dimmed ? "opacity-60" : ""}`}>
-          <span className="text-xs flex items-center gap-1" style={{ color: "var(--color-text-tertiary)" }}>
+        <div className={`mt-2 ${dimmed ? "opacity-60" : ""}`}>
+          <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--color-text-tertiary)" }}>
             <span
               className="inline-block w-3 h-3"
               style={{

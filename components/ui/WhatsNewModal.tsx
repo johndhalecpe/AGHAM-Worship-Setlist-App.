@@ -88,7 +88,7 @@ export default function WhatsNewModal({
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 cursor-pointer"
           style={{ backgroundColor: "rgba(0,0,0,0.3)" }}
           onClick={handleDismiss}
         >

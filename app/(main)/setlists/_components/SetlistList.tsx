@@ -31,7 +31,7 @@ export default function SetlistList({ setlists }: SetlistListProps) {
     <div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <h2
-          className="text-xl sm:text-2xl font-bold"
+          className="text-lg sm:text-xl font-bold"
           style={{ color: "var(--color-text)" }}
         >
           Lineups
@@ -52,7 +52,7 @@ export default function SetlistList({ setlists }: SetlistListProps) {
         Upcoming lineups
       </h3>
       {upcomingSetlists.length > 0 ? (
-        <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-2 sm:gap-3">
           {upcomingSetlists.map((setlist) => (
             <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
               <SetlistPreviewCard setlist={setlist} />
@@ -71,7 +71,7 @@ export default function SetlistList({ setlists }: SetlistListProps) {
       {pastSetlists.length > 0 && (
         <>
           <hr
-            className="my-16"
+            className="my-8"
             style={{
               border: "none",
               borderTop: "1px solid var(--color-border)",
@@ -80,7 +80,7 @@ export default function SetlistList({ setlists }: SetlistListProps) {
           <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
             Past lineups
           </h3>
-          <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col gap-2 sm:gap-3">
             {pastSetlists.map((setlist) => (
               <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
                 <SetlistPreviewCard setlist={setlist} dimmed />

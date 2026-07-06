@@ -46,57 +46,48 @@ export default function Home() {
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
         <div
-          className="w-full max-w-md rounded-2xl p-6 sm:p-10 text-center"
+          className="w-full max-w-md rounded-3xl p-8 sm:p-12 text-center"
           style={{
             backgroundColor: "var(--color-surface-card)",
             boxShadow:
-              "-8px -8px 16px color-mix(in srgb, var(--color-surface-elevated) 80%, transparent), 8px 8px 16px color-mix(in srgb, #000 12%, transparent)",
+              "0 4px 6px -1px rgba(0,0,0,.05), 0 10px 24px -4px rgba(0,0,0,.08)",
           }}
         >
           <Image
             src="/transparent-logo.svg"
             alt="Agham Setlist"
-            className="mx-auto mb-6 w-20 h-20 sm:w-24 sm:h-24 object-contain"
-            width={96}
-            height={96}
+            className="mx-auto mb-8 w-36 h-36 sm:w-44 sm:h-44 object-contain"
+            width={176}
+            height={176}
           />
-          <h1
-            className="text-lg sm:text-xl font-medium leading-relaxed"
-            style={{ color: "var(--color-text-secondary)" }}
+          <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+            Plan your{" "}
+            <span style={{ color: "var(--color-accent)" }}>Worship</span>
+            <br />
+            <span className="text-2xl sm:text-3xl">
+              Lead the{" "}
+              <span style={{ color: "var(--color-accent)" }}>Congregation</span>
+            </span>
+          </h1>
+          <p
+            className="mt-4 text-sm sm:text-base leading-relaxed"
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             Welcome,{" "}
-            <span className="font-semibold" style={{ color: "#D84F0B" }}>
+            <span className="font-semibold" style={{ color: "var(--color-accent)" }}>
               Agham{" "}
             </span>
             worship team!
-          </h1>
-          <p
-            className="mt-3 text-sm leading-relaxed"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Schedule lineups, organize songs, and lead worship together.
           </p>
           <Link
             href="/setlists"
-            className="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium mt-7 transition-all hover:-translate-y-0.5"
+            className="spotlight-btn inline-flex items-center rounded-xl px-14 py-5 text-lg font-semibold mt-10 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent)]"
             style={{
-              backgroundColor: "#D84F0B",
+              background: "linear-gradient(135deg, var(--color-accent), #e8632a)",
               color: "#fff",
             }}
           >
             View lineups
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-4 h-4"
-            >
-              <path
-                fillRule="evenodd"
-                d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z"
-                clipRule="evenodd"
-              />
-            </svg>
             </Link>
           </div>
         </div>

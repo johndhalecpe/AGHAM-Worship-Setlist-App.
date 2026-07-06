@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import KeyPicker from "@/components/ui/KeyPicker";
+
+const AUTO_SAVE_DELAY = 2000;
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
 
@@ -37,7 +40,112 @@ export default function ChordsViewer({
   const [zoomIndex, setZoomIndex] = useState(3);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const initialNotesRef = useRef<Record<string, string>>({});
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
   const [showDrummer, setShowDrummer] = useState(false);
+  const [chordEdits, setChordEdits] = useState<Record<string, string>>({});
+  const chordEditsRef = useRef(chordEdits);
+  chordEditsRef.current = chordEdits;
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSavingRef = useRef(false);
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
+  const editingSong = editingKeyId ? filtered.find((s) => s.id === editingKeyId) ?? null : null;
+
+  async function handleKeyChange(s: SetlistSectionWithSong, key: string) {
+    const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [{ id: s.id, song_key: key }] }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to update key");
+      return;
+    }
+    onSectionsChange((prev) =>
+      prev.map((sec) => (sec.id === s.id ? { ...sec, song_key: key } : sec))
+    );
+    setEditingKeyId(null);
+  }
+
+  function buildItems(currentNotes: Record<string, string>) {
+    return filtered.map((s) => {
+      const chordNotes: Record<string, string> = {};
+      for (const suffix of ["intro", "outro", "transition", "drummer_notes"]) {
+        const val = currentNotes[`${s.id}-${suffix}`];
+        if (val) chordNotes[suffix] = val;
+      }
+      return {
+        id: s.id,
+        chord_notes: Object.keys(chordNotes).length > 0 ? chordNotes : null,
+      };
+    });
+  }
+
+  async function saveNotes(currentNotes: Record<string, string>, silent = false) {
+    if (isPast || isSavingRef.current) return;
+    isSavingRef.current = true;
+    // save chord edits to songs table
+    const currentChordEdits = chordEditsRef.current;
+    for (const s of filtered) {
+      const edited = currentChordEdits[`${s.id}-chords`];
+      if (edited !== undefined && edited !== (s.songs.chords ?? "")) {
+        const songRes = await fetch(`/api/songs/${s.song_id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chords: edited }),
+        });
+        if (!songRes.ok) {
+          isSavingRef.current = false;
+          if (!silent) toast.error(`Failed to save chords for "${s.songs.title}"`);
+          return false;
+        }
+      }
+    }
+    const items = buildItems(currentNotes);
+    const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+    isSavingRef.current = false;
+    if (!res.ok) {
+      if (!silent) toast.error("Failed to save notes");
+      return false;
+    }
+    initialNotesRef.current = { ...currentNotes };
+    if (!silent) toast.success(showDrummer ? "Drummer notes saved" : "Chord notes saved");
+    onSectionsChange((prev) =>
+      prev.map((sec) => {
+        const item = items.find((i) => i.id === sec.id);
+        return item ? { ...sec, chord_notes: item.chord_notes } : sec;
+      })
+    );
+    return true;
+  }
+
+  function handleChordsChange(id: string, value: string) {
+    setChordEdits((prev) => {
+      const next = { ...prev, [id]: value };
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = setTimeout(() => saveNotes(notesRef.current, true), AUTO_SAVE_DELAY);
+      return next;
+    });
+  }
+
+  function handleNotesChange(id: string, value: string) {
+    setNotes((prev) => {
+      const next = { ...prev, [id]: value };
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = setTimeout(() => saveNotes(next, true), AUTO_SAVE_DELAY);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     const initial: Record<string, string> = {};
@@ -68,46 +176,21 @@ export default function ChordsViewer({
       return;
     }
 
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+
     const hasChanges = Object.keys(notes).length !== Object.keys(initialNotesRef.current).length ||
-      Object.entries(notes).some(([k, v]) => initialNotesRef.current[k] !== v);
+      Object.entries(notes).some(([k, v]) => initialNotesRef.current[k] !== v) ||
+      Object.keys(chordEdits).length > 0;
     if (!hasChanges) {
       onClose();
       return;
     }
 
-    const items = filtered.map((s) => {
-      const chordNotes: Record<string, string> = {};
-      for (const suffix of ["intro", "outro", "transition", "drummer_notes"]) {
-        const val = notes[`${s.id}-${suffix}`];
-        if (val) chordNotes[suffix] = val;
-      }
-      return {
-        id: s.id,
-        chord_notes: Object.keys(chordNotes).length > 0 ? chordNotes : null,
-      };
-    });
-
-    const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items }),
-    });
-
-    if (!res.ok) {
-      toast.error("Failed to save notes");
-      return;
-    }
-
-    toast.success(showDrummer ? "Drummer notes saved" : "Chord notes saved");
-    onSectionsChange((prev) =>
-      prev.map((sec) => {
-        const item = items.find((i) => i.id === sec.id);
-        return item ? { ...sec, chord_notes: item.chord_notes } : sec;
-      })
-    );
+    const saved = await saveNotes(notes, false);
+    if (!saved) return;
 
     onClose();
-  }, [filtered, notes, setlist.id, onSectionsChange, onClose]);
+  }, [filtered, notes, chordEdits, setlist.id, onSectionsChange, onClose, isPast, showDrummer]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -121,7 +204,7 @@ export default function ChordsViewer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center cursor-pointer"
       style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
       onClick={handleClose}
     >
@@ -139,7 +222,7 @@ export default function ChordsViewer({
             style={{ color: "var(--color-text)" }}
           >
             {SECTION_LABELS[sectionType] || sectionType}
-          </h2>
+        </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDrummer(!showDrummer)}
@@ -215,42 +298,26 @@ export default function ChordsViewer({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <h3 className="text-base font-semibold truncate" style={{ color: "var(--color-text)" }}>
-                      {s.songs.title}
+                      {s.songs.title.length > 16 ? s.songs.title.slice(0, 16) + "…" : s.songs.title}
                     </h3>
                     {s.songs.author && (
                       <p className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
-                        {s.songs.author}
+                        {s.songs.author.length > 15 ? s.songs.author.slice(0, 15) + "…" : s.songs.author}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span
-                      className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center"
-                      style={{
-                        backgroundColor: "var(--color-badge-key)",
-                        color: "var(--color-badge-key-text)",
-                      }}
-                    >
-                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
-                    </span>
-                    <span
-                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
-                      style={{
-                        backgroundColor: "var(--color-badge-bpm)",
-                        color: "var(--color-badge-bpm-text)",
-                      }}
-                    >
-                      Bpm: {s.songs.default_bpm ?? 120}
-                    </span>
-                    <span
-                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
-                      style={{
-                        backgroundColor: "var(--color-badge-ts)",
-                        color: "var(--color-badge-ts-text)",
-                      }}
-                    >
-                      {s.songs.default_time_signature ?? "4/4"}
-                    </span>
+                      <button
+                        onClick={() => { if (!isPast) setEditingKeyId(s.id); }}
+                        disabled={isPast}
+                        className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+                        style={{
+                          backgroundColor: "var(--color-badge-key)",
+                          color: "var(--color-badge-key-text)",
+                        }}
+                      >
+                        Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                      </button>
                   </div>
                 </div>
                 {s.notes && (
@@ -264,7 +331,7 @@ export default function ChordsViewer({
                   ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                   value={notes[`${s.id}-drummer_notes`] ?? ""}
                   onChange={(e) => {
-                    setNotes((prev) => ({ ...prev, [`${s.id}-drummer_notes`]: e.target.value }));
+                    handleNotesChange(`${s.id}-drummer_notes`, e.target.value);
                     e.target.style.height = "auto";
                     e.target.style.height = e.target.scrollHeight + "px";
                   }}
@@ -294,15 +361,21 @@ export default function ChordsViewer({
             {filtered.map((s, i) => (
               <div key={s.id}>
                 {i === 0 && (
-                  <input
+                  <textarea
                     name={`${s.id}-intro`}
                     autoComplete="off"
+                    ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                     value={notes[`${s.id}-intro`] ?? ""}
-                    onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-intro`]: e.target.value }))}
+                    onChange={(e) => {
+                      handleNotesChange(`${s.id}-intro`, e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = e.target.scrollHeight + "px";
+                    }}
                     readOnly={isPast}
                     onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
                     placeholder="add intro"
-                    className="w-full rounded-lg px-3 py-1.5 mb-4 leading-relaxed outline-none"
+                    rows={1}
+                    className="w-full rounded-lg px-3 py-1.5 mb-4 leading-relaxed outline-none resize-none overflow-hidden"
                     style={{
                       fontFamily: "'Courier New', Courier, monospace",
                       fontSize,
@@ -337,45 +410,29 @@ export default function ChordsViewer({
                       className="text-base font-semibold truncate"
                       style={{ color: "var(--color-text)" }}
                     >
-                      {s.songs.title}
+                      {s.songs.title.length > 16 ? s.songs.title.slice(0, 16) + "…" : s.songs.title}
                     </h3>
                     {s.songs.author && (
                       <p
                         className="text-xs shrink-0"
                         style={{ color: "var(--color-text-tertiary)" }}
                       >
-                        {s.songs.author}
+                        {s.songs.author.length > 15 ? s.songs.author.slice(0, 15) + "…" : s.songs.author}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span
-                      className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center"
-                      style={{
-                        backgroundColor: "var(--color-badge-key)",
-                        color: "var(--color-badge-key-text)",
-                      }}
-                    >
-                      Key: {s.song_key ?? s.songs.default_key ?? "G"}
-                    </span>
-                    <span
-                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
-                      style={{
-                        backgroundColor: "var(--color-badge-bpm)",
-                        color: "var(--color-badge-bpm-text)",
-                      }}
-                    >
-                      Bpm: {s.songs.default_bpm ?? 120}
-                    </span>
-                    <span
-                      className="text-xs font-mono rounded px-1.5 min-h-[22px] flex items-center"
-                      style={{
-                        backgroundColor: "var(--color-badge-ts)",
-                        color: "var(--color-badge-ts-text)",
-                      }}
-                    >
-                      {s.songs.default_time_signature ?? "4/4"}
-                    </span>
+                      <button
+                        onClick={() => { if (!isPast) setEditingKeyId(s.id); }}
+                        disabled={isPast}
+                        className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+                        style={{
+                          backgroundColor: "var(--color-badge-key)",
+                          color: "var(--color-badge-key-text)",
+                        }}
+                      >
+                        Key: {s.song_key ?? s.songs.default_key ?? "G"}
+                      </button>
                   </div>
                 </div>
                 {s.notes && (
@@ -383,8 +440,20 @@ export default function ChordsViewer({
                     &ldquo;{s.notes}&rdquo;
                   </p>
                 )}
-                <pre
-                  className="w-full rounded-lg px-3 py-2 leading-relaxed whitespace-pre-wrap"
+                <textarea
+                  name={`${s.id}-chords`}
+                  autoComplete="off"
+                  ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+                  value={chordEdits[`${s.id}-chords`] ?? s.songs.chords ?? ""}
+                  onChange={(e) => {
+                    handleChordsChange(`${s.id}-chords`, e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = e.target.scrollHeight + "px";
+                  }}
+                  readOnly={isPast}
+                  onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
+                  placeholder="No chords available."
+                  className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
                   style={{
                     fontFamily: "'Courier New', Courier, monospace",
                     fontSize,
@@ -393,19 +462,23 @@ export default function ChordsViewer({
                     backgroundColor: "var(--color-surface-card)",
                     color: "var(--color-accent)",
                   }}
-                >
-                  {s.songs.chords || "No chords available."}
-                </pre>
+                />
                 </div>
-                <input
+                <textarea
                   name={`${s.id}-outro`}
                   autoComplete="off"
+                  ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                   value={notes[`${s.id}-outro`] ?? ""}
-                  onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-outro`]: e.target.value }))}
+                  onChange={(e) => {
+                    handleNotesChange(`${s.id}-outro`, e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = e.target.scrollHeight + "px";
+                  }}
                   readOnly={isPast}
                   onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
                   placeholder="add outro"
-                  className="w-full rounded-lg px-3 py-1.5 mt-4 leading-relaxed outline-none"
+                  rows={1}
+                  className="w-full rounded-lg px-3 py-1.5 mt-4 leading-relaxed outline-none resize-none overflow-hidden"
                   style={{
                     fontFamily: "'Courier New', Courier, monospace",
                     fontSize,
@@ -416,15 +489,21 @@ export default function ChordsViewer({
                   }}
                 />
                 {i < filtered.length - 1 && (
-                  <input
+                  <textarea
                     name={`${s.id}-transition`}
                     autoComplete="off"
+                    ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                     value={notes[`${s.id}-transition`] ?? ""}
-                    onChange={(e) => setNotes((prev) => ({ ...prev, [`${s.id}-transition`]: e.target.value }))}
+                    onChange={(e) => {
+                      handleNotesChange(`${s.id}-transition`, e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = e.target.scrollHeight + "px";
+                    }}
                     readOnly={isPast}
                     onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
                     placeholder="add transition"
-                    className="w-full rounded-lg px-3 py-1.5 mt-2 mb-4 leading-relaxed outline-none"
+                    rows={1}
+                    className="w-full rounded-lg px-3 py-1.5 mt-2 mb-4 leading-relaxed outline-none resize-none overflow-hidden"
                     style={{
                       fontFamily: "'Courier New', Courier, monospace",
                       fontSize,
@@ -448,6 +527,27 @@ export default function ChordsViewer({
           </div>
         )}
       </div>
+      {editingSong && (
+        <div
+          className="absolute inset-0 z-10 flex items-center justify-center p-4"
+          onClick={() => setEditingKeyId(null)}
+        >
+          <div
+            className="rounded-xl p-4 shadow-2xl"
+            style={{
+              backgroundColor: "var(--color-surface-card)",
+              border: "1px solid var(--color-border)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <KeyPicker
+              value={editingSong.song_key ?? editingSong.songs.default_key ?? "G"}
+              onChange={(key) => handleKeyChange(editingSong, key)}
+              onCancel={() => setEditingKeyId(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

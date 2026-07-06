@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
 import SongPicker from "@/components/setlists/song-picker/SongPicker";
 import SongEditForm from "@/components/songs/SongEditForm";
-import KeyPicker from "@/components/ui/KeyPicker";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import LyricsViewer from "./LyricsViewer";
 import ChordsViewer from "./ChordsViewer";
 
@@ -33,23 +33,17 @@ export default function SetlistSections({
 }: SetlistSectionsProps) {
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
   const [chordsView, setChordsView] = useState<{ sectionType: string; songId: string } | null>(null);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [isSavingSong, setIsSavingSong] = useState(false);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
   function getSectionSongs(sectionType: string) {
     return sections
       .filter((s) => s.section_type === sectionType)
       .sort((a, b) => a.sort_order - b.sort_order);
-  }
-
-  function getEffectiveKey(s: SetlistSectionWithSong) {
-    return s.song_key ?? s.songs.default_key ?? "G";
   }
 
   function handleSongAdded(newSection: SetlistSectionWithSong) {
@@ -134,36 +128,6 @@ export default function SetlistSections({
     });
   }
 
-  function startEditingNote(sectionId: string, currentNotes: string | null) {
-    setEditingNoteId(sectionId);
-    setNoteText(currentNotes ?? "");
-  }
-
-  function saveNote(sectionId: string) {
-    onSectionsChange((prev: SetlistSectionWithSong[]) =>
-      prev.map((sec) =>
-        sec.id === sectionId ? { ...sec, notes: noteText || null } : sec
-      )
-    );
-    setEditingNoteId(null);
-    setNoteText("");
-  }
-
-  function cancelNote() {
-    setEditingNoteId(null);
-    setNoteText("");
-  }
-
-  function handleKeyChange(s: SetlistSectionWithSong, key: string) {
-    const newSongKey = !key || key === (s.songs.default_key ?? "G") ? null : key;
-    onSectionsChange((prev: SetlistSectionWithSong[]) =>
-      prev.map((sec) =>
-        sec.id === s.id ? { ...sec, song_key: newSongKey } : sec
-      )
-    );
-    toast.success(newSongKey ? `Key changed to ${key} for this session` : `Key reset to default for this session`);
-  }
-
   async function handleRemoveSongFromSection(sectionId: string) {
     const res = await fetch(
       `/api/setlists/${setlist.id}/sections?sectionId=${sectionId}`,
@@ -244,17 +208,40 @@ export default function SetlistSections({
               border: "1px solid var(--color-border)",
             }}
           >
-            <h3
-              className="font-semibold mb-3"
-              style={{ color: "var(--color-text)" }}
-            >
-              {section.label}
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3
+                className="font-semibold"
+                style={{ color: "var(--color-text)" }}
+              >
+                {section.label}
+              </h3>
+              <div className="flex items-center gap-2">
+                {!isPast && !isLocked && (
+                  <button
+                    onClick={() => setActiveSection(section.key)}
+                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
+                    style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1 -ml-0.5 inline-block align-text-bottom">
+                      <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                    </svg>
+                    Add song
+                  </button>
+                )}
+                {!isPast && isLocked && (
+                  <span className="flex items-center gap-1.5 text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                      <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+                    </svg>
+                    Locked
+                  </span>
+                )}
+              </div>
+            </div>
             <div className="flex flex-col gap-1">
                 {sectionSongs.map((s, songIndex) => {
                 const isDragging = draggedSectionId === s.id;
                 const isDragOver = dragOverSectionId === s.id;
-                const isEditingNote = editingNoteId === s.id;
                 const isFirstSong = songIndex === 0;
                 const isLastSong = songIndex === sectionSongs.length - 1;
                 return (
@@ -266,7 +253,7 @@ export default function SetlistSections({
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, section.key, s.id)}
                         onDragEnd={handleDragEnd}
-                        className="flex items-start gap-2 text-sm py-3 px-3 rounded-lg -mx-3 transition-colors"
+                        className="flex items-center gap-3 text-sm py-3 px-3 rounded-lg -mx-3 transition-colors"
                         style={{
                           color: "var(--color-text-secondary)",
                           opacity: isDragging ? 0.4 : 1,
@@ -276,176 +263,73 @@ export default function SetlistSections({
                           cursor: "default",
                         }}
                       >
-                        <div className={`flex flex-col items-center gap-0.5 pt-0.5 shrink-0 ${isPast || isLocked ? "invisible" : ""}`}>
-                          <button
-                            onClick={() => handleMoveSong(section.key, s.id, "up")}
-                            disabled={isFirstSong}
-                            className="leading-none transition-colors disabled:opacity-20 hover:opacity-80 min-h-[28px] min-w-[28px] flex items-center justify-center rounded"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                            title="Move up"
+                          <div
+                            className={`flex items-center justify-center shrink-0 ${isPast || isLocked ? "invisible" : ""}`}
+                            title="Drag to reorder"
                           >
-                            ▲
-                          </button>
-                          <button
-                            onClick={() => handleMoveSong(section.key, s.id, "down")}
-                            disabled={isLastSong}
-                            className="leading-none transition-colors disabled:opacity-20 hover:opacity-80 min-h-[28px] min-w-[28px] flex items-center justify-center rounded"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                            title="Move down"
-                          >
-                            ▼
-                          </button>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="w-6 h-6"
+                              style={{ color: "var(--color-text-tertiary)", opacity: 0.4 }}
+                            >
+                              <path d="M15.5 17C16.3284 17 17 17.6716 17 18.5C17 19.3284 16.3284 20 15.5 20C14.6716 20 14 19.3284 14 18.5C14 17.6716 14.6716 17 15.5 17ZM8.5 17C9.32843 17 10 17.6716 10 18.5C10 19.3284 9.32843 20 8.5 20C7.67157 20 7 19.3284 7 18.5C7 17.6716 7.67157 17 8.5 17ZM15.5 10C16.3284 10 17 10.6716 17 11.5C17 12.3284 16.3284 13 15.5 13C14.6716 13 14 12.3284 14 11.5C14 10.6716 14.6716 10 15.5 10ZM8.5 10C9.32843 10 10 10.6716 10 11.5C10 12.3284 9.32843 13 8.5 13C7.67157 13 7 12.3284 7 11.5C7 10.6716 7.67157 10 8.5 10ZM15.5 3C16.3284 3 17 3.67157 17 4.5C17 5.32843 16.3284 6 15.5 6C14.6716 6 14 5.32843 14 4.5C14 3.67157 14.6716 3 15.5 3ZM8.5 3C9.32843 3 10 3.67157 10 4.5C10 5.32843 9.32843 6 8.5 6C7.67157 6 7 5.32843 7 4.5C7 3.67157 7.67157 3 8.5 3Z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium truncate" style={{ color: "var(--color-text)" }}>
-                              {s.songs.title}
+                              {s.songs.title.length > 16 ? s.songs.title.slice(0, 16) + "…" : s.songs.title}
                             </span>
                             {s.songs.author && (
                               <span className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
-                                {s.songs.author}
+                                {s.songs.author.length > 15 ? s.songs.author.slice(0, 15) + "…" : s.songs.author}
                               </span>
                             )}
-                            <button
-                              onClick={() => startEditingNote(s.id, s.notes)}
-                              className={`p-1 rounded shrink-0 min-h-[28px] min-w-[28px] flex items-center justify-center hover:opacity-80 ${isPast || isLocked ? "invisible" : ""}`}
-                              style={{
-                                color: s.notes ? "var(--color-accent)" : "var(--color-text-tertiary)",
-                                opacity: 0.6,
-                              }}
-                              title={s.notes ? "Edit note" : "Add a note"}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                                <path d="M2.695 14.763A1 1 0 0 1 2.001 14v-2.17a1 1 0 0 1 .293-.707l10-10a1 1 0 0 1 1.414 0l2.17 2.17a1 1 0 0 1 0 1.414l-10 10a1 1 0 0 1-.707.293H4a1 1 0 0 1-1-1v-1.17a1 1 0 0 1 .293-.707l9.463-9.464a.5.5 0 0 1 .708.707L3.402 14.056Z" />
-                              </svg>
-                            </button>
-
                           </div>
-                          {s.notes && !isEditingNote && (
-                            <p className="text-xs mt-0.5 italic leading-relaxed truncate" style={{ color: "var(--color-text-tertiary)" }}>
-                              &ldquo;{s.notes}&rdquo;
-                            </p>
-                          )}
-                          {isEditingNote && (
-                            <div className="mt-1.5 flex flex-col gap-1.5">
-                              <textarea
-                                value={noteText}
-                                onChange={(e) => setNoteText(e.target.value)}
-                                className="w-full rounded-lg px-2.5 py-1.5 text-xs transition-colors"
-                                style={{
-                                  border: "1px solid var(--color-border)",
-                                  backgroundColor: "var(--color-surface)",
-                                  color: "var(--color-text)",
-                                }}
-                                onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
-                                onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-                                rows={2}
-                                placeholder="e.g. We're only singing the bridge..."
-                                autoFocus
-                              />
-                              <div className="flex gap-1.5">
-                                <button
-                                  onClick={() => saveNote(s.id)}
-                                  className="rounded px-2 py-1 text-xs font-medium transition-colors"
-                                  style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={cancelNote}
-                                  className="rounded px-2 py-1 text-xs font-medium transition-colors"
-                                  style={{ border: "1px solid var(--color-border)", color: "var(--color-text-secondary)" }}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                            {editingKeyId === s.id ? (
-                              <KeyPicker
-                                value={getEffectiveKey(s)}
-                                onChange={(key) => {
-                                  handleKeyChange(s, key);
-                                  setEditingKeyId(null);
-                                }}
-                                onCancel={() => setEditingKeyId(null)}
-                              />
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  if (isPast) { toast.error("Can't edit past lineups"); return; }
-                                  if (!isLocked) setEditingKeyId(s.id);
-                                }}
-                                className={`text-xs font-mono font-semibold rounded px-1.5 min-h-[28px] flex items-center shrink-0 ${!isPast && !isLocked ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
-                                style={{
-                                  backgroundColor: s.song_key ? "var(--color-accent)" : "var(--color-badge-key)",
-                                  color: s.song_key ? "var(--color-text-on-accent)" : "var(--color-badge-key-text)",
-                                }}
-                                title="Tap to change key"
-                              >
-                                Key: {getEffectiveKey(s)}
-                              </button>
-                            )}
-                            <span
-                              className="text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0"
-                              style={{
-                                backgroundColor: "var(--color-badge-bpm)",
-                                color: "var(--color-badge-bpm-text)",
-                              }}
-                            >
-                              Bpm: {s.songs.default_bpm ?? 120}
-                            </span>
-                            <span
-                              className="text-xs font-mono rounded px-1.5 min-h-[28px] flex items-center shrink-0"
-                              style={{
-                                backgroundColor: "var(--color-badge-ts)",
-                                color: "var(--color-badge-ts-text)",
-                              }}
-                            >
-                              {s.songs.default_time_signature ?? "4/4"}
-                            </span>
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-nowrap">
                             <button
                               onClick={() => setChordsView({ sectionType: section.key, songId: s.id })}
-                              className="text-xs font-medium rounded px-2 min-h-[28px] flex items-center whitespace-nowrap hover:opacity-80"
-                              style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
+                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                              style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                                <path fillRule="evenodd" d="M4 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4Zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V4Zm-6 6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2Zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2Z" clipRule="evenodd" />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                                <path d="M9 4.318A1 1 0 0 1 10.366 3.5l5.19 1.298A1 1 0 0 1 16 5.75v8.534a2.5 2.5 0 0 1-1.744 2.394l-1.838.613a2.5 2.5 0 0 1-3.156-1.662l-.747-2.611A2.5 2.5 0 0 1 9 10.358V4.318Z" />
                               </svg>
-                              Show Chords
+                              Chords
                             </button>
                             <button
                               onClick={() => setLyricsView({ sectionType: section.key, songId: s.id })}
-                              className="text-xs font-medium rounded px-2 min-h-[28px] flex items-center whitespace-nowrap hover:opacity-80"
-                              style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
+                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                              style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                                <path fillRule="evenodd" d="M3 4a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm0 4a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm0 4a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm0 4a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Z" clipRule="evenodd" />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                                <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
                               </svg>
-                              Show Lyrics
+                              Lyrics
                             </button>
                           </div>
                         </div>
                         <div className={`flex flex-col items-center gap-0.5 shrink-0 ${isPast || isLocked ? "invisible" : ""}`}>
                           <button
                             onClick={() => setEditingSong(buildSong(s))}
-                            className="p-1 rounded min-h-[28px] min-w-[28px] flex items-center justify-center hover:opacity-80"
+                            className="p-1.5 rounded min-h-[36px] min-w-[36px] flex items-center justify-center hover:opacity-80"
                             style={{ color: "var(--color-accent)", opacity: 0.6 }}
                             title="Edit song details"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                               <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
                               <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
                             </svg>
                           </button>
                           <button
-                            onClick={() => handleRemoveSongFromSection(s.id)}
-                            className="p-1 rounded min-h-[28px] min-w-[28px] flex items-center justify-center hover:opacity-100"
-                            style={{ color: "var(--color-danger)", opacity: 0.5 }}
+                            onClick={() => setConfirmRemoveId(s.id)}
+                            className="p-1.5 rounded min-h-[36px] min-w-[36px] flex items-center justify-center hover:opacity-100"
+                            style={{ color: "var(--color-danger)", opacity: 0.55 }}
                             title="Remove song"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                               <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
                             </svg>
                           </button>
@@ -455,6 +339,11 @@ export default function SetlistSections({
                 );
               })}
             </div>
+            {sectionSongs.length > 0 && !isPast && (
+              <p className="text-[10px] italic text-center mt-2" style={{ color: "var(--color-text-tertiary)", opacity: 0.45 }}>
+                Drag to reorder
+              </p>
+            )}
             {sectionSongs.length === 0 && (
               <p
                 className="text-xs mb-3"
@@ -463,27 +352,48 @@ export default function SetlistSections({
                 No songs in this section yet.
               </p>
             )}
-            {!isPast && !isLocked && (
-              activeSection === section.key ? (
-                <SongPicker
-                  setlistId={setlist.id}
-                  sectionType={section.key}
-                  onSongAdded={handleSongAdded}
-                  onCancel={() => setActiveSection(null)}
-                />
-              ) : (
-                <button
-                  onClick={() => setActiveSection(section.key)}
-                  className="mt-3 text-sm font-medium transition-colors"
-                  style={{ color: "var(--color-accent)" }}
-                >
-                  + Add song
-                </button>
-              )
-            )}
           </div>
         );
       })}
+      {activeSection && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 cursor-pointer"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+          onClick={() => setActiveSection(null)}
+        >
+          <div
+            className="w-full rounded-xl p-5 sm:p-6 overflow-y-auto max-h-[90vh]"
+            style={{
+              maxWidth: "540px",
+              backgroundColor: "var(--color-surface-card)",
+              border: "1px solid var(--color-border)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
+                Add a song
+              </h3>
+              <button
+                onClick={() => setActiveSection(null)}
+                className="p-1.5 rounded transition-colors hover:opacity-80 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                style={{ color: "var(--color-text-tertiary)" }}
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                  <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                </svg>
+              </button>
+            </div>
+            <SongPicker
+              setlistId={setlist.id}
+              sectionType={activeSection}
+              onSongAdded={handleSongAdded}
+              onCancel={() => setActiveSection(null)}
+            />
+          </div>
+        </div>
+      )}
       {chordsView && (
         <ChordsViewer
           setlist={setlist}
@@ -505,7 +415,7 @@ export default function SetlistSections({
       )}
       {editingSong && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 cursor-pointer"
           style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
           onClick={() => setEditingSong(null)}
         >
@@ -541,6 +451,17 @@ export default function SetlistSections({
             />
           </div>
         </div>
+      )}
+      {confirmRemoveId && (
+        <ConfirmDialog
+          title="Remove song"
+          message="Are you sure you want to remove this song from the lineup?"
+          onConfirm={() => {
+            handleRemoveSongFromSection(confirmRemoveId);
+            setConfirmRemoveId(null);
+          }}
+          onCancel={() => setConfirmRemoveId(null)}
+        />
       )}
     </>
   );
