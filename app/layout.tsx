@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://agham-worship-setlist-app.vercel.app"),
   icons: {
     icon: "/transparent-logo.svg",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AGHAM Worship Setlist",
   },
 };
 

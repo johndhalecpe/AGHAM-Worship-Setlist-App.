@@ -37,3 +37,8 @@ Status: working
 Where: `app/globals.css`
 What it does: Teal accent color (`--color-accent-secondary`) added alongside the primary orange for visual variety. Uses teal-600 in light mode, teal-400 in dark mode.
 Status: working
+
+## PWA (installable web app)
+Where: `app/manifest.ts`, `app/layout.tsx`
+What it does: Generates a Web App Manifest (`/manifest.webmanifest`) and iOS `apple-mobile-web-app-*` meta tags so the app can be installed as a standalone PWA on mobile and desktop. Icons (`/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png`) must be placed in `/public` manually.
+Status: working
