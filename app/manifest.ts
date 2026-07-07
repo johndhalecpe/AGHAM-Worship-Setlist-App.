@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "AGHAM Worship Setlist",
-    short_name: "AGHAM",
+    short_name: "Agham Setlist",
     display: "standalone",
     start_url: "/",
     theme_color: "#252320",
