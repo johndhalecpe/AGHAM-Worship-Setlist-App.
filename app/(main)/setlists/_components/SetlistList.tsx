@@ -2,8 +2,41 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
 import SetlistPreviewCard from "./SetlistPreviewCard";
+
+function Greeting() {
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+      if (profile) setName(profile.name);
+    })();
+  }, []);
+
+  if (!name) return null;
+
+  const hour = new Date().getHours();
+  let greeting: string;
+  if (hour < 12) greeting = "Good morning";
+  else if (hour < 18) greeting = "Good afternoon";
+  else greeting = "Good evening";
+
+  return (
+    <p className="text-base font-medium mb-1" style={{ color: "var(--color-text-secondary)" }}>
+      {greeting}, {name}
+    </p>
+  );
+}
 
 type SetlistListProps = {
   setlists: SetlistWithSections[];
@@ -29,6 +62,7 @@ export default function SetlistList({ setlists }: SetlistListProps) {
 
   return (
     <div>
+      <Greeting />
       <div className="flex items-center justify-between gap-3 mb-6">
         <h2
           className="text-lg sm:text-xl font-bold"
@@ -40,7 +74,7 @@ export default function SetlistList({ setlists }: SetlistListProps) {
           href="/setlists/new"
           className="rounded-lg px-4 py-2 text-sm font-medium text-center transition-all hover:-translate-y-0.5 w-full sm:w-auto"
           style={{
-            backgroundColor: "#D84F0B",
+            backgroundColor: "var(--color-accent)",
             color: "var(--color-text-on-accent)",
           }}
         >

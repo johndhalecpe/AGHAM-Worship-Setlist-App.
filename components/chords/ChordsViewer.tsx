@@ -24,7 +24,7 @@ export default function ChordsViewer({ chords, editable, onChange }: ChordsViewe
           whiteSpace: "pre",
           overflow: "auto hidden",
         }}
-        onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+        onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
         onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
       />
     );

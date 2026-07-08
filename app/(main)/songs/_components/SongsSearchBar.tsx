@@ -45,7 +45,7 @@ export default function SongsSearchBar({ value, onChange }: SongsSearchBarProps)
         style={{ color: "var(--color-text)" }}
         onFocus={() => {
           if (borderRef.current) {
-            borderRef.current.style.borderColor = "#D84F0B";
+            borderRef.current.style.borderColor = "var(--color-accent)";
           }
         }}
         onBlur={() => {

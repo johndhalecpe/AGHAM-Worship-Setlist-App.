@@ -228,7 +228,7 @@ export default function ChordsViewer({
               onClick={() => setShowDrummer(!showDrummer)}
               className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
               style={{
-                backgroundColor: showDrummer ? "#D84F0B" : "var(--color-surface-card)",
+                backgroundColor: showDrummer ? "var(--color-accent)" : "var(--color-surface-card)",
                 color: showDrummer ? "#fff" : "var(--color-text-secondary)",
                 border: showDrummer ? "none" : "1px solid var(--color-border)",
               }}

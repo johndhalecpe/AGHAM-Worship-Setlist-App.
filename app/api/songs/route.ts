@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireUser, unauthorized } from "@/lib/auth-server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -26,6 +27,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+
   const body = await request.json();
 
   const hasDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);

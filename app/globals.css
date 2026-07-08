@@ -34,8 +34,8 @@
   --color-border: #E5E1D8;
   --color-border-hover: #D4CEBF;
   --color-text: #2D2B28;
-  --color-text-secondary: #7A756E;
-  --color-text-tertiary: #A39D93;
+  --color-text-secondary: #5C5852;
+  --color-text-tertiary: #595551;
   --color-accent: #D84F0B;
   --color-accent-secondary: #0D9488;
   --color-text-on-accent-secondary: #FFFFFF;
@@ -50,6 +50,11 @@
   --color-badge-ts-text: #16A34A;
   --color-badge-lyrics: #F3E8FF;
   --color-badge-lyrics-text: #9333EA;
+
+  /* Glassmorphism — light mode */
+  --glass-bg: rgba(246, 244, 239, 0.88);
+  --glass-panel-bg: rgba(246, 244, 239, 0.55);
+  --glass-border: rgba(0, 0, 0, 0.08);
 }
 
 html {
@@ -80,6 +85,11 @@ html.dark {
   --color-badge-ts-text: #4ADE80;
   --color-badge-lyrics: #2D1B3D;
   --color-badge-lyrics-text: #C084FC;
+
+  /* Glassmorphism — dark mode */
+  --glass-bg: rgba(23, 21, 18, 0.85);
+  --glass-panel-bg: rgba(23, 21, 18, 0.38);
+  --glass-border: rgba(255, 255, 255, 0.12);
 }
 
 body {
@@ -154,4 +164,70 @@ button, a, input, textarea, select {
   transform: translateX(-100%) skewX(-15deg);
   animation: spotlight-sweep 3s ease-in-out infinite;
   pointer-events: none;
+}
+
+@keyframes grow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-grow-in {
+  animation: grow-in 0.7s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.spotlight-btn-subtle {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.spotlight-btn-subtle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 50px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.09),
+    transparent
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  animation: spotlight-sweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Glassmorphism card with @supports fallback */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 0.5px solid var(--glass-border);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-card {
+    background: rgba(23, 21, 18, 0.92);
+  }
+}
+
+.glass-panel {
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }

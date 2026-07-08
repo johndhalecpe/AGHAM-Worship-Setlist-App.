@@ -59,7 +59,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
             color: "var(--color-text)",
           }}
           onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
+            (e.target.style.borderColor = "var(--color-accent)")
           }
           onBlur={(e) =>
             (e.target.style.borderColor = "var(--color-border)")
@@ -96,7 +96,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
             color: "var(--color-text)",
           }}
           onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
+            (e.target.style.borderColor = "var(--color-accent)")
           }
           onBlur={(e) =>
             (e.target.style.borderColor = "var(--color-border)")
@@ -121,7 +121,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
             color: "var(--color-text)",
           }}
           onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
+            (e.target.style.borderColor = "var(--color-accent)")
           }
           onBlur={(e) =>
             (e.target.style.borderColor = "var(--color-border)")
@@ -146,7 +146,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
               style={{
                 backgroundColor:
                   editBranch === b.value
-                    ? "#D84F0B"
+                    ? "var(--color-accent)"
                     : "var(--color-surface)",
                 color:
                   editBranch === b.value
@@ -154,7 +154,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
                     : "var(--color-text-secondary)",
                 border:
                   editBranch === b.value
-                    ? "1px solid #D84F0B"
+                    ? "1px solid var(--color-accent)"
                     : "1px solid var(--color-border)",
               }}
             >
@@ -180,7 +180,7 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           disabled={isSaving}
           className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
-            backgroundColor: "#D84F0B",
+            backgroundColor: "var(--color-accent)",
             color: "var(--color-text-on-accent)",
           }}
         >

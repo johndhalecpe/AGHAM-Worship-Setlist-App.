@@ -96,7 +96,7 @@ export default function NewSetlistForm() {
                 backgroundColor: "var(--color-surface)",
                 color: "var(--color-text)",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+              onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
               onBlur={(e) =>
                 (e.target.style.borderColor = "var(--color-border)")
               }
@@ -137,7 +137,7 @@ export default function NewSetlistForm() {
                 backgroundColor: "var(--color-surface)",
                 color: "var(--color-text)",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+              onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
               onBlur={(e) =>
                 (e.target.style.borderColor = "var(--color-border)")
               }
@@ -160,7 +160,7 @@ export default function NewSetlistForm() {
                   style={{
                     backgroundColor:
                       branch === b.value
-                        ? "#D84F0B"
+                        ? "var(--color-accent)"
                         : "var(--color-surface)",
                     color:
                       branch === b.value
@@ -168,7 +168,7 @@ export default function NewSetlistForm() {
                         : "var(--color-text-secondary)",
                     border:
                       branch === b.value
-                        ? "1px solid #D84F0B"
+                        ? "1px solid var(--color-accent)"
                         : "1px solid var(--color-border)",
                   }}
                 >
@@ -194,7 +194,7 @@ export default function NewSetlistForm() {
                 backgroundColor: "var(--color-surface)",
                 color: "var(--color-text)",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+              onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
               onBlur={(e) =>
                 (e.target.style.borderColor = "var(--color-border)")
               }
@@ -207,7 +207,7 @@ export default function NewSetlistForm() {
             disabled={loading}
             className="rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
             style={{
-              backgroundColor: "#D84F0B",
+              backgroundColor: "var(--color-accent)",
               color: "var(--color-text-on-accent)",
             }}
           >

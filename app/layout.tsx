@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "sonner";
+import ClientAuthSetup from "@/components/ClientAuthSetup";
 import "./globals.css";
 
 const geist = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
       </head>
       <body className={geist.className}>
         {children}
+        <ClientAuthSetup />
         <Toaster
           position="top-center"
           toastOptions={{

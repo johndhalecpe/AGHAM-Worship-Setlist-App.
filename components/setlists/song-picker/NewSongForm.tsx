@@ -167,7 +167,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           color: "var(--color-text)",
         }}
           onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
+            (e.target.style.borderColor = "var(--color-accent)")
           }
           onBlur={(e) =>
             e.target.style.borderColor = "var(--color-border)"
@@ -187,7 +187,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           }}
           onFocus={(e) => {
             setShowAuthorSuggestions(true);
-            e.target.style.borderColor = "#D84F0B";
+            e.target.style.borderColor = "var(--color-accent)";
           }}
           onBlur={(e) => {
             e.target.style.borderColor = "var(--color-border)";
@@ -241,7 +241,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
             style={{
               backgroundColor:
                 newCategory === opt
-                  ? "#D84F0B"
+                  ? "var(--color-accent)"
                   : "var(--color-surface)",
               color:
                 newCategory === opt
@@ -249,7 +249,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
                   : "var(--color-text-secondary)",
               border:
                 newCategory === opt
-                  ? "1px solid #D84F0B"
+                  ? "1px solid var(--color-accent)"
                   : "1px solid var(--color-border)",
             }}
           >
@@ -272,7 +272,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
             color: "var(--color-text)",
           }}
           onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
+            (e.target.style.borderColor = "var(--color-accent)")
           }
           onBlur={(e) =>
             (e.target.style.borderColor = "var(--color-border)")
@@ -294,9 +294,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
               onClick={() => setNewLanguage(lang)}
               className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
               style={{
-                backgroundColor: newLanguage === lang ? "#D84F0B" : "var(--color-surface)",
+                backgroundColor: newLanguage === lang ? "var(--color-accent)" : "var(--color-surface)",
                 color: newLanguage === lang ? "#fff" : "var(--color-text-secondary)",
-                border: newLanguage === lang ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                border: newLanguage === lang ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
               }}
             >
               {lang === "english" ? "English" : "Filipino"}
@@ -332,7 +332,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
               backgroundColor: "var(--color-surface-card)",
               color: "var(--color-text)",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
             onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
           />
         </div>
@@ -350,7 +350,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
                 style={{
                   backgroundColor:
                     defaultTimeSignature === ts
-                      ? "#D84F0B"
+                      ? "var(--color-accent)"
                       : "var(--color-surface)",
                   color:
                     defaultTimeSignature === ts
@@ -358,7 +358,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
                       : "var(--color-text-secondary)",
                   border:
                     defaultTimeSignature === ts
-                      ? "1px solid #D84F0B"
+                      ? "1px solid var(--color-accent)"
                       : "1px solid var(--color-border)",
                 }}
               >
@@ -373,7 +373,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         disabled={loading}
         className="rounded-lg px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
         style={{
-          backgroundColor: "#D84F0B",
+          backgroundColor: "var(--color-accent)",
           color: "var(--color-text-on-accent)",
         }}
       >

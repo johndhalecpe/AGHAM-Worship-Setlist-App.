@@ -1,5 +1,11 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import AuthCard, { type AuthView } from "@/components/auth/AuthCard";
+import StatusBanner, { type StatusInfo } from "@/components/ui/StatusBanner";
 
 
 function HomePageSkeleton() {
@@ -35,20 +41,66 @@ function HomePageSkeleton() {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const [view, setView] = useState<AuthView>("landing");
+  const [direction, setDirection] = useState<"forward" | "back">("forward");
+  const [statusInfo, setStatusInfo] = useState<StatusInfo>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace("/setlists");
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, [router]);
+
+  function goToLogin() {
+    setDirection("forward");
+    setView("login");
+  }
+
+  function goToLanding() {
+    setDirection("back");
+    setView("landing");
+  }
+
+  function goToCreateAccount() {
+    setDirection("forward");
+    setView("create-account");
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: "var(--color-surface)" }} />
+    );
+  }
+
   return (
     <>
+    <StatusBanner statusInfo={statusInfo} onDismiss={() => setStatusInfo(null)} />
     <div className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0" aria-hidden="true">
-        <HomePageSkeleton />
+        <div className="opacity-40 pointer-events-none select-none">
+          <HomePageSkeleton />
+        </div>
       </div>
 
-      <div className="absolute inset-0 backdrop-blur" aria-hidden="true" />
+      {/* Scrim — ensures text readability over the background */}
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.15)" }}
+      />
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
+      <div className="relative z-10 flex min-h-screen max-h-screen items-center justify-center p-6">
+        {/* Mobile card — glassmorphism */}
         <div
-          className="w-full max-w-md rounded-3xl p-8 sm:p-12 text-center"
+          className="w-full max-w-md rounded-3xl p-8 sm:p-12 text-center lg:hidden glass-card overflow-y-auto"
           style={{
-            backgroundColor: "var(--color-surface-card)",
+            maxHeight: "calc(100vh - 3rem)",
             boxShadow:
               "0 4px 6px -1px rgba(0,0,0,.05), 0 10px 24px -4px rgba(0,0,0,.08)",
           }}
@@ -79,17 +131,118 @@ export default function Home() {
             </span>
             worship team!
           </p>
-          <Link
-            href="/setlists"
-            className="spotlight-btn inline-flex items-center rounded-xl px-14 py-5 text-lg font-semibold mt-10 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent)]"
-            style={{
-              background: "linear-gradient(135deg, var(--color-accent), #e8632a)",
-              color: "#fff",
-            }}
-          >
-            View lineups
-            </Link>
-          </div>
+          <AuthCard
+            view={view}
+            onGoToLogin={goToLogin}
+            onGoToCreateAccount={goToCreateAccount}
+            onGoToLanding={goToLanding}
+            direction={direction}
+            onRejected={(name) => setStatusInfo({ type: "rejected", name })}
+            onPending={(name) => setStatusInfo({ type: "pending", name })}
+          />
+        </div>
+
+        {/* Desktop — glassmorphism card for all views */}
+        <div
+          className="hidden lg:flex w-full rounded-3xl overflow-hidden glass-card"
+          style={{
+            maxWidth: 1050,
+            height: 680,
+            maxHeight: "calc(100vh - 3rem)",
+            boxShadow:
+              "0 4px 6px -1px rgba(0,0,0,.05), 0 10px 24px -4px rgba(0,0,0,.08)",
+          }}
+        >
+          {view === "landing" ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
+              <Image
+                src="/transparent-logo.svg"
+                alt="Agham Setlist"
+                className="mb-8 w-36 h-36 object-contain"
+                width={144}
+                height={144}
+              />
+              <h1 className="text-3xl font-bold leading-tight tracking-tight">
+                Plan your{" "}
+                <span style={{ color: "var(--color-accent)" }}>Worship</span>
+                <br />
+                <span className="text-2xl">
+                  Lead the{" "}
+                  <span style={{ color: "var(--color-accent)" }}>Congregation</span>
+                </span>
+              </h1>
+              <p
+                className="mt-4 text-sm leading-relaxed"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                Welcome,{" "}
+                <span className="font-semibold" style={{ color: "var(--color-accent)" }}>
+                  Agham{" "}
+                </span>
+                worship team!
+              </p>
+              <AuthCard
+                view={view}
+                onGoToLogin={goToLogin}
+                onGoToCreateAccount={goToCreateAccount}
+                onGoToLanding={goToLanding}
+                direction={direction}
+              />
+
+              <p
+                className="mt-8 text-[10px] leading-relaxed select-none"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                Agham Setlist 0.1.3<br />
+                Property of AGHAM &copy; {new Date().getFullYear()}<br />
+                dev - johndhalecpe
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="w-[45%] flex flex-col items-center justify-center text-center p-12">
+                <Image
+                  src="/transparent-logo.svg"
+                  alt="Agham Setlist"
+                  className="mb-6 w-36 h-36 object-contain"
+                  width={144}
+                  height={144}
+                />
+                <h1 className="text-3xl font-bold leading-tight tracking-tight">
+                  Plan your{" "}
+                  <span style={{ color: "var(--color-accent)" }}>Worship</span>
+                </h1>
+                <p className="text-xl mt-1">
+                  Lead the{" "}
+                  <span style={{ color: "var(--color-accent)" }}>Congregation</span>
+                </p>
+                <p
+                  className="mt-5 text-sm leading-relaxed max-w-xs"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  Welcome,{" "}
+                  <span className="font-semibold" style={{ color: "var(--color-accent)" }}>
+                    Agham
+                  </span>{" "}
+                  worship team!
+                </p>
+              </div>
+              <div
+                className="w-[55%] flex flex-col justify-start overflow-y-auto p-8 glass-panel"
+              >
+                <AuthCard
+                  view={view}
+                  onGoToLogin={goToLogin}
+                  onGoToCreateAccount={goToCreateAccount}
+                  onGoToLanding={goToLanding}
+                  direction={direction}
+                  onRejected={(name) => setStatusInfo({ type: "rejected", name })}
+                  onPending={(name) => setStatusInfo({ type: "pending", name })}
+                />
+              </div>
+            </>
+          )}
+        </div>
         </div>
       </div>
     </>

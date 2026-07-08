@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireUser, unauthorized } from "@/lib/auth-server";
 
 export async function GET(
   request: Request,
@@ -23,6 +24,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+
   const { id } = await params;
   const body = await request.json();
 
@@ -62,6 +66,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+
   const { id } = await params;
   const { error } = await supabase.from("songs").delete().eq("id", id);
 

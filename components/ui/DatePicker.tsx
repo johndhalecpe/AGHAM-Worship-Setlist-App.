@@ -132,7 +132,7 @@ export default function DatePicker({ value, onChange, minDate }: DatePickerProps
           color: value ? "var(--color-text)" : "var(--color-text-tertiary)",
         }}
         onFocus={(e) =>
-          (e.currentTarget.style.borderColor = "#D84F0B")
+          (e.currentTarget.style.borderColor = "var(--color-accent)")
         }
         onBlur={(e) =>
           (e.currentTarget.style.borderColor = "var(--color-border)")
@@ -242,7 +242,7 @@ export default function DatePicker({ value, onChange, minDate }: DatePickerProps
                 className="py-1 text-xs font-medium"
                 style={{
                   color:
-                    i === 0 ? "#D84F0B" : "var(--color-text-tertiary)",
+                    i === 0 ? "var(--color-accent)" : "var(--color-text-tertiary)",
                 }}
               >
                 {name}
@@ -271,10 +271,10 @@ export default function DatePicker({ value, onChange, minDate }: DatePickerProps
                       : isSelected(day)
                       ? "#fff"
                       : isSunday
-                      ? "#D84F0B"
+                      ? "var(--color-accent)"
                       : "var(--color-text)",
                     backgroundColor: isSelected(day)
-                      ? "#D84F0B"
+                      ? "var(--color-accent)"
                       : isToday(day)
                       ? "var(--color-surface-muted)"
                       : "transparent",

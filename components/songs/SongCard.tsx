@@ -96,7 +96,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
             <button
               onClick={() => setShowLyrics(!showLyrics)}
               className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80"
-              style={{ color: "#D84F0B" }}
+              style={{ color: "var(--color-accent)" }}
             >
               {showLyrics ? "Hide Lyrics" : "Show Lyrics"}
             </button>
@@ -127,11 +127,11 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
             )}
             {(song.default_key || song.default_bpm || song.default_time_signature) && (
               <span className="flex items-baseline gap-x-0.5 text-[10px]">
-                {song.default_key && (<><span style={{ color: "#D84F0B" }}>key</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_key}</span></>)}
+                {song.default_key && (<><span style={{ color: "var(--color-accent)" }}>key</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_key}</span></>)}
                 {song.default_key && (song.default_bpm || song.default_time_signature) && <span className="mx-0.5" style={{ color: "var(--color-text-tertiary)" }}>·</span>}
-                {song.default_bpm && (<><span style={{ color: "#D84F0B" }}>bpm</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_bpm}</span></>)}
+                {song.default_bpm && (<><span style={{ color: "var(--color-accent)" }}>bpm</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_bpm}</span></>)}
                 {song.default_bpm && song.default_time_signature && <span className="mx-0.5" style={{ color: "var(--color-text-tertiary)" }}>·</span>}
-                {song.default_time_signature && (<><span style={{ color: "#D84F0B" }}>time</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_time_signature}</span></>)}
+                {song.default_time_signature && (<><span style={{ color: "var(--color-accent)" }}>time</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_time_signature}</span></>)}
               </span>
             )}
           </div>
@@ -147,7 +147,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
                 }
               }}
               className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80"
-              style={{ color: "#D84F0B" }}
+              style={{ color: "var(--color-accent)" }}
             >
               {showChords ? "Hide Chords" : "Show Chords"}
             </button>
@@ -177,8 +177,8 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
               key={detail}
               className="text-xs rounded-full px-2 py-0.5 font-medium"
               style={{
-                color: "#D84F0B",
-                backgroundColor: "#D84F0B15",
+                color: "var(--color-accent)",
+                backgroundColor: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
               }}
             >
               {detail}
@@ -236,7 +236,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
                   disabled={saving}
                   className="rounded px-2 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50"
                   style={{
-                    backgroundColor: "#D84F0B",
+                    backgroundColor: "var(--color-accent)",
                     color: "white",
                   }}
                 >

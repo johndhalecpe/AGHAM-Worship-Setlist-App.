@@ -122,7 +122,7 @@ export default function SongPicker({
             color: "var(--color-text)",
           }}
           onFocus={(e) =>
-            (e.target.style.borderColor = "#D84F0B")
+            (e.target.style.borderColor = "var(--color-accent)")
           }
           onBlur={(e) =>
             (e.target.style.borderColor = "var(--color-border)")
@@ -144,7 +144,7 @@ export default function SongPicker({
               setShowNewSongForm(true);
             }}
             className="mt-2 text-sm font-medium w-full text-left px-3 py-2 rounded-lg transition-colors shrink-0"
-            style={{ color: "#D84F0B" }}
+            style={{ color: "var(--color-accent)" }}
           >
             + Add &ldquo;{search}&rdquo; as a new song
           </button>

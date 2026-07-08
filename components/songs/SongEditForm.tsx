@@ -153,7 +153,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           backgroundColor: "var(--color-surface)",
           color: "var(--color-text)",
         }}
-        onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+        onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
         onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
       />
       <div className="relative">
@@ -170,7 +170,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           }}
           onFocus={(e) => {
             setShowAuthorSuggestions(true);
-            e.target.style.borderColor = "#D84F0B";
+            e.target.style.borderColor = "var(--color-accent)";
           }}
           onBlur={(e) => {
             e.target.style.borderColor = "var(--color-border)";
@@ -224,7 +224,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
             style={{
               backgroundColor:
                 category === opt
-                  ? "#D84F0B"
+                  ? "var(--color-accent)"
                   : "var(--color-surface)",
               color:
                 category === opt
@@ -232,7 +232,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
                   : "var(--color-text-secondary)",
               border:
                 category === opt
-                  ? "1px solid #D84F0B"
+                  ? "1px solid var(--color-accent)"
                   : "1px solid var(--color-border)",
             }}
           >
@@ -254,7 +254,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
             backgroundColor: "var(--color-surface)",
             color: "var(--color-text)",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+          onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
           onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
         />
       )}
@@ -270,9 +270,9 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
               onClick={() => setLanguage(lang)}
               className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
               style={{
-                backgroundColor: language === lang ? "#D84F0B" : "var(--color-surface)",
+                backgroundColor: language === lang ? "var(--color-accent)" : "var(--color-surface)",
                 color: language === lang ? "#fff" : "var(--color-text-secondary)",
-                border: language === lang ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                border: language === lang ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
               }}
             >
               {languageLabels[lang]}
@@ -295,7 +295,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
             backgroundColor: "var(--color-surface)",
             color: "var(--color-text)",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+          onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
           onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
         />
       </div>
@@ -319,7 +319,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
             backgroundColor: "var(--color-surface)",
             color: "var(--color-text)",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+          onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
           onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
         />
       </div>
@@ -347,7 +347,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           disabled={isSaving || !title}
           className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
-            backgroundColor: "#D84F0B",
+            backgroundColor: "var(--color-accent)",
             color: "var(--color-text-on-accent)",
           }}
         >

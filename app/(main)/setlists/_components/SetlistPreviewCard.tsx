@@ -31,7 +31,7 @@ export default function SetlistPreviewCard({
     >
       <span
         className={`absolute top-3 right-3 text-xs font-semibold ${dimmed ? "opacity-60" : ""}`}
-        style={{ color: "#D84F0B" }}
+        style={{ color: "var(--color-accent)" }}
       >
         {getBranchLabel(setlist.branch)}
       </span>
@@ -91,7 +91,7 @@ export default function SetlistPreviewCard({
             <span
               className="inline-block w-3 h-3"
               style={{
-                backgroundColor: "#D84F0B",
+                backgroundColor: "var(--color-accent)",
                 mask: "url(/microphone-with-cable.svg) no-repeat center / contain",
                 WebkitMask: "url(/microphone-with-cable.svg) no-repeat center / contain",
               }}

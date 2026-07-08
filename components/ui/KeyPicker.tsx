@@ -91,12 +91,12 @@ export default function KeyPicker({
               className="rounded-lg font-medium transition-all min-w-[32px] px-1.5 py-1 text-xs leading-none"
               style={{
                 backgroundColor:
-                  letter === l ? "#D84F0B" : "var(--color-surface)",
+                  letter === l ? "var(--color-accent)" : "var(--color-surface)",
                 color:
                   letter === l ? "#fff" : "var(--color-text-secondary)",
                 border:
                   letter === l
-                    ? "1px solid #D84F0B"
+                    ? "1px solid var(--color-accent)"
                     : "1px solid var(--color-border)",
               }}
             >
@@ -112,12 +112,12 @@ export default function KeyPicker({
             className="rounded-lg min-w-[32px] px-2 py-1 text-xs font-medium transition-all disabled:opacity-30"
             style={{
               backgroundColor:
-                accidental === "flat" ? "#D84F0B" : "var(--color-surface)",
+                accidental === "flat" ? "var(--color-accent)" : "var(--color-surface)",
               color:
                 accidental === "flat" ? "#fff" : "var(--color-text-secondary)",
               border:
                 accidental === "flat"
-                  ? "1px solid #D84F0B"
+                  ? "1px solid var(--color-accent)"
                   : "1px solid var(--color-border)",
             }}
           >
@@ -130,12 +130,12 @@ export default function KeyPicker({
             className="rounded-lg min-w-[32px] px-2 py-1 text-xs font-medium transition-all disabled:opacity-30"
             style={{
               backgroundColor:
-                accidental === "sharp" ? "#D84F0B" : "var(--color-surface)",
+                accidental === "sharp" ? "var(--color-accent)" : "var(--color-surface)",
               color:
                 accidental === "sharp" ? "#fff" : "var(--color-text-secondary)",
               border:
                 accidental === "sharp"
-                  ? "1px solid #D84F0B"
+                  ? "1px solid var(--color-accent)"
                   : "1px solid var(--color-border)",
             }}
           >
@@ -149,12 +149,12 @@ export default function KeyPicker({
             className="rounded-lg min-w-[32px] px-2 py-1 text-xs font-medium transition-all disabled:opacity-30"
             style={{
               backgroundColor:
-                isMinor ? "#D84F0B" : "var(--color-surface)",
+                isMinor ? "var(--color-accent)" : "var(--color-surface)",
               color:
                 isMinor ? "#fff" : "var(--color-text-secondary)",
               border:
                 isMinor
-                  ? "1px solid #D84F0B"
+                  ? "1px solid var(--color-accent)"
                   : "1px solid var(--color-border)",
             }}
           >

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isSetlistDateInPast } from "@/app/api/_lib/setlistGuards";
+import { requireUser, unauthorized } from "@/lib/auth-server";
 
 export async function GET(
   request: Request,
@@ -24,6 +25,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+
   const { id } = await params;
 
   if (await isSetlistDateInPast(id)) {
@@ -59,6 +63,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+
   const { id } = await params;
 
   if (await isSetlistDateInPast(id)) {

@@ -15,9 +15,9 @@ export default function MainLayout({
         className="pb-6 text-center text-xs"
         style={{ color: "var(--color-text-tertiary)" }}
       >
-        Agham Setlist 0.1.2 <br />
+        Agham Setlist 0.1.3 <br />
         Property of AGHAM &copy; 2026 <br />
-        dev - dhalecpe
+        dev - johndhalecpe
       </footer>
     </div>
   );

@@ -242,14 +242,14 @@ export default function NewSongForm() {
               color: "var(--color-text)",
             }}
             onFocus={(e) =>
-              (e.target.style.borderColor = "#D84F0B")
+              (e.target.style.borderColor = "var(--color-accent)")
             }
             onBlur={(e) =>
               (e.target.style.borderColor = "var(--color-border)")
             }
           />
           {duplicateWarning && (
-            <p className="text-xs mt-1" style={{ color: "#D84F0B" }}>
+            <p className="text-xs mt-1" style={{ color: "var(--color-accent)" }}>
               A song named &ldquo;{duplicateWarning}&rdquo; already exists. Save anyway?
             </p>
           )}
@@ -275,7 +275,7 @@ export default function NewSongForm() {
               }}
               onFocus={(e) => {
                 setShowAuthorSuggestions(true);
-                e.target.style.borderColor = "#D84F0B";
+                e.target.style.borderColor = "var(--color-accent)";
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = "var(--color-border)";
@@ -337,7 +337,7 @@ export default function NewSongForm() {
                 style={{
                   backgroundColor:
                     category === opt
-                      ? "#D84F0B"
+                      ? "var(--color-accent)"
                       : "var(--color-surface)",
                   color:
                     category === opt
@@ -345,7 +345,7 @@ export default function NewSongForm() {
                       : "var(--color-text-secondary)",
                   border:
                     category === opt
-                      ? "1px solid #D84F0B"
+                      ? "1px solid var(--color-accent)"
                       : "1px solid var(--color-border)",
                 }}
               >
@@ -376,7 +376,7 @@ export default function NewSongForm() {
                 color: "var(--color-text)",
               }}
               onFocus={(e) =>
-                (e.target.style.borderColor = "#D84F0B")
+                (e.target.style.borderColor = "var(--color-accent)")
               }
               onBlur={(e) =>
                 (e.target.style.borderColor = "var(--color-border)")
@@ -396,9 +396,9 @@ export default function NewSongForm() {
                 onClick={() => setLanguage(lang)}
                 className="rounded-lg px-3 py-2 text-sm font-medium transition-all text-left"
                 style={{
-                  backgroundColor: language === lang ? "#D84F0B" : "var(--color-surface)",
+                  backgroundColor: language === lang ? "var(--color-accent)" : "var(--color-surface)",
                   color: language === lang ? "#fff" : "var(--color-text-secondary)",
-                  border: language === lang ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                  border: language === lang ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                 }}
               >
                 {lang === "english" ? "English" : "Filipino"}
@@ -426,7 +426,7 @@ export default function NewSongForm() {
               backgroundColor: "var(--color-surface)",
               color: "var(--color-text)",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
             onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
           />
         </div>
@@ -450,7 +450,7 @@ export default function NewSongForm() {
               backgroundColor: "var(--color-surface)",
               color: "var(--color-text)",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "#D84F0B")}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
             onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
           />
         </div>
@@ -479,7 +479,7 @@ export default function NewSongForm() {
             disabled={loading || !title}
             className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             style={{
-              backgroundColor: "#D84F0B",
+              backgroundColor: "var(--color-accent)",
               color: "var(--color-text-on-accent)",
             }}
           >

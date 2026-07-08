@@ -42,3 +42,8 @@ Status: working
 Where: `app/manifest.ts`, `app/layout.tsx`
 What it does: Generates a Web App Manifest (`/manifest.webmanifest`) and iOS `apple-mobile-web-app-*` meta tags so the app can be installed as a standalone PWA on mobile and desktop. Icons (`/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png`) must be placed in `/public` manually.
 Status: working
+
+## Admin approval system
+Where: `app/admin/approvals/`, `components/ui/StatusBanner.tsx`, `components/auth/`, `lib/services/profileService.ts`
+What it does: New users sign up with `pending` status. The hardcoded admin (`johndhalecpe@setlist.com`) sees an Admin nav link and can approve or reject pending accounts from the `/admin/approvals` page. Rejected users see a full-screen modal on login; pending users see a pending modal. The admin account is auto-detected on signup and granted full access.
+Status: working

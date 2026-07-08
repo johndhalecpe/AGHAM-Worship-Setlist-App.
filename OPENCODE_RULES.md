@@ -5,15 +5,9 @@ project. These rules apply to every task, every session, forever — not just
 the current request. If a rule here conflicts with something I ask you to do
 in a specific prompt, stop and ask me rather than silently choosing one.
 
-This file has two parts:
-- **Part A** — permanent rules. Never delete these.
-- **Part B** — the current one-time task list. Work through it top to bottom.
-  When a task is fully done and verified, delete that task's section from
-  this file so the list stays current. Do not delete Part A.
-
 ---
 
-## Part A — Permanent Rules
+Permanent Rules --- permanent rules. Never delete these.
 
 ### 1. Naming
 - Every variable, function, and type name should tell a reader what it *is*
@@ -116,6 +110,9 @@ you think needs to change and why, and wait for my confirmation.
   batch several structural changes together and report them all at once.
 - Recommend a git commit after each verified, working step. Don't let
   multiple unrelated changes pile up uncommitted.
+- Ask me first before you do anything youre unsure of. If you have something
+youre not sure, or needs clarifying first, dont hesitate to ask the user/ me.
+ I actually prefer answering your questions instead of you just blindly doing something. I DONT want that
 
 ### 9. Colors and theming
 - This project uses CSS variables defined in `app/globals.css` under

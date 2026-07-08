@@ -73,7 +73,7 @@ export default function SongSearchList({ searchMatches, loading, onSelect }: Son
                   onClick={() => onSelect(song.id)}
                   disabled={loading}
                   className="shrink-0 p-1 rounded transition-colors hover:opacity-80 active:scale-95"
-                  style={{ color: "#D84F0B" }}
+                  style={{ color: "var(--color-accent)" }}
                   aria-label={`Add ${song.title}`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">

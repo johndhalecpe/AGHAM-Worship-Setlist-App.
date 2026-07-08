@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { todayLocalISO } from "@/lib/dates";
+import { requireUser, unauthorized } from "@/lib/auth-server";
 
 export async function GET() {
   const { data, error } = await supabase
@@ -16,6 +17,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const user = await requireUser(request);
+  if (!user) return unauthorized();
+
   const body = await request.json();
 
   const todayISOString = todayLocalISO();

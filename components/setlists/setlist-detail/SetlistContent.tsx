@@ -195,7 +195,7 @@ export default function SetlistContent({
             disabled={isSaving}
             className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
             style={{
-              backgroundColor: "#D84F0B",
+              backgroundColor: "var(--color-accent)",
               color: "var(--color-text-on-accent)",
             }}
           >

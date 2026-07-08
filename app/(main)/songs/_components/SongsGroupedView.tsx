@@ -206,7 +206,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
             <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 shrink-0" style={{ color: "#D84F0B" }}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 shrink-0" style={{ color: "var(--color-accent)" }}>
             <path fillRule="evenodd" d="M14.5 1A4.5 4.5 0 0 0 10 5.5V9H3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 14.5 1Zm-3 8V5.5a3 3 0 1 1 6 0V9h-6Z" clipRule="evenodd" />
           </svg>
         )}
@@ -223,7 +223,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
             href="/songs/new"
             className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[40px] flex items-center"
             style={{
-              backgroundColor: "#D84F0B",
+              backgroundColor: "var(--color-accent)",
               color: "var(--color-text-on-accent)",
             }}
           >
@@ -236,7 +236,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
             onClick={() => setIsLocked(!isLocked)}
             className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[40px]"
             style={{
-              backgroundColor: isLocked ? "#D84F0B" : "var(--color-surface-card)",
+              backgroundColor: isLocked ? "var(--color-accent)" : "var(--color-surface-card)",
               color: isLocked ? "#fff" : "var(--color-text-secondary)",
               border: isLocked ? "none" : "1px solid var(--color-border)",
             }}
@@ -268,7 +268,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
           onClick={() => setShowFilters(!showFilters)}
           className="rounded-lg px-3 py-2 text-sm font-medium transition-all shrink-0 min-h-[40px] flex items-center gap-1.5"
           style={{
-            backgroundColor: showFilters || hasActiveFilters ? "#D84F0B" : "var(--color-surface-card)",
+            backgroundColor: showFilters || hasActiveFilters ? "var(--color-accent)" : "var(--color-surface-card)",
             color: showFilters || hasActiveFilters ? "#fff" : "var(--color-text-secondary)",
             border: showFilters || hasActiveFilters ? "none" : "1px solid var(--color-border)",
           }}
@@ -314,9 +314,9 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
                   onClick={() => handleCategoryClick(cat)}
                   className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
                   style={{
-                    backgroundColor: selectedCategory === cat ? "#D84F0B" : "var(--color-surface-card)",
+                    backgroundColor: selectedCategory === cat ? "var(--color-accent)" : "var(--color-surface-card)",
                     color: selectedCategory === cat ? "#fff" : "var(--color-text-secondary)",
-                    border: selectedCategory === cat ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                    border: selectedCategory === cat ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                   }}
                 >
                   {cat === "worship" ? "Worship" : cat === "praise" ? "Praise" : cat === "other" ? "Other" : "Draft"}
@@ -336,9 +336,9 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
                   onClick={() => toggleLanguage(lang)}
                   className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
                   style={{
-                    backgroundColor: selectedLanguages.has(lang) ? "#D84F0B" : "var(--color-surface-card)",
+                    backgroundColor: selectedLanguages.has(lang) ? "var(--color-accent)" : "var(--color-surface-card)",
                     color: selectedLanguages.has(lang) ? "#fff" : "var(--color-text-secondary)",
-                    border: selectedLanguages.has(lang) ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                    border: selectedLanguages.has(lang) ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                   }}
                 >
                   {LANGUAGE_LABELS[lang]}
@@ -356,9 +356,9 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
                 onClick={() => setComposedOnly(!composedOnly)}
                 className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
                 style={{
-                  backgroundColor: composedOnly ? "#D84F0B" : "var(--color-surface-card)",
+                  backgroundColor: composedOnly ? "var(--color-accent)" : "var(--color-surface-card)",
                   color: composedOnly ? "#fff" : "var(--color-text-secondary)",
-                  border: composedOnly ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                  border: composedOnly ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                 }}
               >
                 Composed
@@ -377,9 +377,9 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
                   onClick={() => toggleTimeSig(ts)}
                   className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
                   style={{
-                    backgroundColor: selectedTimeSigs.has(ts) ? "#D84F0B" : "var(--color-surface-card)",
+                    backgroundColor: selectedTimeSigs.has(ts) ? "var(--color-accent)" : "var(--color-surface-card)",
                     color: selectedTimeSigs.has(ts) ? "#fff" : "var(--color-text-secondary)",
-                    border: selectedTimeSigs.has(ts) ? "1px solid #D84F0B" : "1px solid var(--color-border)",
+                    border: selectedTimeSigs.has(ts) ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                   }}
                 >
                   {ts}

@@ -59,7 +59,7 @@ export default function SetlistHeader({
           </h2>
           <p
             className="mt-0.5 text-sm font-medium"
-            style={{ color: "#D84F0B" }}
+            style={{ color: "var(--color-accent)" }}
           >
             {getBranchLabel(setlist.branch)}
           </p>

@@ -52,3 +52,22 @@ export type SetlistSectionWithSong = {
 export type SetlistWithSections = Setlist & {
   sections: SetlistSectionWithSong[];
 };
+
+export type Profile = {
+  id: string;
+  name: string;
+  role: "singer" | "musician" | "staff" | "admin";
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  updated_at: string;
+};
+
+export type PasswordReset = {
+  id: string;
+  email: string;
+  requested_password: string;
+  created_at: string;
+  resolved: boolean;
+};
+
+export const ADMIN_EMAIL = "johndhalecpe@setlist.com";
