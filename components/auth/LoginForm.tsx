@@ -72,6 +72,7 @@ export default function LoginForm({ onBack, onRejected, onPending }: LoginFormPr
   const passwordError = password.length > 0 && password.length < 4;
 
   async function handleSubmit(e: React.FormEvent) {
+    if (showForgotPassword) return;
     e.preventDefault();
     if (!email || !password) {
       toast.error("Please fill in all fields");

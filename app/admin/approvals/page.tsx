@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getPendingProfiles } from "@/lib/services/profileService";
@@ -106,9 +107,18 @@ export default function AdminApprovalsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-6" style={{ color: "var(--color-text)" }}>
-        Pending Approvals
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+          Pending Approvals
+        </h1>
+        <Link
+          href="/admin/users"
+          className="text-sm font-medium transition-opacity hover:opacity-70"
+          style={{ color: "var(--color-accent)" }}
+        >
+          Active Users &rarr;
+        </Link>
+      </div>
 
       {profiles.length > 0 && (
         <div className="flex flex-col gap-3 mb-8">
@@ -141,7 +151,7 @@ export default function AdminApprovalsPage() {
                 <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
                   {reset.email}
                 </p>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
                     type="text"
                     placeholder="Enter new password"

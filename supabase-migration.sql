@@ -95,3 +95,56 @@ DROP POLICY IF EXISTS "Authenticated users can delete setlist_sections" ON setli
 CREATE POLICY "Authenticated users can delete setlist_sections"
   ON setlist_sections FOR DELETE
   USING (auth.role() = 'authenticated');
+
+-- ============================================================
+-- Password resets table (forgot password flow)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.password_resets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  requested_password TEXT DEFAULT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  resolved BOOLEAN DEFAULT false
+);
+
+ALTER TABLE public.password_resets ENABLE ROW LEVEL SECURITY;
+
+-- Fix: requested_password should not be NOT NULL (forgot password flow sends null)
+ALTER TABLE public.password_resets ALTER COLUMN requested_password DROP NOT NULL;
+
+DROP POLICY IF EXISTS "Anyone can insert password_resets" ON public.password_resets;
+CREATE POLICY "Anyone can insert password_resets"
+  ON public.password_resets FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can read password_resets" ON public.password_resets;
+CREATE POLICY "Authenticated users can read password_resets"
+  ON public.password_resets FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+-- ============================================================
+-- Active users function (admin dashboard)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_active_users()
+RETURNS TABLE (
+  user_id UUID,
+  email TEXT,
+  name TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT DISTINCT ON (s.user_id)
+    s.user_id,
+    u.email::TEXT,
+    COALESCE(p.name, u.email::TEXT) AS name
+  FROM auth.sessions s
+  JOIN auth.users u ON u.id = s.user_id
+  LEFT JOIN public.profiles p ON p.id = s.user_id
+  WHERE s.not_after IS NULL OR s.not_after > now()
+  ORDER BY s.user_id, s.updated_at DESC;
+END;
+$$;

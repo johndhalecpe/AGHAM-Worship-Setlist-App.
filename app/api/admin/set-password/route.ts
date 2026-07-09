@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/lib/type";
 
 export async function POST(request: Request) {
@@ -10,7 +9,7 @@ export async function POST(request: Request) {
   }
 
   const token = authHeader.slice(7);
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  const { error: resolveError } = await supabase
+  const { error: resolveError } = await supabaseAdmin
     .from("password_resets")
     .update({ resolved: true })
     .eq("id", resetId);

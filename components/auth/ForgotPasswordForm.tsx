@@ -59,6 +59,18 @@ export default function ForgotPasswordForm({ onClose }: { onClose: () => void })
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 grid place-items-center rounded-xl transition-colors hover:opacity-70"
+          style={{ color: "var(--color-text-tertiary)" }}
+          aria-label="Close"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
         <h2 className="text-xl font-bold mb-6 text-center" style={{ color: "var(--color-text)" }}>
           Forgot Password
         </h2>
@@ -78,17 +90,6 @@ export default function ForgotPasswordForm({ onClose }: { onClose: () => void })
           />
 
           <div className="flex gap-3 mt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-xl py-3 text-sm font-semibold transition-all"
-              style={{
-                backgroundColor: "var(--color-surface-muted)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              Cancel
-            </button>
             <button
               type="submit"
               disabled={loading || !email || !isEmailValid}

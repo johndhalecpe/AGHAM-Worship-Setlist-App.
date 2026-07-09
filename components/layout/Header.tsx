@@ -31,6 +31,9 @@ export default function Header() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
   const [showMobileApprovals, setShowMobileApprovals] = useState(false);
+  const [showMobileUsers, setShowMobileUsers] = useState(false);
+  const [activeUsers, setActiveUsers] = useState<{ user_id: string; email: string; name: string }[]>([]);
+  const [loadingActiveUsers, setLoadingActiveUsers] = useState(false);
   const [pendingProfiles, setPendingProfiles] = useState<
     { id: string; name: string; role: string }[]
   >([]);
@@ -107,6 +110,22 @@ export default function Header() {
       setPasswordResets(resetsResult.data);
     }
     setLoadingApprovals(false);
+  }
+
+  async function fetchActiveUsers() {
+    setLoadingActiveUsers(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (token) {
+      const res = await fetch("/api/admin/active-users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setActiveUsers(json.users);
+      }
+    }
+    setLoadingActiveUsers(false);
   }
 
   async function handleQuickAction(
@@ -441,6 +460,17 @@ export default function Header() {
               )}
             </div>
           )}
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              className="text-sm font-medium transition-colors min-h-[44px] flex items-center"
+              style={{ color: "var(--color-text-secondary)" }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "var(--color-text)"; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "var(--color-text-secondary)"; }}
+            >
+              Users
+            </Link>
+          )}
           {userName && <UserMenu userName={userName} />}
           <button
             onClick={toggleDarkMode}
@@ -644,7 +674,7 @@ export default function Header() {
                         {passwordResets.map((reset) => (
                           <div key={reset.id} className="flex flex-col px-4 py-3 border-b last:border-b-0 gap-2" style={{ borderColor: "var(--color-border)" }}>
                             <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>{reset.email}</p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                               <input
                                 type="text"
                                 placeholder="New password"
@@ -669,7 +699,7 @@ export default function Header() {
                                   quickActionId !== null ||
                                   !(resetPasswords[reset.id] ?? "").trim()
                                 }
-                                className="rounded-lg px-3 py-2 text-[11px] font-semibold shrink-0 whitespace-nowrap transition-all active:scale-95 disabled:opacity-50"
+                                className="rounded-lg px-4 py-2 text-[11px] font-semibold shrink-0 whitespace-nowrap transition-all active:scale-95 disabled:opacity-50"
                                 style={{ backgroundColor: "var(--color-accent-secondary)", color: "#fff" }}
                               >
                                 {resolveResetId === reset.id ? "..." : "Set Password"}
@@ -682,6 +712,58 @@ export default function Header() {
                   </div>
                 )}
               </div>
+            ) : showMobileUsers ? (
+            <div className="flex flex-col min-h-full">
+              <div className="px-4 pt-5 pb-3 border-b" style={{ borderColor: "var(--color-border)" }}>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setShowMobileUsers(false)}
+                    className="rounded-lg p-2 transition-colors hover:bg-(--color-surface-muted) min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    style={{ color: "var(--color-text-secondary)" }}
+                    aria-label="Back to menu"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setShowMobileMenu(false)}
+                    className="rounded-lg p-2 transition-colors hover:bg-(--color-surface-muted) min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    style={{ color: "var(--color-text-secondary)" }}
+                    aria-label="Close menu"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+                <h2 className="font-bold text-base mt-3" style={{ color: "var(--color-text)" }}>Active Users</h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>Users with an active session right now.</p>
+              </div>
+
+              {loadingActiveUsers ? (
+                <div className="flex-1 flex items-center justify-center p-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="2">
+                      <path d="M21 12a9 9 0 11-6.219-8.56" />
+                    </svg>
+                    <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>Loading...</span>
+                  </div>
+                </div>
+              ) : activeUsers.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                  <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>No active users at the moment.</span>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto">
+                  {activeUsers.map((u) => (
+                    <div key={u.user_id} className="px-4 py-3 border-b last:border-b-0" style={{ borderColor: "var(--color-border)" }}>
+                      <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>{u.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             ) : (
             <div className="flex flex-col min-h-full">
               <div className="px-4 pt-5 pb-4 border-b" style={{ borderColor: "var(--color-border)" }}>
@@ -796,6 +878,28 @@ export default function Header() {
                           {pendingProfiles.length + passwordResets.length}
                         </span>
                       )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMobileUsers(true);
+                        fetchActiveUsers();
+                      }}
+                      className="rounded-xl px-4 py-3 text-sm font-medium transition-all text-left min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
+                      style={{ color: "var(--color-text-secondary)" }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--color-accent) 5%, transparent)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                        <path d="M16 3.13a4 4 0 010 7.75" />
+                      </svg>
+                      Users
                     </button>
                   </>
                 )}
