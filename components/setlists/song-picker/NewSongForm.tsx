@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Song, SetlistSectionWithSong } from "@/lib/type";
+import { SetlistSectionWithSong } from "@/lib/type";
 import KeyPicker from "@/components/ui/KeyPicker";
 
 type NewSongFormProps = {
@@ -37,15 +37,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
   const suggestionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/songs")
+    fetch("/api/songs/authors")
       .then((res) => res.json())
-      .then((songs: Song[]) => {
-        const unique = new Set<string>();
-        for (const song of songs) {
-          if (song.author) unique.add(song.author);
-        }
-        setAuthors(Array.from(unique).sort());
-      });
+      .then(setAuthors);
   }, []);
 
   const authorSuggestions = newAuthor.trim()

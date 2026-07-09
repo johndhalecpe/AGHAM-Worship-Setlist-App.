@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Song } from "@/lib/type";
 import MusicalDataSection from "@/components/songs/MusicalDataSection";
 
 export default function NewSongForm() {
@@ -30,15 +29,9 @@ export default function NewSongForm() {
   const suggestionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/songs")
+    fetch("/api/songs/authors")
       .then((res) => res.json())
-      .then((songs: Song[]) => {
-        const unique = new Set<string>();
-        for (const song of songs) {
-          if (song.author) unique.add(song.author);
-        }
-        setAuthors(Array.from(unique).sort());
-      });
+      .then(setAuthors);
   }, []);
 
   const authorSuggestions = author.trim()
