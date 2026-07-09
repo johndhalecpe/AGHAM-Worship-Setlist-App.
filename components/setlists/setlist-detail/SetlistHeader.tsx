@@ -160,10 +160,10 @@ export default function SetlistHeader({
           </p>
         )}
         {!isPast && !isGuest && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col gap-2">
             <button
               onClick={onToggleLock}
-              className="rounded-lg px-3 py-2 text-xs font-medium transition-all hover:-translate-y-0.5 min-h-[44px]"
+              className="rounded-lg px-3 py-2 text-xs font-medium transition-all hover:-translate-y-0.5 min-h-[44px] w-full"
               style={{
                 backgroundColor: isLocked ? "var(--color-accent)" : "var(--color-surface-card)",
                 color: isLocked ? "var(--color-text-on-accent)" : "var(--color-text-secondary)",
@@ -187,28 +187,28 @@ export default function SetlistHeader({
               )}
             </button>
             {!isLocked && (
-              <button
-                onClick={onEdit}
-                className="rounded-lg px-3 py-2 text-xs font-medium transition-colors min-h-[44px]"
-                style={{
-                  border: "1px solid var(--color-border)",
-                  color: "var(--color-text-secondary)",
-                }}
-              >
-                Edit
-              </button>
-            )}
-            {!isLocked && (
-              <button
-                onClick={onDeleteRequest}
-                className="rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 min-h-[44px]"
-                style={{
-                  border: "1px solid var(--color-danger)",
-                  color: "var(--color-danger)",
-                }}
-              >
-                Delete
-              </button>
+              <div className="flex flex-row gap-2">
+                <button
+                  onClick={onEdit}
+                  className="rounded-lg px-3 py-2 text-xs font-medium transition-colors min-h-[44px] flex-[3]"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={onDeleteRequest}
+                  className="rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 min-h-[44px] flex-[1]"
+                  style={{
+                    border: "1px solid var(--color-danger)",
+                    color: "var(--color-danger)",
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
             )}
           </div>
         )}

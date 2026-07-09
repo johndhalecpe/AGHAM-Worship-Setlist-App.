@@ -134,7 +134,10 @@ export default function Header() {
         const json = await res.json();
         setActiveUsers(json.users);
       } else {
-        const json = await res.json().catch(() => ({}));
+        const text = await res.text();
+        console.error("fetchActiveUsers failed:", res.status, text);
+        let json: Record<string, string> = {};
+        try { json = JSON.parse(text); } catch {}
         toast.error(json.error ?? "Failed to fetch active users");
       }
     }

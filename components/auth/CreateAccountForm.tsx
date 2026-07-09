@@ -213,7 +213,7 @@ export default function CreateAccountForm({ onBack, onPending }: CreateAccountFo
         <InputField
           label="Full Name"
           type="text"
-          placeholder="e.g. Kevs Ace"
+          placeholder="e.g. Kevs Acecruz"
           icon={<UserIcon />}
           value={name}
           onChange={setName}

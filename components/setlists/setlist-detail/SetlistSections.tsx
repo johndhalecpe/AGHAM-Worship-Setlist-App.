@@ -224,38 +224,14 @@ export default function SetlistSections({
                 {!effectiveLock && (
                   <button
                     onClick={() => setActiveSection(section.key)}
-                    className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
-                    style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
+                    className="rounded-xl px-8 py-2.5 text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 min-h-[44px]"
+                    style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)", boxShadow: "0 2px 8px color-mix(in srgb, var(--color-accent) 30%, transparent)" }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1 -ml-0.5 inline-block align-text-bottom">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1.5 -ml-0.5 inline-block align-text-bottom">
                       <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
                     </svg>
                     Add song
                   </button>
-                )}
-                {sectionSongs.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => setChordsView({ sectionType: section.key, songId: sectionSongs[0].id })}
-                      className="text-[11px] font-semibold rounded-lg px-2 py-1 flex items-center justify-center gap-1 transition-all hover:-translate-y-0.5 active:scale-95"
-                      style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path d="M9 4.318A1 1 0 0 1 10.366 3.5l5.19 1.298A1 1 0 0 1 16 5.75v8.534a2.5 2.5 0 0 1-1.744 2.394l-1.838.613a2.5 2.5 0 0 1-3.156-1.662l-.747-2.611A2.5 2.5 0 0 1 9 10.358V4.318Z" />
-                      </svg>
-                      Chords
-                    </button>
-                    <button
-                      onClick={() => setLyricsView({ sectionType: section.key, songId: sectionSongs[0].id })}
-                      className="text-[11px] font-semibold rounded-lg px-2 py-1 flex items-center justify-center gap-1 transition-all hover:-translate-y-0.5 active:scale-95"
-                      style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                        <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
-                      </svg>
-                      Lyrics
-                    </button>
-                  </div>
                 )}
                 {!isPast && (isLocked || isGuest) && (
                   <span className="flex items-center gap-1.5 text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
@@ -267,6 +243,30 @@ export default function SetlistSections({
                 )}
               </div>
             </div>
+            {sectionSongs.length > 0 && (
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  onClick={() => setChordsView({ sectionType: section.key, songId: sectionSongs[0].id })}
+                  className="flex-1 text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
+                  style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                    <path d="M9 4.318A1 1 0 0 1 10.366 3.5l5.19 1.298A1 1 0 0 1 16 5.75v8.534a2.5 2.5 0 0 1-1.744 2.394l-1.838.613a2.5 2.5 0 0 1-3.156-1.662l-.747-2.611A2.5 2.5 0 0 1 9 10.358V4.318Z" />
+                  </svg>
+                  Chords
+                </button>
+                <button
+                  onClick={() => setLyricsView({ sectionType: section.key, songId: sectionSongs[0].id })}
+                  className="flex-1 text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
+                  style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                    <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                  </svg>
+                  Lyrics
+                </button>
+              </div>
+            )}
             <div className="flex flex-col gap-1">
                 {sectionSongs.map((s, songIndex) => {
                 const isDragging = draggedSectionId === s.id;

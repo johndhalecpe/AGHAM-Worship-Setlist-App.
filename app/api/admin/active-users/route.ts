@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { ADMIN_EMAIL } from "@/lib/type";
@@ -24,23 +25,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
+    let adminClient: SupabaseClient | null = null;
+    try {
+      adminClient = getSupabaseAdmin();
+    } catch (e) {
+      console.warn("getSupabaseAdmin failed, will try RPC with regular client:", e);
+    }
 
     let rawUsers: { id: string; email?: string | null }[] = [];
 
-    try {
-      const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-      if (!usersError && usersData?.users) {
-        rawUsers = usersData.users;
-      } else {
-        console.warn("listUsers failed, falling back to RPC:", usersError?.message);
+    if (adminClient) {
+      try {
+        const { data: usersData, error: usersError } = await adminClient.auth.admin.listUsers();
+        if (!usersError && usersData?.users) {
+          rawUsers = usersData.users;
+        } else {
+          console.warn("listUsers failed, falling back to RPC:", usersError?.message);
+        }
+      } catch (e) {
+        console.warn("listUsers threw, falling back to RPC:", e);
       }
-    } catch (e) {
-      console.warn("listUsers threw, falling back to RPC:", e);
+
+      if (rawUsers.length === 0) {
+        const { data: rpcData, error: rpcError } = await adminClient.rpc("get_active_users");
+        if (rpcError) {
+          console.warn("admin RPC failed, will try regular client:", rpcError);
+        } else {
+          rawUsers = ((rpcData ?? []) as { user_id: string; email: string }[]).map((u) => ({
+            id: u.user_id,
+            email: u.email,
+          }));
+        }
+      }
     }
 
     if (rawUsers.length === 0) {
-      const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc("get_active_users");
+      const { data: rpcData, error: rpcError } = await getSupabase().rpc("get_active_users");
       if (rpcError) {
         const message = typeof rpcError === "string" ? rpcError : rpcError.message;
         return NextResponse.json({ error: message }, { status: 500 });
@@ -51,7 +71,8 @@ export async function GET(request: Request) {
       }));
     }
 
-    const { data: profiles } = await supabaseAdmin
+    const db = adminClient ?? getSupabase();
+    const { data: profiles } = await db
       .from("profiles")
       .select("id, name, role, status");
 
