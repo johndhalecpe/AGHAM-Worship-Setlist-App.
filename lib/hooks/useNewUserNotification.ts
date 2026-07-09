@@ -2,9 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import { getPendingProfiles } from "@/lib/services/profileService";
-
-const POLL_INTERVAL_MS = 30000;
 
 export function useNewUserNotification(isAdmin: boolean) {
   const notifiedIdsRef = useRef<Set<string>>(new Set());
@@ -12,40 +11,36 @@ export function useNewUserNotification(isAdmin: boolean) {
   useEffect(() => {
     if (!isAdmin) return;
 
-    let interval: ReturnType<typeof setInterval>;
-
-    function startPolling() {
-      interval = setInterval(async () => {
-        const profiles = await getPendingProfiles();
-
-        for (const profile of profiles) {
-          if (notifiedIdsRef.current.has(profile.id)) continue;
-          notifiedIdsRef.current.add(profile.id);
-
-          toast.success(`${profile.name} signed up!`);
-        }
-      }, POLL_INTERVAL_MS);
-    }
-
-    function stopPolling() {
-      if (interval) clearInterval(interval);
-    }
-
     getPendingProfiles().then((profiles) => {
       for (const p of profiles) {
         notifiedIdsRef.current.add(p.id);
       }
     });
 
-    startPolling();
+    function handleInsert(payload: { new: { id: string; name: string } }) {
+      const profile = payload.new;
+      if (!notifiedIdsRef.current.has(profile.id)) {
+        notifiedIdsRef.current.add(profile.id);
+        toast.success(`${profile.name} signed up!`);
+      }
+    }
 
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopPolling();
-      else startPolling();
-    });
+    const channel = supabase
+      .channel("pending-profiles")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "profiles",
+          filter: "status=eq.pending",
+        },
+        handleInsert,
+      )
+      .subscribe();
 
     return () => {
-      stopPolling();
+      supabase.removeChannel(channel);
     };
   }, [isAdmin]);
 }
