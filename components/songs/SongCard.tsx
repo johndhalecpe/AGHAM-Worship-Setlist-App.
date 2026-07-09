@@ -3,12 +3,12 @@
 import { memo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Song } from "@/lib/type";
+import { SongListItem } from "@/lib/type";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import ChordsViewer from "@/components/chords/ChordsViewer";
 
 type SongCardProps = {
-  song: Song;
+  song: SongListItem;
   isLocked?: boolean;
   onEditRequest?: (id: string) => void;
   showMissingTags?: boolean;
@@ -30,13 +30,16 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const [showLyrics, setShowLyrics] = useState(false);
   const [showChords, setShowChords] = useState(false);
   const [editingChords, setEditingChords] = useState(false);
-  const [chordsDraft, setChordsDraft] = useState(song.chords ?? "");
+  const [chordsDraft, setChordsDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [fullData, setFullData] = useState<{ lyrics: string | null; chords: string | null } | null>(null);
+  const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [loadingChords, setLoadingChords] = useState(false);
   const chordsRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setChordsDraft(song.chords ?? "");
-  }, [song.chords]);
+    setChordsDraft(fullData?.chords ?? "");
+  }, [fullData?.chords]);
 
   async function handleDeleteConfirm() {
     setIsDeleting(true);
@@ -49,6 +52,51 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     }
     toast.success("Song deleted");
     router.refresh();
+  }
+
+  async function fetchFullData() {
+    if (fullData) return fullData;
+    const res = await fetch(`/api/songs/${song.id}`);
+    if (!res.ok) throw new Error("Failed to load song data");
+    const data = await res.json();
+    const result = { lyrics: data.lyrics, chords: data.chords };
+    setFullData(result);
+    return result;
+  }
+
+  async function handleShowLyrics() {
+    if (!showLyrics) {
+      setLoadingLyrics(true);
+      try {
+        await fetchFullData();
+      } catch {
+        toast.error("Failed to load lyrics");
+      }
+      setLoadingLyrics(false);
+    }
+    setShowLyrics(!showLyrics);
+  }
+
+  async function handleShowChords() {
+    if (!showChords) {
+      setLoadingChords(true);
+      try {
+        const data = await fetchFullData();
+        setChordsDraft(data.chords ?? "");
+      } catch {
+        toast.error("Failed to load chords");
+      }
+      setLoadingChords(false);
+    }
+    if (!showChords) {
+      if (!isLocked) {
+        setEditingChords(true);
+        setTimeout(() => chordsRef.current?.focus(), 0);
+      }
+    } else {
+      setEditingChords(false);
+    }
+    setShowChords(!showChords);
   }
 
   async function saveChords() {
@@ -74,7 +122,6 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
   const missingDetails: string[] = [];
   if (isDraft) {
-    if (!song.lyrics) missingDetails.push("Lyrics");
     if (!song.default_key) missingDetails.push("Key");
     if (!song.default_bpm) missingDetails.push("BPM");
     if (!song.default_time_signature) missingDetails.push("Time");
@@ -94,11 +141,11 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           </span>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={() => setShowLyrics(!showLyrics)}
+              onClick={handleShowLyrics}
               className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80 min-h-[44px] flex items-center px-2"
               style={{ color: "var(--color-accent)" }}
             >
-              {showLyrics ? "Hide Lyrics" : "Show Lyrics"}
+              {loadingLyrics ? "Loading..." : showLyrics ? "Hide Lyrics" : "Show Lyrics"}
             </button>
             <div className={`flex items-center gap-1 ${isLocked ? "invisible" : ""}`}>
               <button
@@ -137,19 +184,11 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={() => {
-                setShowChords(!showChords);
-                if (!showChords && !isLocked) {
-                  setEditingChords(true);
-                  setTimeout(() => chordsRef.current?.focus(), 0);
-                } else {
-                  setEditingChords(false);
-                }
-              }}
+              onClick={handleShowChords}
               className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80 min-h-[44px] flex items-center px-2"
               style={{ color: "var(--color-accent)" }}
             >
-              {showChords ? "Hide Chords" : "Show Chords"}
+              {loadingChords ? "Loading..." : showChords ? "Hide Chords" : "Show Chords"}
             </button>
             <div className={`flex items-center gap-1 ${isLocked ? "invisible" : ""}`}>
               <button
@@ -189,7 +228,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
       {showLyrics && (
         <div className="mt-1.5">
-          {song.lyrics ? (
+          {fullData?.lyrics ? (
             <pre
               className="w-full rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap"
               style={{
@@ -201,11 +240,11 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
                 overflow: "hidden",
               }}
             >
-              {song.lyrics}
+              {fullData.lyrics}
             </pre>
           ) : (
             <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
-              No lyrics yet.
+              {fullData === null ? "Loading..." : "No lyrics yet."}
             </p>
           )}
         </div>
@@ -215,37 +254,51 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
         <div className="mt-1.5">
           {!isLocked && editingChords ? (
             <div className="flex flex-col gap-1.5">
-              <ChordsViewer chords={chordsDraft} editable onChange={setChordsDraft} />
-              <div className="flex gap-1.5 justify-end">
-                <button
-                  onClick={() => {
-                    setEditingChords(false);
-                    setShowChords(false);
-                    setChordsDraft(song.chords ?? "");
-                  }}
-                  className="rounded px-2 py-1 text-xs font-medium"
-                  style={{
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveChords}
-                  disabled={saving}
-                  className="rounded px-2 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50"
-                  style={{
-                    backgroundColor: "var(--color-accent)",
-                    color: "white",
-                  }}
-                >
-                  {saving ? "Saving..." : "Save"}
-                </button>
-              </div>
+              {loadingChords ? (
+                <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
+                  Loading chords...
+                </p>
+              ) : (
+                <>
+                  <ChordsViewer chords={chordsDraft} editable onChange={setChordsDraft} />
+                  <div className="flex gap-1.5 justify-end">
+                    <button
+                      onClick={() => {
+                        setEditingChords(false);
+                        setShowChords(false);
+                        setChordsDraft(fullData?.chords ?? "");
+                      }}
+                      className="rounded px-2 py-1 text-xs font-medium"
+                      style={{
+                        border: "1px solid var(--color-border)",
+                        color: "var(--color-text-secondary)",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveChords}
+                      disabled={saving}
+                      className="rounded px-2 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                      style={{
+                        backgroundColor: "var(--color-accent)",
+                        color: "white",
+                      }}
+                    >
+                      {saving ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
-            <ChordsViewer chords={song.chords ?? ""} />
+            fullData?.chords ? (
+              <ChordsViewer chords={fullData.chords} />
+            ) : (
+              <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
+                {fullData === null ? "Loading..." : "No chords yet."}
+              </p>
+            )
           )}
         </div>
       )}

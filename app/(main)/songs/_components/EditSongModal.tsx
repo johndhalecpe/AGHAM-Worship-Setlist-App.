@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Song } from "@/lib/type";
+import { toast } from "sonner";
 import SongEditForm from "@/components/songs/SongEditForm";
 
 type EditSongModalProps = {
-  song: Song;
+  songId: string;
   onSave: (data: {
     title: string;
     author: string;
@@ -21,8 +22,10 @@ type EditSongModalProps = {
   isSaving: boolean;
 };
 
-export default function EditSongModal({ song, onSave, onCancel, isSaving }: EditSongModalProps) {
+export default function EditSongModal({ songId, onSave, onCancel, isSaving }: EditSongModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [song, setSong] = useState<Song | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -30,6 +33,14 @@ export default function EditSongModal({ song, onSave, onCancel, isSaving }: Edit
       document.body.style.overflow = "";
     };
   }, []);
+
+  useEffect(() => {
+    fetch(`/api/songs/${songId}`)
+      .then((res) => res.json())
+      .then(setSong)
+      .catch(() => toast.error("Failed to load song"))
+      .finally(() => setLoading(false));
+  }, [songId]);
 
   return (
     <div
@@ -60,12 +71,22 @@ export default function EditSongModal({ song, onSave, onCancel, isSaving }: Edit
             </svg>
           </button>
         </div>
-        <SongEditForm
-          song={song}
-          onSave={onSave}
-          onCancel={onCancel}
-          isSaving={isSaving}
-        />
+        {loading ? (
+          <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Loading song...
+          </p>
+        ) : song ? (
+          <SongEditForm
+            song={song}
+            onSave={onSave}
+            onCancel={onCancel}
+            isSaving={isSaving}
+          />
+        ) : (
+          <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Failed to load song.
+          </p>
+        )}
       </div>
     </div>
   );

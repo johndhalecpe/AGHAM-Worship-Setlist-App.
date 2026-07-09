@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback, useDeferredValue } from "react";
+import { useState, useMemo, useCallback, useDeferredValue, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Song } from "@/lib/type";
+import { SongListItem } from "@/lib/type";
 import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
 import EditSongModal from "./EditSongModal";
@@ -25,17 +25,17 @@ const SORTED_LANGUAGES = ["english", "filipino"];
 
 type Group = {
   category: string;
-  songs: Record<string, Song[]>;
+  songs: Record<string, SongListItem[]>;
 };
 
-function groupSongsByCategoryAndLanguage(songs: Song[]): Group[] {
+function groupSongsByCategoryAndLanguage(songs: SongListItem[]): Group[] {
   const songsWithCategoryAndLanguage = songs.filter(
     (s) => s.category !== null && s.language !== null
   );
   const songGroups: Group[] = [];
 
   for (const category of PRIORITY_CATEGORIES) {
-    const songsByLanguage: Record<string, Song[]> = {};
+    const songsByLanguage: Record<string, SongListItem[]> = {};
     for (const song of songsWithCategoryAndLanguage) {
       if (song.category === category) {
         const lang = song.language!;
@@ -48,7 +48,7 @@ function groupSongsByCategoryAndLanguage(songs: Song[]): Group[] {
     }
   }
 
-  const otherSongsByLanguage: Record<string, Song[]> = {};
+  const otherSongsByLanguage: Record<string, SongListItem[]> = {};
   for (const song of songsWithCategoryAndLanguage) {
     if (!PRIORITY_CATEGORIES.includes(song.category!)) {
       const lang = song.language!;
@@ -67,7 +67,7 @@ const CATEGORY_FILTERS = ["worship", "praise", "other", "draft"] as const;
 const LANGUAGE_FILTERS = ["english", "filipino"] as const;
 const TIME_SIG_FILTERS = ["4/4", "3/4", "6/8"] as const;
 
-export default function SongsGroupedView({ songs }: { songs: Song[] }) {
+export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
   const router = useRouter();
   const [isLocked, setIsLocked] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,22 +84,18 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
   const searchMatches = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
     if (!query) return null;
-    const title: Song[] = [];
-    const author: Song[] = [];
-    const lyrics: Song[] = [];
+    const title: SongListItem[] = [];
+    const author: SongListItem[] = [];
     for (const song of songs) {
       const lowerTitle = song.title.toLowerCase();
       const lowerAuthor = (song.author ?? "").toLowerCase();
-      const lowerLyrics = (song.lyrics ?? "").toLowerCase();
       if (lowerTitle.includes(query)) {
         title.push(song);
       } else if (lowerAuthor.includes(query)) {
         author.push(song);
-      } else if (lowerLyrics.includes(query)) {
-        lyrics.push(song);
       }
     }
-    return { title, author, lyrics };
+    return { title, author };
   }, [songs, deferredSearch]);
 
   const filteredSongs = useMemo(() => {
@@ -126,7 +122,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
     return result;
   }, [songs, selectedCategory, composedOnly, selectedLanguages, selectedTimeSigs]);
 
-  const editingSong = useMemo(() => songs.find((s) => s.id === editingId) ?? null, [songs, editingId]);
+
   const hasSearch = searchMatches !== null;
   const groups = hasSearch ? [] : groupSongsByCategoryAndLanguage(filteredSongs);
 
@@ -437,19 +433,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
               </div>
             </div>
           )}
-          {searchMatches.lyrics.length > 0 && (
-            <div>
-              <h3 className="text-base font-bold mb-3" style={{ color: "var(--color-text)" }}>
-                Found a lyrics match
-              </h3>
-              <div className="flex flex-col gap-0.5">
-                {searchMatches.lyrics.map((song) => (
-                  <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
-                ))}
-              </div>
-            </div>
-          )}
-          {searchMatches.title.length + searchMatches.author.length + searchMatches.lyrics.length === 0 && (
+          {searchMatches.title.length + searchMatches.author.length === 0 && (
             <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
               No songs match your search.
             </p>
@@ -508,10 +492,10 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
         </>
       )}
 
-      {editingSong && (
+      {editingId && (
         <EditSongModal
-          song={editingSong}
-          onSave={(data) => handleSave(editingSong.id, data)}
+          songId={editingId}
+          onSave={(data) => handleSave(editingId, data)}
           onCancel={() => setEditingId(null)}
           isSaving={isSaving}
         />
