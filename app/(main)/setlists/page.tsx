@@ -2,21 +2,22 @@ import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
 import SetlistList from "./_components/SetlistList";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 async function fetchAllSetlists(): Promise<SetlistWithSections[]> {
   const { data, error } = await supabase
     .from("setlists")
     .select(
       `
-      *,
+      id, date, title, description, song_leader, branch, created_at,
       sections:setlist_sections(
-        *,
+        id, setlist_id, section_type, sort_order, song_id, notes, song_key,
         songs(id, title, author, category, language)
       )
     `
     )
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(50);
 
   if (error) {
     throw new Error(error.message);

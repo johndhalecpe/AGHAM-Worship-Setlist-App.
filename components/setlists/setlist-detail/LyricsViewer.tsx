@@ -63,11 +63,11 @@ export default function LyricsViewer({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center cursor-pointer"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", height: "100dvh" }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 backdrop-blur-xl"
+        className="relative w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 pb-[env(safe-area-inset-bottom,16px)] sm:pb-6 backdrop-blur-xl"
         style={{
           backgroundColor: "var(--color-surface)",
           border: "1px solid var(--color-border)",

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import AuthCard, { type AuthView } from "@/components/auth/AuthCard";
 import StatusBanner, { type StatusInfo } from "@/components/ui/StatusBanner";
@@ -56,6 +57,17 @@ export default function Home() {
       }
     });
   }, [router]);
+
+  useEffect(() => {
+    if (statusInfo?.type === "rejected") {
+      const timer = setTimeout(() => {
+        toast.error("Your account has been rejected. Please contact the admin.", {
+          duration: 8000,
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [statusInfo]);
 
   function goToLogin() {
     setDirection("forward");

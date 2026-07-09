@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Song } from "@/lib/type";
 
 type SearchMatches = {
@@ -20,7 +21,7 @@ const GROUP_LABELS: Record<keyof SearchMatches, string> = {
   lyrics: "Found a lyrics match",
 };
 
-export default function SongSearchList({ searchMatches, loading, onSelect }: SongSearchListProps) {
+function SongSearchListFn({ searchMatches, loading, onSelect }: SongSearchListProps) {
   const groups = (
     Object.entries(GROUP_LABELS) as [keyof SearchMatches, string][]
   ).filter(([key]) => searchMatches[key].length > 0);
@@ -88,3 +89,6 @@ export default function SongSearchList({ searchMatches, loading, onSelect }: Son
     </div>
   );
 }
+
+const SongSearchList = memo(SongSearchListFn);
+export default SongSearchList;

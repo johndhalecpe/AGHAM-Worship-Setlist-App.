@@ -45,7 +45,7 @@ export default function AuthCard({ view, onGoToLogin, onGoToCreateAccount, onGoT
         <div className="flex flex-col items-center gap-4">
           <button
             onClick={onGoToLogin}
-            className="spotlight-btn inline-flex items-center justify-center rounded-xl w-64 px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent)]"
+            className="spotlight-btn inline-flex items-center justify-center rounded-xl w-full max-w-xs px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent)]"
             style={{
               background: "linear-gradient(135deg, var(--color-accent), #e8632a)",
               color: "#fff",
@@ -56,7 +56,7 @@ export default function AuthCard({ view, onGoToLogin, onGoToCreateAccount, onGoT
 
           <button
             onClick={onGoToCreateAccount}
-            className="spotlight-btn-subtle inline-flex items-center justify-center rounded-xl w-64 px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent-secondary)]"
+            className="spotlight-btn-subtle inline-flex items-center justify-center rounded-xl w-full max-w-xs px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent-secondary)]"
             style={{
               border: "2px solid var(--color-accent)",
               color: "var(--color-accent)",
@@ -68,7 +68,7 @@ export default function AuthCard({ view, onGoToLogin, onGoToCreateAccount, onGoT
 
           <Link
             href="/setlists"
-            className="group inline-flex items-center justify-center rounded-xl w-64 px-8 py-4 text-base font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-border)]"
+            className="group inline-flex items-center justify-center rounded-xl w-full max-w-xs px-8 py-4 text-base font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-border)]"
             style={{
               backgroundColor: "var(--color-surface-muted)",
               color: "var(--color-text-secondary)",

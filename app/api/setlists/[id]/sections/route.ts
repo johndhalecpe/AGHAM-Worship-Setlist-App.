@@ -35,7 +35,9 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+  });
 }
 
 export async function POST(
@@ -162,6 +164,7 @@ export async function PATCH(
       );
     }
 
+    const errors: string[] = [];
     for (const sectionUpdate of body.items) {
       const updatePayload: Record<string, unknown> = {};
       if (sectionUpdate.sort_order !== undefined) updatePayload.sort_order = sectionUpdate.sort_order;
@@ -179,11 +182,15 @@ export async function PATCH(
         .eq("setlist_id", id);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        errors.push(error.message);
       }
     }
 
-    return NextResponse.json({ message: "Order updated" });
+    if (errors.length > 0) {
+      return NextResponse.json({ error: errors.join("; ") }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "Updated" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown server error";
     return NextResponse.json({ error: message }, { status: 500 });

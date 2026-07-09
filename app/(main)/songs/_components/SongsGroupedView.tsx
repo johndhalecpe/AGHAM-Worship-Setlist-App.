@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -79,8 +79,10 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
   const [selectedTimeSigs, setSelectedTimeSigs] = useState<Set<string>>(new Set());
   const [composedOnly, setComposedOnly] = useState(false);
 
+  const deferredSearch = useDeferredValue(searchQuery);
+
   const searchMatches = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = deferredSearch.trim().toLowerCase();
     if (!query) return null;
     const title: Song[] = [];
     const author: Song[] = [];
@@ -98,7 +100,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
       }
     }
     return { title, author, lyrics };
-  }, [songs, searchQuery]);
+  }, [songs, deferredSearch]);
 
   const filteredSongs = useMemo(() => {
     let result = songs;
@@ -128,39 +130,39 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
   const hasSearch = searchMatches !== null;
   const groups = hasSearch ? [] : groupSongsByCategoryAndLanguage(filteredSongs);
 
-  function toggleLanguage(lang: string) {
+  const toggleLanguage = useCallback((lang: string) => {
     setSelectedLanguages((prev) => {
       const next = new Set(prev);
       if (next.has(lang)) next.delete(lang);
       else next.add(lang);
       return next;
     });
-  }
+  }, []);
 
-  function toggleTimeSig(ts: string) {
+  const toggleTimeSig = useCallback((ts: string) => {
     setSelectedTimeSigs((prev) => {
       const next = new Set(prev);
       if (next.has(ts)) next.delete(ts);
       else next.add(ts);
       return next;
     });
-  }
+  }, []);
 
-  function handleCategoryClick(cat: string) {
+  const handleCategoryClick = useCallback((cat: string) => {
     if (selectedCategory === cat) {
       setSelectedCategory(null);
     } else {
       setSelectedCategory(cat);
     }
-  }
+  }, [selectedCategory]);
 
-  function clearFilters() {
+  const clearFilters = useCallback(() => {
     setSelectedCategory(null);
     setSelectedLanguages(new Set());
     setSelectedTimeSigs(new Set());
     setComposedOnly(false);
     setShowFilters(false);
-  }
+  }, []);
 
   async function handleSave(songId: string, data: {
     title: string;
@@ -221,7 +223,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/songs/new"
-            className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[40px] flex items-center"
+            className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[44px] flex items-center"
             style={{
               backgroundColor: "var(--color-accent)",
               color: "var(--color-text-on-accent)",
@@ -234,7 +236,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
           </Link>
           <button
             onClick={() => setIsLocked(!isLocked)}
-            className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[40px]"
+            className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[44px]"
             style={{
               backgroundColor: isLocked ? "var(--color-accent)" : "var(--color-surface-card)",
               color: isLocked ? "#fff" : "var(--color-text-secondary)",
@@ -266,7 +268,7 @@ export default function SongsGroupedView({ songs }: { songs: Song[] }) {
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="rounded-lg px-3 py-2 text-sm font-medium transition-all shrink-0 min-h-[40px] flex items-center gap-1.5"
+          className="rounded-lg px-3 py-2 text-sm font-medium transition-all shrink-0 min-h-[44px] flex items-center gap-1.5"
           style={{
             backgroundColor: showFilters || hasActiveFilters ? "var(--color-accent)" : "var(--color-surface-card)",
             color: showFilters || hasActiveFilters ? "#fff" : "var(--color-text-secondary)",

@@ -2,12 +2,12 @@ import { supabase } from "@/lib/supabase";
 import { Song } from "@/lib/type";
 import SongsGroupedView from "./_components/SongsGroupedView";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 async function fetchAllSongs(): Promise<Song[]> {
   const { data, error } = await supabase
     .from("songs")
-    .select("*")
+    .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, lyrics, chords, status, created_at")
     .order("title", { ascending: true });
 
   if (error) {

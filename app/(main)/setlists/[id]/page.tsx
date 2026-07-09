@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { getBranchLabel } from "@/lib/branches";
 import SetlistDetail from "./SetlistDetail";
+
+const getSetlist = cache(async (id: string) => {
+  const { data, error } = await supabase
+    .from("setlists")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) return null;
+  return data as Setlist;
+});
 
 export async function generateMetadata({
   params,
@@ -11,11 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
 
-  const { data: setlist } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const setlist = await getSetlist(id);
 
   if (!setlist) {
     return { title: "Setlist not found" };
@@ -46,18 +53,7 @@ export async function generateMetadata({
   };
 }
 
-async function fetchSetlistById(id: string) {
-  const { data, error } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-  return data as Setlist;
-}
-
-async function fetchSectionsBySetlistId(id: string) {
+const fetchSectionsBySetlistId = cache(async (id: string) => {
   const { data, error } = await supabase
     .from("setlist_sections")
     .select(
@@ -83,7 +79,7 @@ async function fetchSectionsBySetlistId(id: string) {
 
   if (error) return [];
   return data as unknown as SetlistSectionWithSong[];
-}
+});
 
 export default async function SetlistDetailPage({
   params,
@@ -93,7 +89,7 @@ export default async function SetlistDetailPage({
   const { id } = await params;
 
   const [setlist, sections] = await Promise.all([
-    fetchSetlistById(id),
+    getSetlist(id),
     fetchSectionsBySetlistId(id),
   ]);
 

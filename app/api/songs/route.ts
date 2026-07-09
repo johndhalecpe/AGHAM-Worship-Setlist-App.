@@ -8,7 +8,7 @@ export async function GET(request: Request) {
 
   let supabaseQuery = supabase
     .from("songs")
-    .select("*")
+    .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, lyrics, chords, status, created_at")
     .order("title", { ascending: true });
 
   if (searchTitle) {
@@ -23,7 +23,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+  });
 }
 
 export async function POST(request: Request) {

@@ -291,7 +291,7 @@ export default function SetlistSections({
                           <div className="flex items-center gap-1.5 mt-1.5 flex-nowrap">
                             <button
                               onClick={() => setChordsView({ sectionType: section.key, songId: s.id })}
-                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[44px] sm:min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
                               style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
@@ -301,7 +301,7 @@ export default function SetlistSections({
                             </button>
                             <button
                               onClick={() => setLyricsView({ sectionType: section.key, songId: s.id })}
-                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[44px] sm:min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
                               style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
@@ -314,7 +314,7 @@ export default function SetlistSections({
                         <div className={`flex flex-col items-center gap-0.5 shrink-0 ${isPast || isLocked ? "invisible" : ""}`}>
                           <button
                             onClick={() => setEditingSong(buildSong(s))}
-                            className="p-1.5 rounded min-h-[36px] min-w-[36px] flex items-center justify-center hover:opacity-80"
+                            className="p-1.5 rounded min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center hover:opacity-80"
                             style={{ color: "var(--color-accent)", opacity: 0.6 }}
                             title="Edit song details"
                           >
@@ -325,7 +325,7 @@ export default function SetlistSections({
                           </button>
                           <button
                             onClick={() => setConfirmRemoveId(s.id)}
-                            className="p-1.5 rounded min-h-[36px] min-w-[36px] flex items-center justify-center hover:opacity-100"
+                            className="p-1.5 rounded min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center hover:opacity-100"
                             style={{ color: "var(--color-danger)", opacity: 0.55 }}
                             title="Remove song"
                           >
@@ -340,7 +340,7 @@ export default function SetlistSections({
               })}
             </div>
             {sectionSongs.length > 0 && !isPast && (
-              <p className="text-[10px] italic text-center mt-2" style={{ color: "var(--color-text-tertiary)", opacity: 0.45 }}>
+              <p className="text-xs italic text-center mt-2" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>
                 Drag to reorder
               </p>
             )}

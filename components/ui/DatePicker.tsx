@@ -182,7 +182,7 @@ export default function DatePicker({ value, onChange, minDate }: DatePickerProps
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1 rounded-lg transition-colors"
+              className="p-2 sm:p-1 rounded-lg transition-colors"
               style={{
                 color: "var(--color-text-secondary)",
                 opacity: isAtMinimumMonth ? 0.3 : 1,
@@ -264,7 +264,7 @@ export default function DatePicker({ value, onChange, minDate }: DatePickerProps
                   key={i}
                   type="button"
                   onClick={() => selectDay(day)}
-                  className="relative w-9 h-9 text-sm rounded-lg transition-all mx-auto"
+                  className="relative w-11 h-11 sm:w-9 sm:h-9 text-sm rounded-lg transition-all mx-auto"
                   style={{
                     color: isDisabled(day)
                       ? "var(--color-text-tertiary)"

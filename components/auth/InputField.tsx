@@ -21,7 +21,7 @@ function ClearButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex-shrink-0 grid place-items-center min-h-[32px] min-w-[32px] rounded-lg transition-colors hover:opacity-70"
+      className="flex-shrink-0 grid place-items-center min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] rounded-lg transition-colors hover:opacity-70"
       style={{ color: "var(--color-text-tertiary)" }}
     >
       <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

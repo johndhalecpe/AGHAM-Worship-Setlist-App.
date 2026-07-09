@@ -77,12 +77,18 @@ export default function CreateAccountForm({ onBack, onPending }: CreateAccountFo
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<Role>("singer");
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const emailError = email.length > 0 && !email.includes("@");
 
   const passwordError = password.length > 0 && password.length < 4;
+
+  function handleBackToLanding() {
+    setShowSuccess(false);
+    onBack();
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -129,8 +135,64 @@ export default function CreateAccountForm({ onBack, onPending }: CreateAccountFo
       toast.success("Admin account created!");
       router.push("/admin/approvals");
     } else {
-      onPending?.(name);
+      localStorage.setItem("pendingApprovalEmail", email);
+      setShowSuccess(true);
     }
+  }
+
+  if (showSuccess) {
+    return (
+      <div className="flex flex-col items-center w-full lg:mt-3 mt-6 text-left">
+        <div
+          className="w-full max-w-xs rounded-2xl p-6 text-center"
+          style={{
+            backgroundColor: "var(--color-surface-card)",
+            border: "2px solid var(--color-accent-secondary)",
+          }}
+        >
+          <div
+            className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: "rgba(13, 148, 136, 0.1)" }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="w-7 h-7"
+              fill="none"
+              stroke="var(--color-accent-secondary)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <h2
+            className="text-lg font-bold mb-3"
+            style={{ color: "var(--color-accent-secondary)" }}
+          >
+            Thank you for signing up!
+          </h2>
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            Please wait for the admin to approve your account. You&apos;ll be
+            able to log in once it&apos;s done.
+          </p>
+          <button
+            onClick={handleBackToLanding}
+            className="mt-6 rounded-xl px-6 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 w-full"
+            style={{
+              backgroundColor: "var(--color-accent-secondary)",
+              color: "white",
+            }}
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

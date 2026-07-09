@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import KeyPicker from "@/components/ui/KeyPicker";
@@ -48,6 +48,7 @@ export default function ChordsViewer({
   chordEditsRef.current = chordEdits;
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
+  const isDirtyRef = useRef(false);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const editingSong = editingKeyId ? filtered.find((s) => s.id === editingKeyId) ?? null : null;
 
@@ -84,9 +85,8 @@ export default function ChordsViewer({
   async function saveNotes(currentNotes: Record<string, string>, silent = false) {
     if (isPast || isSavingRef.current) return;
     isSavingRef.current = true;
-    // save chord edits to songs table
     const currentChordEdits = chordEditsRef.current;
-    for (const s of filtered) {
+    const songPromises = filtered.map(async (s) => {
       const edited = currentChordEdits[`${s.id}-chords`];
       if (edited !== undefined && edited !== (s.songs.chords ?? "")) {
         const songRes = await fetch(`/api/songs/${s.song_id}`, {
@@ -95,11 +95,16 @@ export default function ChordsViewer({
           body: JSON.stringify({ chords: edited }),
         });
         if (!songRes.ok) {
-          isSavingRef.current = false;
-          if (!silent) toast.error(`Failed to save chords for "${s.songs.title}"`);
-          return false;
+          throw new Error(`Failed to save chords for "${s.songs.title}"`);
         }
       }
+    });
+    try {
+      await Promise.all(songPromises);
+    } catch (e) {
+      isSavingRef.current = false;
+      if (!silent) toast.error(e instanceof Error ? e.message : "Failed to save chords");
+      return false;
     }
     const items = buildItems(currentNotes);
     const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
@@ -113,17 +118,26 @@ export default function ChordsViewer({
       return false;
     }
     initialNotesRef.current = { ...currentNotes };
+    isDirtyRef.current = false;
     if (!silent) toast.success(showDrummer ? "Drummer notes saved" : "Chord notes saved");
     onSectionsChange((prev) =>
       prev.map((sec) => {
         const item = items.find((i) => i.id === sec.id);
-        return item ? { ...sec, chord_notes: item.chord_notes } : sec;
+        const chordsEdit = currentChordEdits[`${sec.id}-chords`];
+        return {
+          ...sec,
+          chord_notes: item ? item.chord_notes : sec.chord_notes,
+          ...(chordsEdit !== undefined
+            ? { songs: { ...sec.songs, chords: chordsEdit } }
+            : {}),
+        };
       })
     );
     return true;
   }
 
   function handleChordsChange(id: string, value: string) {
+    isDirtyRef.current = true;
     setChordEdits((prev) => {
       const next = { ...prev, [id]: value };
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -133,6 +147,7 @@ export default function ChordsViewer({
   }
 
   function handleNotesChange(id: string, value: string) {
+    isDirtyRef.current = true;
     setNotes((prev) => {
       const next = { ...prev, [id]: value };
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -167,9 +182,10 @@ export default function ChordsViewer({
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+  }, [activeSongId]);
 
-  const handleClose = useCallback(async () => {
+  const handleCloseRef = useRef<() => void>(() => {});
+  handleCloseRef.current = () => {
     if (isPast) {
       toast.error("Can't edit past lineups");
       onClose();
@@ -178,38 +194,37 @@ export default function ChordsViewer({
 
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
 
-    const hasChanges = Object.keys(notes).length !== Object.keys(initialNotesRef.current).length ||
-      Object.entries(notes).some(([k, v]) => initialNotesRef.current[k] !== v) ||
-      Object.keys(chordEdits).length > 0;
-    if (!hasChanges) {
-      onClose();
-      return;
-    }
-
-    const saved = await saveNotes(notes, false);
-    if (!saved) return;
-
     onClose();
-  }, [filtered, notes, chordEdits, setlist.id, onSectionsChange, onClose, isPast, showDrummer]);
+
+    if (isDirtyRef.current) {
+      saveNotes(notesRef.current, true).then((ok) => {
+        if (ok === false) {
+          toast.error("Failed to save changes");
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") {
+        handleCloseRef.current();
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClose]);
+  }, []);
 
   const fontSize = ZOOM_STEPS[zoomIndex];
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center cursor-pointer"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
-      onClick={handleClose}
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", height: "100dvh" }}
+      onClick={() => handleCloseRef.current()}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 backdrop-blur-xl"
+        className="relative w-full max-w-2xl max-h-[85dvh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 pb-[env(safe-area-inset-bottom,16px)] sm:pb-6 backdrop-blur-xl"
         style={{
           backgroundColor: "var(--color-surface)",
           border: "1px solid var(--color-border)",
@@ -226,7 +241,7 @@ export default function ChordsViewer({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDrummer(!showDrummer)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors shrink-0 flex items-center gap-1 min-h-[44px]"
               style={{
                 backgroundColor: showDrummer ? "var(--color-accent)" : "var(--color-surface-card)",
                 color: showDrummer ? "#fff" : "var(--color-text-secondary)",
@@ -248,28 +263,28 @@ export default function ChordsViewer({
             <button
                   onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
                   disabled={zoomIndex === 0}
-                  className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[32px] flex items-center justify-center"
-                  style={{
-                    backgroundColor: "var(--color-surface-muted)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text)",
-                  }}
-                  aria-label="Zoom out"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path d="M2 10a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Z" />
-                  </svg>
-                </button>
-                <span
-                  className="text-xs font-medium tabular-nums min-w-[2.5rem] text-center"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  {fontSize}px
-                </span>
-                <button
-                  onClick={() => setZoomIndex(Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1))}
-                  disabled={zoomIndex === ZOOM_STEPS.length - 1}
-                  className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[32px] flex items-center justify-center"
+              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--color-surface-muted)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text)",
+              }}
+              aria-label="Zoom out"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M2 10a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Z" />
+              </svg>
+            </button>
+            <span
+              className="text-xs font-medium tabular-nums min-w-[2.5rem] text-center"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              {fontSize}px
+            </span>
+            <button
+              onClick={() => setZoomIndex(Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1))}
+              disabled={zoomIndex === ZOOM_STEPS.length - 1}
+              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
                   style={{
                     backgroundColor: "var(--color-surface-muted)",
                     border: "1px solid var(--color-border)",
@@ -310,7 +325,7 @@ export default function ChordsViewer({
                       <button
                         onClick={() => { if (!isPast) setEditingKeyId(s.id); }}
                         disabled={isPast}
-                        className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+                        className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
                         style={{
                           backgroundColor: "var(--color-badge-key)",
                           color: "var(--color-badge-key-text)",

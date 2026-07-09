@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Song } from "@/lib/type";
@@ -23,7 +23,7 @@ function isPredefinedCategory(cat: string | null): cat is keyof typeof categoryL
   return cat !== null && cat in categoryLabels;
 }
 
-export default function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardProps) {
+function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -95,7 +95,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setShowLyrics(!showLyrics)}
-              className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80"
+              className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80 min-h-[44px] flex items-center px-2"
               style={{ color: "var(--color-accent)" }}
             >
               {showLyrics ? "Hide Lyrics" : "Show Lyrics"}
@@ -103,7 +103,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
             <div className={`flex items-center gap-1 ${isLocked ? "invisible" : ""}`}>
               <button
                 onClick={() => onEditRequest?.(song.id)}
-                className="p-1 rounded transition-colors min-h-[28px] min-w-[28px] flex items-center justify-center"
+                className="p-1 rounded transition-colors min-h-[44px] min-w-[44px] sm:min-h-[28px] sm:min-w-[28px] flex items-center justify-center"
                 style={{ color: "var(--color-accent)", opacity: 0.6 }}
                 onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "1")}
                 onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = "0.6")}
@@ -146,7 +146,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
                   setEditingChords(false);
                 }
               }}
-              className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80"
+              className="text-xs font-medium whitespace-nowrap transition-colors hover:opacity-80 min-h-[44px] flex items-center px-2"
               style={{ color: "var(--color-accent)" }}
             >
               {showChords ? "Hide Chords" : "Show Chords"}
@@ -155,7 +155,7 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="p-1 rounded transition-colors disabled:opacity-50 min-h-[28px] min-w-[28px] flex items-center justify-center"
+                className="p-1 rounded transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px] sm:min-h-[28px] sm:min-w-[28px] flex items-center justify-center"
                 style={{ color: "#DC2626", opacity: 0.6 }}
                 onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "1")}
                 onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = "0.6")}
@@ -262,3 +262,5 @@ export default function SongCard({ song, isLocked, onEditRequest, showMissingTag
     </div>
   );
 }
+
+export default memo(SongCard);

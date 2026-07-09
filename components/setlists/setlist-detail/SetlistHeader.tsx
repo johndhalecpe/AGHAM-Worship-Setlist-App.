@@ -140,7 +140,7 @@ export default function SetlistHeader({
               toast.success("Lineup preview copied to clipboard");
               setTimeout(() => setCopiedText(false), 10000);
             }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0 flex items-center gap-1.5"
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0 flex items-center gap-1.5 min-h-[44px]"
             style={{
               backgroundColor: copiedText ? "var(--color-success)" : "var(--color-accent)",
               color: "var(--color-text-on-accent)",
@@ -262,7 +262,7 @@ export default function SetlistHeader({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={onToggleLock}
-              className="rounded-lg px-3 py-2 text-xs font-medium transition-all hover:-translate-y-0.5"
+              className="rounded-lg px-3 py-2 text-xs font-medium transition-all hover:-translate-y-0.5 min-h-[44px]"
               style={{
                 backgroundColor: isLocked ? "var(--color-accent)" : "var(--color-surface-card)",
                 color: isLocked ? "var(--color-text-on-accent)" : "var(--color-text-secondary)",
@@ -288,7 +288,7 @@ export default function SetlistHeader({
             {!isLocked && (
               <button
                 onClick={onEdit}
-                className="rounded-lg px-3 py-2 text-xs font-medium transition-colors"
+                className="rounded-lg px-3 py-2 text-xs font-medium transition-colors min-h-[44px]"
                 style={{
                   border: "1px solid var(--color-border)",
                   color: "var(--color-text-secondary)",
@@ -300,7 +300,7 @@ export default function SetlistHeader({
             {!isLocked && (
               <button
                 onClick={onDeleteRequest}
-                className="rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
+                className="rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 min-h-[44px]"
                 style={{
                   border: "1px solid var(--color-danger)",
                   color: "var(--color-danger)",

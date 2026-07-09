@@ -97,6 +97,7 @@ export default function LoginForm({ onBack, onRejected, onPending }: LoginFormPr
         .single();
 
       if (profile?.status === "rejected") {
+        localStorage.removeItem("pendingApprovalEmail");
         await supabase.auth.signOut();
         setLoading(false);
         onRejected?.(profile.name);
@@ -126,7 +127,15 @@ export default function LoginForm({ onBack, onRejected, onPending }: LoginFormPr
     }
 
     setLoading(false);
-    toast.success("Welcome back!");
+
+    const pendingEmail = localStorage.getItem("pendingApprovalEmail");
+    if (pendingEmail === user?.email) {
+      localStorage.removeItem("pendingApprovalEmail");
+      toast.success("Your account has been approved! You can now log in.");
+    } else {
+      toast.success("Welcome back!");
+    }
+
     router.push("/setlists");
   }
 
@@ -190,7 +199,7 @@ export default function LoginForm({ onBack, onRejected, onPending }: LoginFormPr
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="min-h-[32px] min-w-[32px] grid place-items-center rounded-lg transition-opacity hover:opacity-70"
+              className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] grid place-items-center rounded-lg transition-opacity hover:opacity-70"
             >
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>

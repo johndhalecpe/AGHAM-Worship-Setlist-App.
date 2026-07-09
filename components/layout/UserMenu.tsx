@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOut } from "@/lib/auth";
 import ChangePasswordForm from "../auth/ChangePasswordForm";
-import Portal from "@/components/shared/Portal";
 
 function UserIcon() {
   return (
@@ -23,24 +22,24 @@ export default function UserMenu({ userName }: { userName: string }) {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const [dropdownTop, setDropdownTop] = useState<number | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      if (ref.current?.contains(target)) return;
-      const dropdown = document.querySelector("[data-user-menu-dropdown]");
-      if (dropdown?.contains(target)) return;
-      setOpen(false);
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
-    if (open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      setDropdownTop(rect.bottom + 8);
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    if (open) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [open]);
 
@@ -63,7 +62,7 @@ export default function UserMenu({ userName }: { userName: string }) {
       <div className="relative" ref={ref}>
         <button
           onClick={() => setOpen(!open)}
-          className="p-2 rounded-lg transition-colors active:scale-95"
+          className="p-2 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
           style={{
             backgroundColor: "var(--color-surface-muted)",
             color: "var(--color-text)",
@@ -74,13 +73,11 @@ export default function UserMenu({ userName }: { userName: string }) {
           <UserIcon />
         </button>
 
-        {open && dropdownTop !== null && (
-          <Portal>
+        {open && (
           <div
             data-user-menu-dropdown
-            className="fixed right-4 w-56 rounded-xl shadow-lg border overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-lg border overflow-hidden"
             style={{
-              top: dropdownTop,
               backgroundColor: "var(--color-surface-card)",
               borderColor: "var(--color-border)",
               zIndex: 200,
@@ -98,10 +95,8 @@ export default function UserMenu({ userName }: { userName: string }) {
 
             <button
               onClick={() => { setOpen(false); setShowChangePassword(true); }}
-              className="w-full px-4 py-2.5 text-sm text-left transition-colors flex items-center gap-2"
+              className="w-full px-4 py-2.5 text-sm text-left transition-colors flex items-center gap-2 hover:opacity-80"
               style={{ color: "var(--color-text-secondary)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-surface-muted)")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="5" y="11" width="14" height="10" rx="2" />
@@ -114,10 +109,8 @@ export default function UserMenu({ userName }: { userName: string }) {
 
             <button
               onClick={() => setShowConfirm(true)}
-              className="w-full px-4 py-2.5 text-sm text-left transition-colors flex items-center gap-2"
+              className="w-full px-4 py-2.5 text-sm text-left transition-colors flex items-center gap-2 hover:opacity-80"
               style={{ color: "var(--color-danger)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-surface-muted)")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -127,12 +120,10 @@ export default function UserMenu({ userName }: { userName: string }) {
               Log out
             </button>
           </div>
-          </Portal>
         )}
       </div>
 
       {showConfirm && (
-        <Portal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
@@ -155,7 +146,7 @@ export default function UserMenu({ userName }: { userName: string }) {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 rounded-xl py-3 text-sm font-semibold transition-all"
+                className="flex-1 rounded-xl py-3 text-sm font-semibold transition-all min-h-[44px]"
                 style={{
                   backgroundColor: "var(--color-surface-muted)",
                   color: "var(--color-text-secondary)",
@@ -166,7 +157,7 @@ export default function UserMenu({ userName }: { userName: string }) {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="flex-1 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-50"
+                className="flex-1 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-50 min-h-[44px]"
                 style={{
                   backgroundColor: "var(--color-danger)",
                   color: "#fff",
@@ -177,7 +168,6 @@ export default function UserMenu({ userName }: { userName: string }) {
             </div>
           </div>
         </div>
-        </Portal>
       )}
 
       {showChangePassword && (

@@ -105,27 +105,35 @@ body {
   color: var(--color-text-on-accent);
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-hover);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-hover);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
+@media (pointer: coarse) {
+  * {
+    scrollbar-width: auto;
+  }
 }
 
 button {
@@ -164,6 +172,11 @@ button, a, input, textarea, select {
   transform: translateX(-100%) skewX(-15deg);
   animation: spotlight-sweep 3s ease-in-out infinite;
   pointer-events: none;
+}
+
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes grow-in {

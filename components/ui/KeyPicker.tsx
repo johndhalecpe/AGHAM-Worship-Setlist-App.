@@ -88,7 +88,7 @@ export default function KeyPicker({
               key={l}
               type="button"
               onClick={() => handleLetterClick(l)}
-              className="rounded-lg font-medium transition-all min-w-[32px] px-1.5 py-1 text-xs leading-none"
+              className="rounded-lg font-medium transition-all min-w-[32px] px-1.5 py-2.5 sm:py-1 text-xs leading-none"
               style={{
                 backgroundColor:
                   letter === l ? "var(--color-accent)" : "var(--color-surface)",
@@ -109,7 +109,7 @@ export default function KeyPicker({
             type="button"
             onClick={() => handleAccidentalClick("flat")}
             disabled={!letter || CANT_FLAT.has(letter)}
-            className="rounded-lg min-w-[32px] px-2 py-1 text-xs font-medium transition-all disabled:opacity-30"
+            className="rounded-lg min-w-[32px] px-2 py-2.5 sm:py-1 text-xs font-medium transition-all disabled:opacity-30"
             style={{
               backgroundColor:
                 accidental === "flat" ? "var(--color-accent)" : "var(--color-surface)",
@@ -127,7 +127,27 @@ export default function KeyPicker({
             type="button"
             onClick={() => handleAccidentalClick("sharp")}
             disabled={!letter || CANT_SHARP.has(letter)}
-            className="rounded-lg min-w-[32px] px-2 py-1 text-xs font-medium transition-all disabled:opacity-30"
+            className="rounded-lg min-w-[32px] px-2 py-2.5 sm:py-1 text-xs font-medium transition-all disabled:opacity-30"
+            style={{
+              backgroundColor:
+                accidental === "sharp" ? "var(--color-accent)" : "var(--color-surface)",
+              color:
+                accidental === "sharp" ? "#fff" : "var(--color-text-secondary)",
+              border:
+                accidental === "sharp"
+                  ? "1px solid var(--color-accent)"
+                  : "1px solid var(--color-border)",
+            }}
+          >
+            ♯
+          </button>
+          <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>/</span>
+
+          <button
+            type="button"
+            onClick={handleMinorToggle}
+            disabled={!letter}
+            className="rounded-lg min-w-[32px] px-2 py-2.5 sm:py-1 text-xs font-medium transition-all disabled:opacity-30"
             style={{
               backgroundColor:
                 accidental === "sharp" ? "var(--color-accent)" : "var(--color-surface)",
@@ -172,7 +192,7 @@ export default function KeyPicker({
           type="button"
           onClick={handleSave}
           disabled={!hasChanges}
-          className="rounded p-1 leading-none transition-colors hover:opacity-80 shrink-0 min-h-[28px] min-w-[28px] flex items-center justify-center disabled:opacity-30"
+          className="rounded p-1 leading-none transition-colors hover:opacity-80 shrink-0 min-h-[44px] min-w-[44px] sm:min-h-[28px] sm:min-w-[28px] flex items-center justify-center disabled:opacity-30"
           style={{ color: hasChanges ? "var(--color-accent)" : "var(--color-text-tertiary)" }}
           aria-label="Save"
         >
@@ -184,7 +204,7 @@ export default function KeyPicker({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded p-1 leading-none transition-colors hover:opacity-80 shrink-0 min-h-[28px] min-w-[28px] flex items-center justify-center"
+            className="rounded p-1 leading-none transition-colors hover:opacity-80 shrink-0 min-h-[44px] min-w-[44px] sm:min-h-[28px] sm:min-w-[28px] flex items-center justify-center"
             style={{ color: "var(--color-text-tertiary)" }}
             aria-label="Cancel"
           >

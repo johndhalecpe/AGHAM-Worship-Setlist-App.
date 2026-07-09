@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
@@ -25,8 +25,13 @@ export default function SetlistContent({
   onToggleLock,
 }: SetlistContentProps) {
   const router = useRouter();
-  const [setlist] = useState(initialSetlist);
+  const [setlist, setSetlist] = useState(initialSetlist);
   const [sections, setSections] = useState(initialSections);
+
+  useEffect(() => {
+    setSetlist(initialSetlist);
+    setSections(initialSections);
+  }, [initialSetlist, initialSections]);
 
   const [editing, setEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -106,7 +111,7 @@ export default function SetlistContent({
     <div>
       <button
         onClick={() => router.push("/setlists")}
-        className="inline-flex items-center gap-1.5 text-sm font-medium mb-4 w-fit px-1 py-1 -ml-1 rounded-lg transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm font-medium mb-4 w-fit px-3 py-2 -ml-1 rounded-lg transition-colors"
         style={{ color: "var(--color-text-secondary)" }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -160,7 +165,7 @@ export default function SetlistContent({
         {isPast ? (
           <button
             onClick={() => router.push("/setlists")}
-            className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 w-full sm:w-auto min-h-[44px]"
             style={{
               border: "1px solid var(--color-border)",
               color: "var(--color-text-secondary)",
@@ -193,7 +198,7 @@ export default function SetlistContent({
               });
             }}
             disabled={isSaving}
-            className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 w-full sm:w-auto min-h-[44px]"
             style={{
               backgroundColor: "var(--color-accent)",
               color: "var(--color-text-on-accent)",
