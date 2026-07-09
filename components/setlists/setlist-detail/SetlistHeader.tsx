@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { getBranchLabel } from "@/lib/branches";
 
 type SetlistHeaderProps = {
@@ -35,10 +36,44 @@ export default function SetlistHeader({
   onToggleLock,
   onDeleteRequest,
 }: SetlistHeaderProps) {
+  const isGuest = useIsGuest();
   const [copiedText, setCopiedText] = useState(false);
 
   function getKey(s: SetlistSectionWithSong) {
     return s.song_key ?? s.songs.default_key ?? "G";
+  }
+
+  function handleCopy() {
+    const sectionLabels: Record<string, string> = {
+      worship: "Worship",
+      praise: "Praise",
+      tithes_offering: "Tithes and offering",
+      special: "Special numbers",
+    };
+    let text = formatDate(setlist.date);
+    if (setlist.song_leader) text += ` — ${setlist.song_leader}`;
+    if (setlist.branch === "carissa_1") text += `\n${getBranchLabel(setlist.branch)}`;
+    if (setlist.title) text += `\n${setlist.title}`;
+    if (setlist.description) text += `\n${setlist.description}`;
+    for (const type of SECTION_TYPES_FOR_COPY) {
+      const sectionSongs = sections
+        .filter((s) => s.section_type === type)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      if (sectionSongs.length > 0) {
+        text += `\n\n${sectionLabels[type] ?? type}`;
+        for (const s of sectionSongs) {
+          const key = getKey(s);
+          text += `\n• [${key}] ${s.songs.title}`;
+          if (s.songs.author) text += ` (${s.songs.author})`;
+          if (s.notes) text += ` — "${s.notes}"`;
+        }
+      }
+    }
+    text += `\n\n${window.location.href}`;
+    navigator.clipboard.writeText(text);
+    setCopiedText(true);
+    toast.success("Lineup copied to clipboard");
+    setTimeout(() => setCopiedText(false), 10000);
   }
 
   return (
@@ -80,168 +115,34 @@ export default function SetlistHeader({
             </p>
           )}
         </div>
-      </div>
-
-      <div
-        className="rounded-lg p-4 mb-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
-        style={{
-          backgroundColor: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-secondary)",
-        }}
-      >
-        <div className="flex justify-between items-start gap-3">
-          <div>
-            <p className="font-semibold" style={{ color: "var(--color-text)" }}>
-              {formatDate(setlist.date)}
-              {setlist.song_leader && (
-                <span className="font-normal" style={{ color: "var(--color-text-secondary)" }}>
-                  {" "}— {setlist.song_leader}
-                </span>
-              )}
-            </p>
-            {setlist.branch === "carissa_1" && (
-              <p className="font-semibold text-[11px] mt-0.5" style={{ color: "var(--color-accent)" }}>
-                {getBranchLabel(setlist.branch)}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              const sectionLabels: Record<string, string> = {
-                worship: "Worship",
-                praise: "Praise",
-                tithes_offering: "Tithes and offering",
-                special: "Special numbers",
-              };
-              let text = formatDate(setlist.date);
-              if (setlist.song_leader) text += ` — ${setlist.song_leader}`;
-              if (setlist.branch === "carissa_1") text += `\n${getBranchLabel(setlist.branch)}`;
-              if (setlist.title) text += `\n${setlist.title}`;
-              if (setlist.description) text += `\n${setlist.description}`;
-              for (const type of SECTION_TYPES_FOR_COPY) {
-                const sectionSongs = sections
-                  .filter((s) => s.section_type === type)
-                  .sort((a, b) => a.sort_order - b.sort_order);
-                if (sectionSongs.length > 0) {
-                  text += `\n\n${sectionLabels[type] ?? type}`;
-                  for (const s of sectionSongs) {
-                    const key = getKey(s);
-                    text += `\n• [${key}] ${s.songs.title}`;
-                    if (s.songs.author) text += ` (${s.songs.author})`;
-                    if (s.notes) text += ` — "${s.notes}"`;
-                  }
-                }
-              }
-              text += `\n\n${window.location.href}`;
-              navigator.clipboard.writeText(text);
-              setCopiedText(true);
-              toast.success("Lineup preview copied to clipboard");
-              setTimeout(() => setCopiedText(false), 10000);
-            }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0 flex items-center gap-1.5 min-h-[44px]"
-            style={{
-              backgroundColor: copiedText ? "var(--color-success)" : "var(--color-accent)",
-              color: "var(--color-text-on-accent)",
-            }}
-          >
-            {copiedText ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
-                </svg>
-                Copied!
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                  <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z" />
-                  <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
-                </svg>
-                Copy text
-              </>
-            )}
-          </button>
-        </div>
-        {setlist.title && (
-          <p className="mt-1 font-semibold" style={{ color: "var(--color-text)" }}>
-            {setlist.title}
-          </p>
-        )}
-        {setlist.description && (
-          <p className="italic" style={{ color: "var(--color-text-tertiary)" }}>
-            {setlist.description}
-          </p>
-        )}
-        {sections.filter((s) => s.section_type === "worship").length > 0 && (
-          <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
-              Worship
-            </p>
-            {sections
-              .filter((s) => s.section_type === "worship")
-              .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
-                </p>
-              ))}
-          </>
-        )}
-        {sections.filter((s) => s.section_type === "praise").length > 0 && (
-          <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
-              Praise
-            </p>
-            {sections
-              .filter((s) => s.section_type === "praise")
-              .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
-                </p>
-              ))}
-          </>
-        )}
-        {sections.filter((s) => s.section_type === "tithes_offering").length > 0 && (
-          <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
-              Tithes and offering
-            </p>
-            {sections
-              .filter((s) => s.section_type === "tithes_offering")
-              .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
-                </p>
-              ))}
-          </>
-        )}
-        {sections.filter((s) => s.section_type === "special").length > 0 && (
-          <>
-            <p className="mt-3 font-semibold uppercase tracking-wider text-xs" style={{ color: "var(--color-accent)" }}>
-              Special numbers
-            </p>
-            {sections
-              .filter((s) => s.section_type === "special")
-              .sort((a, b) => a.sort_order - b.sort_order)
-              .map((s) => (
-                <p key={s.id} className="ml-2 break-words">
-                  • <span className="opacity-70">[{getKey(s)}]</span> {s.songs.title}
-                  {s.songs.author && <span className="opacity-60"> ({s.songs.author})</span>}
-                  {s.notes && <span className="italic opacity-60"> — &ldquo;{s.notes}&rdquo;</span>}
-                </p>
-              ))}
-          </>
-        )}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCopy();
+          }}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 shrink-0 flex items-center gap-1.5"
+          style={{
+            backgroundColor: copiedText ? "var(--color-success)" : "var(--color-accent)",
+            color: "var(--color-text-on-accent)",
+          }}
+        >
+          {copiedText ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+              </svg>
+              Copied!
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z" />
+                <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
+              </svg>
+              Copy text
+            </>
+          )}
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -258,7 +159,7 @@ export default function SetlistHeader({
             {setlist.song_leader}
           </p>
         )}
-        {!isPast && (
+        {!isPast && !isGuest && (
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={onToggleLock}

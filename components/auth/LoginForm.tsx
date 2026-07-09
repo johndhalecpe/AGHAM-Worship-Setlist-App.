@@ -137,6 +137,7 @@ export default function LoginForm({ onBack, onRejected, onPending }: LoginFormPr
       toast.success("Welcome back!");
     }
 
+    localStorage.removeItem("guest_mode");
     router.push("/setlists");
   }
 

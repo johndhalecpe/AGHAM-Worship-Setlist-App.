@@ -3,29 +3,34 @@ import { supabase } from "@/lib/supabase";
 import { requireUser, unauthorized } from "@/lib/auth-server";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const searchTitle = searchParams.get("search");
+  try {
+    const { searchParams } = new URL(request.url);
+    const searchTitle = searchParams.get("search");
 
-  let supabaseQuery = supabase
-    .from("songs")
-    .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, lyrics, chords, status, created_at")
-    .order("title", { ascending: true });
+    let supabaseQuery = supabase
+      .from("songs")
+      .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, lyrics, chords, status, created_at")
+      .order("title", { ascending: true });
 
-  if (searchTitle) {
-    supabaseQuery = supabaseQuery.or(
-      `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,lyrics.ilike.%${searchTitle}%`
-    );
+    if (searchTitle) {
+      supabaseQuery = supabaseQuery.or(
+        `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,lyrics.ilike.%${searchTitle}%`
+      );
+    }
+
+    const { data, error } = await supabaseQuery;
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const { data, error } = await supabaseQuery;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data, {
-    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
-  });
 }
 
 export async function POST(request: Request) {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import SongPicker from "@/components/setlists/song-picker/SongPicker";
 import SongEditForm from "@/components/songs/SongEditForm";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -31,6 +32,8 @@ export default function SetlistSections({
   isLocked,
   onSectionsChange,
 }: SetlistSectionsProps) {
+  const isGuest = useIsGuest();
+  const effectiveLock = isPast || isLocked || isGuest;
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -66,6 +69,8 @@ export default function SetlistSections({
   function handleDrop(e: React.DragEvent, sectionType: string, targetId: string) {
     e.preventDefault();
     setDragOverSectionId(null);
+
+    if (isGuest) return;
 
     if (!draggedSectionId || draggedSectionId === targetId) {
       setDraggedSectionId(null);
@@ -200,7 +205,7 @@ export default function SetlistSections({
         return (
           <div
             key={section.key}
-            className={`rounded-xl p-5 transition-colors ${
+            className={`rounded-xl p-4 transition-colors ${
               draggedSectionId !== null ? "min-h-[80px]" : ""
             }`}
             style={{
@@ -208,7 +213,7 @@ export default function SetlistSections({
               border: "1px solid var(--color-border)",
             }}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <h3
                 className="font-semibold"
                 style={{ color: "var(--color-text)" }}
@@ -216,10 +221,10 @@ export default function SetlistSections({
                 {section.label}
               </h3>
               <div className="flex items-center gap-2">
-                {!isPast && !isLocked && (
+                {!effectiveLock && (
                   <button
                     onClick={() => setActiveSection(section.key)}
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
+                    className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
                     style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)" }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1 -ml-0.5 inline-block align-text-bottom">
@@ -228,7 +233,31 @@ export default function SetlistSections({
                     Add song
                   </button>
                 )}
-                {!isPast && isLocked && (
+                {sectionSongs.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setChordsView({ sectionType: section.key, songId: sectionSongs[0].id })}
+                      className="text-[11px] font-semibold rounded-lg px-2 py-1 flex items-center justify-center gap-1 transition-all hover:-translate-y-0.5 active:scale-95"
+                      style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                        <path d="M9 4.318A1 1 0 0 1 10.366 3.5l5.19 1.298A1 1 0 0 1 16 5.75v8.534a2.5 2.5 0 0 1-1.744 2.394l-1.838.613a2.5 2.5 0 0 1-3.156-1.662l-.747-2.611A2.5 2.5 0 0 1 9 10.358V4.318Z" />
+                      </svg>
+                      Chords
+                    </button>
+                    <button
+                      onClick={() => setLyricsView({ sectionType: section.key, songId: sectionSongs[0].id })}
+                      className="text-[11px] font-semibold rounded-lg px-2 py-1 flex items-center justify-center gap-1 transition-all hover:-translate-y-0.5 active:scale-95"
+                      style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                        <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                      </svg>
+                      Lyrics
+                    </button>
+                  </div>
+                )}
+                {!isPast && (isLocked || isGuest) && (
                   <span className="flex items-center gap-1.5 text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                       <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
@@ -247,13 +276,13 @@ export default function SetlistSections({
                 return (
                   <div key={s.id}>
                       <div
-                        draggable={!isPast}
+                        draggable={!effectiveLock}
                         onDragStart={() => handleDragStart(s.id)}
                         onDragOver={(e) => handleDragOver(e, s.id)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, section.key, s.id)}
                         onDragEnd={handleDragEnd}
-                        className="flex items-center gap-3 text-sm py-3 px-3 rounded-lg -mx-3 transition-colors"
+                        className="flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg -mx-3 transition-colors"
                         style={{
                           color: "var(--color-text-secondary)",
                           opacity: isDragging ? 0.4 : 1,
@@ -263,20 +292,22 @@ export default function SetlistSections({
                           cursor: "default",
                         }}
                       >
-                          <div
-                            className={`flex items-center justify-center shrink-0 ${isPast || isLocked ? "invisible" : ""}`}
-                            title="Drag to reorder"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-6 h-6"
-                              style={{ color: "var(--color-text-tertiary)", opacity: 0.4 }}
+                          {!effectiveLock && (
+                            <div
+                              className="flex items-center justify-center shrink-0"
+                              title="Drag to reorder"
                             >
-                              <path d="M15.5 17C16.3284 17 17 17.6716 17 18.5C17 19.3284 16.3284 20 15.5 20C14.6716 20 14 19.3284 14 18.5C14 17.6716 14.6716 17 15.5 17ZM8.5 17C9.32843 17 10 17.6716 10 18.5C10 19.3284 9.32843 20 8.5 20C7.67157 20 7 19.3284 7 18.5C7 17.6716 7.67157 17 8.5 17ZM15.5 10C16.3284 10 17 10.6716 17 11.5C17 12.3284 16.3284 13 15.5 13C14.6716 13 14 12.3284 14 11.5C14 10.6716 14.6716 10 15.5 10ZM8.5 10C9.32843 10 10 10.6716 10 11.5C10 12.3284 9.32843 13 8.5 13C7.67157 13 7 12.3284 7 11.5C7 10.6716 7.67157 10 8.5 10ZM15.5 3C16.3284 3 17 3.67157 17 4.5C17 5.32843 16.3284 6 15.5 6C14.6716 6 14 5.32843 14 4.5C14 3.67157 14.6716 3 15.5 3ZM8.5 3C9.32843 3 10 3.67157 10 4.5C10 5.32843 9.32843 6 8.5 6C7.67157 6 7 5.32843 7 4.5C7 3.67157 7.67157 3 8.5 3Z" />
-                            </svg>
-                          </div>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className="w-5 h-5"
+                                style={{ color: "var(--color-text-tertiary)", opacity: 0.4 }}
+                              >
+                                <path d="M15.5 17C16.3284 17 17 17.6716 17 18.5C17 19.3284 16.3284 20 15.5 20C14.6716 20 14 19.3284 14 18.5C14 17.6716 14.6716 17 15.5 17ZM8.5 17C9.32843 17 10 17.6716 10 18.5C10 19.3284 9.32843 20 8.5 20C7.67157 20 7 19.3284 7 18.5C7 17.6716 7.67157 17 8.5 17ZM15.5 10C16.3284 10 17 10.6716 17 11.5C17 12.3284 16.3284 13 15.5 13C14.6716 13 14 12.3284 14 11.5C14 10.6716 14.6716 10 15.5 10ZM8.5 10C9.32843 10 10 10.6716 10 11.5C10 12.3284 9.32843 13 8.5 13C7.67157 13 7 12.3284 7 11.5C7 10.6716 7.67157 10 8.5 10ZM15.5 3C16.3284 3 17 3.67157 17 4.5C17 5.32843 16.3284 6 15.5 6C14.6716 6 14 5.32843 14 4.5C14 3.67157 14.6716 3 15.5 3ZM8.5 3C9.32843 3 10 3.67157 10 4.5C10 5.32843 9.32843 6 8.5 6C7.67157 6 7 5.32843 7 4.5C7 3.67157 7.67157 3 8.5 3Z" />
+                              </svg>
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium truncate" style={{ color: "var(--color-text)" }}>
@@ -288,58 +319,38 @@ export default function SetlistSections({
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 mt-1.5 flex-nowrap">
+                        </div>
+                        {!effectiveLock && (
+                          <div className="flex flex-col items-center gap-0.5 shrink-0">
                             <button
-                              onClick={() => setChordsView({ sectionType: section.key, songId: s.id })}
-                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[44px] sm:min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
-                              style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
+                              onClick={() => setEditingSong(buildSong(s))}
+                              className="p-1.5 rounded min-h-[36px] min-w-[36px] sm:min-h-[30px] sm:min-w-[30px] flex items-center justify-center hover:opacity-80"
+                              style={{ color: "var(--color-accent)", opacity: 0.6 }}
+                              title="Edit song details"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                                <path d="M9 4.318A1 1 0 0 1 10.366 3.5l5.19 1.298A1 1 0 0 1 16 5.75v8.534a2.5 2.5 0 0 1-1.744 2.394l-1.838.613a2.5 2.5 0 0 1-3.156-1.662l-.747-2.611A2.5 2.5 0 0 1 9 10.358V4.318Z" />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
+                                <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
                               </svg>
-                              Chords
                             </button>
                             <button
-                              onClick={() => setLyricsView({ sectionType: section.key, songId: s.id })}
-                              className="flex-1 text-xs font-semibold rounded-lg px-3 min-h-[44px] sm:min-h-[32px] flex items-center justify-center gap-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
-                              style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
+                              onClick={() => setConfirmRemoveId(s.id)}
+                              className="p-1.5 rounded min-h-[36px] min-w-[36px] sm:min-h-[30px] sm:min-w-[30px] flex items-center justify-center hover:opacity-100"
+                              style={{ color: "var(--color-danger)", opacity: 0.55 }}
+                              title="Remove song"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                                <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
                               </svg>
-                              Lyrics
                             </button>
                           </div>
-                        </div>
-                        <div className={`flex flex-col items-center gap-0.5 shrink-0 ${isPast || isLocked ? "invisible" : ""}`}>
-                          <button
-                            onClick={() => setEditingSong(buildSong(s))}
-                            className="p-1.5 rounded min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center hover:opacity-80"
-                            style={{ color: "var(--color-accent)", opacity: 0.6 }}
-                            title="Edit song details"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                              <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
-                              <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => setConfirmRemoveId(s.id)}
-                            className="p-1.5 rounded min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center hover:opacity-100"
-                            style={{ color: "var(--color-danger)", opacity: 0.55 }}
-                            title="Remove song"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                              <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
+                        )}
                       </div>
                   </div>
                 );
               })}
             </div>
-            {sectionSongs.length > 0 && !isPast && (
+            {sectionSongs.length > 0 && !effectiveLock && (
               <p className="text-xs italic text-center mt-2" style={{ color: "var(--color-text-tertiary)", opacity: 0.7 }}>
                 Drag to reorder
               </p>

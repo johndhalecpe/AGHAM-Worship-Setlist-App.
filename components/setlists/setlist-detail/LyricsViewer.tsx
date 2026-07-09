@@ -29,7 +29,8 @@ export default function LyricsViewer({
   const [copiedSongId, setCopiedSongId] = useState<string | null>(null);
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
   useEffect(() => {

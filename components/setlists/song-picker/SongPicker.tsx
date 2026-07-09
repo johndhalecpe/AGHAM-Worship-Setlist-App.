@@ -30,11 +30,14 @@ export default function SongPicker({
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [showNewSongForm, setShowNewSongForm] = useState(false);
+  const [loadingSongs, setLoadingSongs] = useState(true);
 
   useEffect(() => {
     fetch("/api/songs")
       .then((res) => res.json())
-      .then(setAllSongs);
+      .then(setAllSongs)
+      .catch(() => toast.error("Failed to load songs"))
+      .finally(() => setLoadingSongs(false));
   }, []);
 
   const categoryFilter = SECTION_TO_CATEGORY[sectionType];
@@ -131,13 +134,27 @@ export default function SongPicker({
       </div>
 
       <div className="flex flex-col overflow-y-auto" style={{ maxHeight: "35vh" }}>
-        {hasMatches && searchMatches && (
+        {loadingSongs ? (
+          <div className="flex flex-col gap-2 py-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-8 rounded-lg animate-pulse"
+                style={{ backgroundColor: "var(--color-surface-card)" }}
+              />
+            ))}
+          </div>
+        ) : hasMatches && searchMatches ? (
           <SongSearchList
             searchMatches={searchMatches}
             loading={loading}
             onSelect={handleSelectSong}
           />
-        )}
+        ) : search.trim() === "" && allSongs.length === 0 ? (
+          <p className="text-xs py-4 text-center" style={{ color: "var(--color-text-tertiary)" }}>
+            No songs found. Add one above.
+          </p>
+        ) : null}
         {search.trim() !== "" && !showNewSongForm && (
           <button
             onClick={() => {

@@ -68,6 +68,7 @@ export default function AuthCard({ view, onGoToLogin, onGoToCreateAccount, onGoT
 
           <Link
             href="/setlists"
+            onClick={() => localStorage.setItem("guest_mode", "true")}
             className="group inline-flex items-center justify-center rounded-xl w-full max-w-xs px-8 py-4 text-base font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-border)]"
             style={{
               backgroundColor: "var(--color-surface-muted)",

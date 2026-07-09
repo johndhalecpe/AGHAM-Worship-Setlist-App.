@@ -12,7 +12,7 @@ async function fetchAllSetlists(): Promise<SetlistWithSections[]> {
       id, date, title, description, song_leader, branch, created_at,
       sections:setlist_sections(
         id, setlist_id, section_type, sort_order, song_id, notes, song_key,
-        songs(id, title, author, category, language)
+        songs(id, title, author, category, language, lyrics, chords, default_key, default_bpm, default_time_signature, status)
       )
     `
     )

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { SongListItem } from "@/lib/type";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
 import EditSongModal from "./EditSongModal";
@@ -70,6 +71,8 @@ const TIME_SIG_FILTERS = ["4/4", "3/4", "6/8"] as const;
 export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
   const router = useRouter();
   const [isLocked, setIsLocked] = useState(true);
+  const isGuest = useIsGuest();
+  const effectivelyLocked = isLocked || isGuest;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -199,7 +202,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
           border: "1px solid var(--color-border)",
         }}
       >
-        {isLocked ? (
+        {effectivelyLocked ? (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
             <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
           </svg>
@@ -210,10 +213,10 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
         )}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-            {isLocked ? "Song library is locked" : "Song library is unlocked"}
+            {effectivelyLocked ? "Song library is locked" : "Song library is unlocked"}
           </p>
           <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>
-            {isLocked ? "Unlock to edit or delete songs" : "Lock to prevent accidental changes"}
+            {effectivelyLocked ? "Unlock to edit or delete songs" : "Lock to prevent accidental changes"}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -231,7 +234,13 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
             Add a song
           </Link>
           <button
-            onClick={() => setIsLocked(!isLocked)}
+            onClick={() => {
+              if (isGuest) {
+                toast.error("Guests can only view — sign in to make changes");
+                return;
+              }
+              setIsLocked(!isLocked);
+            }}
             className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[44px]"
             style={{
               backgroundColor: isLocked ? "var(--color-accent)" : "var(--color-surface-card)",
@@ -416,7 +425,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
               </h3>
               <div className="flex flex-col gap-0.5">
                 {searchMatches.title.map((song) => (
-                  <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                  <SongCard key={song.id} song={song} isLocked={effectivelyLocked} onEditRequest={(id) => setEditingId(id)} />
                 ))}
               </div>
             </div>
@@ -428,7 +437,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
               </h3>
               <div className="flex flex-col gap-0.5">
                 {searchMatches.author.map((song) => (
-                  <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                  <SongCard key={song.id} song={song} isLocked={effectivelyLocked} onEditRequest={(id) => setEditingId(id)} />
                 ))}
               </div>
             </div>
@@ -447,7 +456,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
                 <SongCard
                   key={song.id}
                   song={song}
-                  isLocked={isLocked}
+                  isLocked={effectivelyLocked}
                   onEditRequest={(id) => setEditingId(id)}
                   showMissingTags
                 />
@@ -476,7 +485,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
                       </h4>
                       <div className="flex flex-col gap-0.5">
                         {group.songs[lang].map((song) => (
-                          <SongCard key={song.id} song={song} isLocked={isLocked} onEditRequest={(id) => setEditingId(id)} />
+                          <SongCard key={song.id} song={song} isLocked={effectivelyLocked} onEditRequest={(id) => setEditingId(id)} />
                         ))}
                       </div>
                     </div>

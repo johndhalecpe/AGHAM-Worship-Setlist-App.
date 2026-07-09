@@ -180,10 +180,6 @@ export default function ChordsViewer({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  useEffect(() => {
-    activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [activeSongId]);
-
   const handleCloseRef = useRef<() => void>(() => {});
   handleCloseRef.current = () => {
     if (isPast) {

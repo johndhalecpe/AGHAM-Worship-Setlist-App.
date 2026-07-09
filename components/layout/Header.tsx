@@ -11,6 +11,7 @@ import { getPasswordResets, signOut } from "@/lib/auth";
 import UserMenu from "./UserMenu";
 import ChangePasswordForm from "../auth/ChangePasswordForm";
 import Portal from "@/components/shared/Portal";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { useNewUserNotification } from "@/lib/hooks/useNewUserNotification";
 import type { PasswordReset } from "@/lib/type";
 
@@ -47,6 +48,7 @@ export default function Header() {
   const usersDropdownRef = useRef<HTMLDivElement>(null);
 
   useNewUserNotification(isAdmin);
+  const isGuest = useIsGuest();
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
@@ -232,6 +234,7 @@ export default function Header() {
     } catch {
       // signOut failed — still reset UI
     }
+    localStorage.removeItem("guest_mode");
     setLoggingOut(false);
     setShowMobileMenu(false);
     setShowMobileUserActions(false);
@@ -249,7 +252,7 @@ export default function Header() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur-md bg-(--color-surface-card)/80 border-b"
+      className="fixed top-0 z-50 inset-x-0 backdrop-blur-md bg-(--color-surface-card)/80 border-b"
       style={{ borderColor: "var(--color-border)" }}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
@@ -578,7 +581,15 @@ export default function Header() {
               )}
             </div>
           )}
-          {userName && <UserMenu userName={userName} />}
+          {isGuest ? (
+            <Link
+              href="/"
+              className="text-sm font-medium transition-colors min-h-[44px] flex items-center"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Sign in
+            </Link>
+          ) : userName && <UserMenu userName={userName} />}
           <button
             onClick={toggleDarkMode}
             className="ml-2 p-2 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -906,7 +917,23 @@ export default function Header() {
                   </button>
                 </div>
 
-                {userName && (
+                {isGuest ? (
+                  <div className="mt-3">
+                    <Link
+                      href="/"
+                      onClick={() => setShowMobileMenu(false)}
+                      className="rounded-xl px-4 py-3 text-sm font-medium transition-all min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                      </svg>
+                      Sign in
+                    </Link>
+                  </div>
+                ) : userName && (
                   <div className="flex items-center gap-3 mt-3">
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0"

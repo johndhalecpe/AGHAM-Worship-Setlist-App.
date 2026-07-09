@@ -164,28 +164,28 @@ export async function PATCH(
       );
     }
 
-    const errors: string[] = [];
-    for (const sectionUpdate of body.items) {
-      const updatePayload: Record<string, unknown> = {};
-      if (sectionUpdate.sort_order !== undefined) updatePayload.sort_order = sectionUpdate.sort_order;
-      if ("notes" in sectionUpdate && sectionUpdate.notes !== undefined) updatePayload.notes = sectionUpdate.notes;
-      if ("song_key" in sectionUpdate && sectionUpdate.song_key !== undefined) updatePayload.song_key = sectionUpdate.song_key;
-      if ("override_lyrics" in sectionUpdate && sectionUpdate.override_lyrics !== undefined) updatePayload.override_lyrics = sectionUpdate.override_lyrics;
-      if ("chord_notes" in sectionUpdate && sectionUpdate.chord_notes !== undefined) updatePayload.chord_notes = sectionUpdate.chord_notes;
+    const results = await Promise.all(
+      body.items.map(async (sectionUpdate: Record<string, unknown>) => {
+        const updatePayload: Record<string, unknown> = {};
+        if (sectionUpdate.sort_order !== undefined) updatePayload.sort_order = sectionUpdate.sort_order;
+        if ("notes" in sectionUpdate && sectionUpdate.notes !== undefined) updatePayload.notes = sectionUpdate.notes;
+        if ("song_key" in sectionUpdate && sectionUpdate.song_key !== undefined) updatePayload.song_key = sectionUpdate.song_key;
+        if ("override_lyrics" in sectionUpdate && sectionUpdate.override_lyrics !== undefined) updatePayload.override_lyrics = sectionUpdate.override_lyrics;
+        if ("chord_notes" in sectionUpdate && sectionUpdate.chord_notes !== undefined) updatePayload.chord_notes = sectionUpdate.chord_notes;
 
-      if (Object.keys(updatePayload).length === 0) continue;
+        if (Object.keys(updatePayload).length === 0) return null;
 
-      const { error } = await supabase
-        .from("setlist_sections")
-        .update(updatePayload)
-        .eq("id", sectionUpdate.id)
-        .eq("setlist_id", id);
+        const { error } = await supabase
+          .from("setlist_sections")
+          .update(updatePayload)
+          .eq("id", sectionUpdate.id)
+          .eq("setlist_id", id);
 
-      if (error) {
-        errors.push(error.message);
-      }
-    }
+        return error?.message ?? null;
+      })
+    );
 
+    const errors = results.filter(Boolean) as string[];
     if (errors.length > 0) {
       return NextResponse.json({ error: errors.join("; ") }, { status: 500 });
     }
