@@ -42,20 +42,20 @@ function Greeting() {
           100% { opacity: 1; transform: translateY(0); }
         }
         @keyframes greet-shimmer {
-          0% { background-position: -100% center; }
+          0% { background-position: 100% center; }
           50% { background-position: 0% center; }
-          100% { background-position: -100% center; }
+          100% { background-position: 100% center; }
         }
         .greet-text {
           background: linear-gradient(
             90deg,
-            color-mix(in srgb, var(--color-accent), #fff 8%) 0%,
-            color-mix(in srgb, var(--color-accent), #fff 8%) 30%,
-            color-mix(in srgb, var(--color-accent), #fff 35%) 45%,
+            var(--color-accent) 0%,
+            var(--color-accent) 20%,
+            color-mix(in srgb, var(--color-accent), #fff 40%) 35%,
             #fff 50%,
-            color-mix(in srgb, var(--color-accent), #fff 35%) 55%,
-            color-mix(in srgb, var(--color-accent), #fff 8%) 70%,
-            color-mix(in srgb, var(--color-accent), #fff 8%) 100%
+            color-mix(in srgb, var(--color-accent), #fff 40%) 65%,
+            var(--color-accent) 80%,
+            var(--color-accent) 100%
           );
           background-size: 200% 100%;
           -webkit-background-clip: text;
