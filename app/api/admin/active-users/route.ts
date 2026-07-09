@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { getSupabase } from "@/lib/supabase";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/lib/type";
 
 export async function GET(request: Request) {
@@ -10,9 +10,13 @@ export async function GET(request: Request) {
   }
 
   const token = authHeader.slice(7);
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  const { data: { user }, error: authError } = await getSupabase().auth.getUser(token);
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({
+      error: "Unauthorized",
+      message: authError?.message ?? "Could not verify user from token",
+    }, { status: 401 });
   }
 
   if (user.email !== ADMIN_EMAIL) {
@@ -20,10 +24,30 @@ export async function GET(request: Request) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin.rpc("get_active_users");
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+  if (usersError) {
+    return NextResponse.json({ error: usersError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ users: data ?? [] });
+  const { data: profiles } = await supabaseAdmin
+    .from("profiles")
+    .select("id, name, role, status");
+
+  const profileMap = new Map(profiles?.map((p) => [p.id, p]) ?? []);
+
+  const users = usersData.users
+    .filter((u) => u.email)
+    .map((u) => {
+      const profile = profileMap.get(u.id);
+      return {
+        user_id: u.id,
+        email: u.email!,
+        name: profile?.name ?? u.email!.split("@")[0],
+        role: profile?.role ?? null,
+        status: profile?.status ?? null,
+      };
+    });
+
+  return NextResponse.json({ users });
 }

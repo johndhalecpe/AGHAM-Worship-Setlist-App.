@@ -6,9 +6,9 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/lib/type";
 
-export default function AdminActiveUsersPage() {
+export default function AdminAllUsersPage() {
   const router = useRouter();
-  const [users, setUsers] = useState<{ user_id: string; email: string; name: string }[]>([]);
+  const [users, setUsers] = useState<{ user_id: string; email: string; name: string; role: string | null; status: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,10 +46,10 @@ export default function AdminActiveUsersPage() {
       </Link>
 
       <h1 className="text-xl font-bold mb-1" style={{ color: "var(--color-text)" }}>
-        Active Users
+        All Users
       </h1>
       <p className="text-sm mb-6" style={{ color: "var(--color-text-tertiary)" }}>
-        Users with an active session right now.
+        All registered users.
       </p>
 
       {loading ? (
@@ -58,7 +58,7 @@ export default function AdminActiveUsersPage() {
         </p>
       ) : users.length === 0 ? (
         <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
-          No active users at the moment.
+          No users found.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
@@ -71,9 +71,29 @@ export default function AdminActiveUsersPage() {
                 border: "1px solid var(--color-border)",
               }}
             >
-              <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                {u.name}
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                    {u.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {u.role && (
+                      <span className="text-[11px] uppercase tracking-wider font-medium" style={{ color: "var(--color-accent-secondary)" }}>
+                        {u.role}
+                      </span>
+                    )}
+                    {u.status && u.status !== "approved" && (
+                      <span
+                        className="text-[11px] uppercase tracking-wider font-medium"
+                        style={{ color: u.status === "pending" ? "var(--color-accent-secondary)" : "var(--color-danger)" }}
+                      >
+                        {u.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>{u.email}</span>
+              </div>
             </div>
           ))}
         </div>

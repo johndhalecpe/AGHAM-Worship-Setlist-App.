@@ -1,20 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let _client: SupabaseClient | null = null;
 
-if (!supabaseUrl) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_URL environment variable. " +
-      "Ensure it is set in your deployment platform or .env file."
-  );
+export function getSupabase(): SupabaseClient {
+  if (!_client) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !anonKey) {
+      throw new Error("Missing Supabase client credentials");
+    }
+
+    _client = createClient(url, anonKey);
+  }
+  return _client;
 }
 
-if (!supabaseAnonKey) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable. " +
-      "Ensure it is set in your deployment platform or .env file."
-  );
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = new Proxy<SupabaseClient>({} as SupabaseClient, {
+  get(_, prop) {
+    return getSupabase()[prop as keyof SupabaseClient];
+  },
+});

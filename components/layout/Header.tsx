@@ -30,9 +30,10 @@ export default function Header() {
   const [showMobileChangePassword, setShowMobileChangePassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
+  const [showUsers, setShowUsers] = useState(false);
   const [showMobileApprovals, setShowMobileApprovals] = useState(false);
   const [showMobileUsers, setShowMobileUsers] = useState(false);
-  const [activeUsers, setActiveUsers] = useState<{ user_id: string; email: string; name: string }[]>([]);
+  const [activeUsers, setActiveUsers] = useState<{ user_id: string; email: string; name: string; role: string | null; status: string | null }[]>([]);
   const [loadingActiveUsers, setLoadingActiveUsers] = useState(false);
   const [pendingProfiles, setPendingProfiles] = useState<
     { id: string; name: string; role: string }[]
@@ -43,6 +44,7 @@ export default function Header() {
   const [resolveResetId, setResolveResetId] = useState<string | null>(null);
   const [resetPasswords, setResetPasswords] = useState<Record<string, string>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const usersDropdownRef = useRef<HTMLDivElement>(null);
 
   useNewUserNotification(isAdmin);
 
@@ -61,6 +63,12 @@ export default function Header() {
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setShowApprovals(false);
+      }
+      if (
+        usersDropdownRef.current &&
+        !usersDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowUsers(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -123,6 +131,9 @@ export default function Header() {
       if (res.ok) {
         const json = await res.json();
         setActiveUsers(json.users);
+      } else {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error ?? "Failed to fetch active users");
       }
     }
     setLoadingActiveUsers(false);
@@ -187,7 +198,17 @@ export default function Header() {
     const next = !showApprovals;
     setShowApprovals(next);
     if (next) {
+      setShowUsers(false);
       fetchPendingApprovals();
+    }
+  }
+
+  function toggleUsers() {
+    const next = !showUsers;
+    setShowUsers(next);
+    if (next) {
+      setShowApprovals(false);
+      fetchActiveUsers();
     }
   }
 
@@ -461,15 +482,101 @@ export default function Header() {
             </div>
           )}
           {isAdmin && (
-            <Link
-              href="/admin/users"
-              className="text-sm font-medium transition-colors min-h-[44px] flex items-center"
-              style={{ color: "var(--color-text-secondary)" }}
-              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "var(--color-text)"; }}
-              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "var(--color-text-secondary)"; }}
-            >
-              Users
-            </Link>
+            <div className="relative" ref={usersDropdownRef}>
+              <button
+                onClick={toggleUsers}
+                className="relative text-sm font-medium transition-colors flex items-center gap-1.5 min-h-[44px]"
+                style={{
+                  color: showUsers
+                    ? "var(--color-accent)"
+                    : "var(--color-text-secondary)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!showUsers)
+                    (e.target as HTMLElement).style.color =
+                      "var(--color-text)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!showUsers)
+                    (e.target as HTMLElement).style.color =
+                      "var(--color-text-secondary)";
+                }}
+              >
+                Users
+              </button>
+
+              {showUsers && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-xl shadow-lg border overflow-hidden"
+                  style={{
+                    backgroundColor: "var(--color-surface-card)",
+                    borderColor: "var(--color-border)",
+                  }}
+                >
+                  <div className="p-3 border-b" style={{ borderColor: "var(--color-border)" }}>
+                    <p
+                      className="text-xs font-semibold"
+                      style={{ color: "var(--color-text)" }}
+                    >
+                      All Users
+                    </p>
+                  </div>
+
+                  {loadingActiveUsers ? (
+                    <div className="p-4 text-center text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                      Loading...
+                    </div>
+                  ) : activeUsers.length === 0 ? (
+                    <div className="p-4 text-center text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                      No users found.
+                    </div>
+                  ) : (
+                    <div className="max-h-80 overflow-y-auto">
+                      {activeUsers.map((u) => (
+                        <div
+                          key={u.user_id}
+                          className="flex items-center justify-between px-3 py-2.5 border-b last:border-b-0"
+                          style={{ borderColor: "var(--color-border)" }}
+                        >
+                          <div className="min-w-0 mr-2">
+                            <p
+                              className="text-xs font-medium truncate"
+                              style={{ color: "var(--color-text)" }}
+                            >
+                              {u.name}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {u.role && (
+                                <span
+                                  className="text-[10px] uppercase tracking-wider font-medium"
+                                  style={{ color: "var(--color-accent-secondary)" }}
+                                >
+                                  {u.role}
+                                </span>
+                              )}
+                              {u.status && u.status !== "approved" && (
+                                <span
+                                  className="text-[10px] uppercase tracking-wider font-medium"
+                                  style={{ color: u.status === "pending" ? "var(--color-accent-secondary)" : "var(--color-danger)" }}
+                                >
+                                  {u.status}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span
+                            className="text-[10px] shrink-0 ml-2 max-w-[120px] truncate"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                          >
+                            {u.email}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           {userName && <UserMenu userName={userName} />}
           <button
@@ -737,8 +844,8 @@ export default function Header() {
                     </svg>
                   </button>
                 </div>
-                <h2 className="font-bold text-base mt-3" style={{ color: "var(--color-text)" }}>Active Users</h2>
-                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>Users with an active session right now.</p>
+                <h2 className="font-bold text-base mt-3" style={{ color: "var(--color-text)" }}>All Users</h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>All registered users.</p>
               </div>
 
               {loadingActiveUsers ? (
@@ -752,13 +859,31 @@ export default function Header() {
                 </div>
               ) : activeUsers.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                  <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>No active users at the moment.</span>
+                  <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>No users found.</span>
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto">
                   {activeUsers.map((u) => (
                     <div key={u.user_id} className="px-4 py-3 border-b last:border-b-0" style={{ borderColor: "var(--color-border)" }}>
-                      <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>{u.name}</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>{u.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {u.role && (
+                              <span className="text-[11px] uppercase tracking-wider font-medium" style={{ color: "var(--color-accent-secondary)" }}>{u.role}</span>
+                            )}
+                            {u.status && u.status !== "approved" && (
+                              <span
+                                className="text-[11px] uppercase tracking-wider font-medium"
+                                style={{ color: u.status === "pending" ? "var(--color-accent-secondary)" : "var(--color-danger)" }}
+                              >
+                                {u.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[11px] shrink-0 ml-2" style={{ color: "var(--color-text-tertiary)" }}>{u.email}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

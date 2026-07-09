@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSupabase } from "@/lib/supabase";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { ADMIN_EMAIL } from "@/lib/type";
 
@@ -9,16 +10,20 @@ export async function POST(request: Request) {
   }
 
   const token = authHeader.slice(7);
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+  const { data: { user }, error: authError } = await getSupabase().auth.getUser(token);
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({
+      error: "Unauthorized",
+      message: authError?.message ?? "Could not verify user from token",
+    }, { status: 401 });
   }
 
   if (user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const supabaseAdmin = getSupabaseAdmin();
   const { email, newPassword, resetId } = await request.json();
   if (!email || !newPassword || !resetId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

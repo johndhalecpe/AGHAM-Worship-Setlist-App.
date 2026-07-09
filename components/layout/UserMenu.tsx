@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOut } from "@/lib/auth";
 import ChangePasswordForm from "../auth/ChangePasswordForm";
+import Portal from "@/components/shared/Portal";
 
 function UserIcon() {
   return (
@@ -124,8 +125,9 @@ export default function UserMenu({ userName }: { userName: string }) {
       </div>
 
       {showConfirm && (
+        <Portal>
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[400] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
           onClick={() => setShowConfirm(false)}
         >
@@ -168,6 +170,7 @@ export default function UserMenu({ userName }: { userName: string }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {showChangePassword && (
