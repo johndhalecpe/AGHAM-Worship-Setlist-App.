@@ -42,19 +42,18 @@ function Greeting() {
           100% { opacity: 1; transform: translateY(0); }
         }
         @keyframes greet-shimmer {
-          0% { background-position: 100% center; }
-          50% { background-position: 0% center; }
-          100% { background-position: 100% center; }
+          0% { background-position: 150% center; }
+          100% { background-position: -50% center; }
         }
         .greet-text {
           background: linear-gradient(
             90deg,
             var(--color-accent) 0%,
-            var(--color-accent) 20%,
-            color-mix(in srgb, var(--color-accent), #fff 40%) 35%,
+            var(--color-accent) 47%,
+            rgba(255,255,255,0.6) 49%,
             #fff 50%,
-            color-mix(in srgb, var(--color-accent), #fff 40%) 65%,
-            var(--color-accent) 80%,
+            rgba(255,255,255,0.6) 51%,
+            var(--color-accent) 53%,
             var(--color-accent) 100%
           );
           background-size: 200% 100%;
@@ -62,7 +61,7 @@ function Greeting() {
           background-clip: text;
           -webkit-text-fill-color: transparent;
           animation: greet-fade-slide 0.6s ease-out both,
-                     greet-shimmer 3s ease-in-out infinite 0.6s;
+                     greet-shimmer 6s ease-in-out infinite 0.6s;
         }
       `}</style>
       <p className="text-xl font-bold mb-1">
