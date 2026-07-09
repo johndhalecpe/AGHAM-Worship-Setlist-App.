@@ -41,35 +41,32 @@ function Greeting() {
           0% { opacity: 0; transform: translateY(10px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        @keyframes greet-spotlight {
-          0% { transform: translateX(-100%) skewX(-15deg); }
-          100% { transform: translateX(400%) skewX(-15deg); }
+        @keyframes greet-shimmer {
+          0% { background-position: -100% center; }
+          50% { background-position: 0% center; }
+          100% { background-position: -100% center; }
         }
-        .greet-wrapper {
-          position: relative;
-          display: inline-block;
-          overflow: hidden;
-          isolation: isolate;
-          animation: greet-fade-slide 0.6s ease-out both;
-        }
-        .greet-wrapper::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          width: 60px;
+        .greet-text {
           background: linear-gradient(
             90deg,
-            transparent,
-            rgba(255,255,255,0.45),
-            transparent
+            color-mix(in srgb, var(--color-accent), #fff 8%) 0%,
+            color-mix(in srgb, var(--color-accent), #fff 8%) 30%,
+            color-mix(in srgb, var(--color-accent), #fff 35%) 45%,
+            #fff 50%,
+            color-mix(in srgb, var(--color-accent), #fff 35%) 55%,
+            color-mix(in srgb, var(--color-accent), #fff 8%) 70%,
+            color-mix(in srgb, var(--color-accent), #fff 8%) 100%
           );
-          transform: translateX(-100%) skewX(-15deg);
-          animation: greet-spotlight 3s ease-in-out infinite;
-          pointer-events: none;
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: greet-fade-slide 0.6s ease-out both,
+                     greet-shimmer 3s ease-in-out infinite 0.6s;
         }
       `}</style>
-      <p className="text-xl font-bold mb-1" style={{ color: "var(--color-accent)" }}>
-        <span className="greet-wrapper">{icon} {greeting}, {name}</span>
+      <p className="text-xl font-bold mb-1">
+        <span className="greet-text">{icon} {greeting}, {name}</span>
       </p>
     </>
   );
