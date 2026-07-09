@@ -41,33 +41,35 @@ function Greeting() {
           0% { opacity: 0; transform: translateY(10px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        @keyframes greet-gradient-shift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        @keyframes greet-spotlight {
+          0% { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(400%) skewX(-15deg); }
         }
-        .greet-text {
+        .greet-wrapper {
+          position: relative;
+          display: inline-block;
+          overflow: hidden;
+          isolation: isolate;
           animation: greet-fade-slide 0.6s ease-out both;
+        }
+        .greet-wrapper::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          width: 60px;
           background: linear-gradient(
             90deg,
-            #f59e0b,
-            #ef4444,
-            #ec4899,
-            #8b5cf6,
-            #3b82f6,
-            #f59e0b
+            transparent,
+            rgba(255,255,255,0.45),
+            transparent
           );
-          background-size: 300% 100%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: greet-fade-slide 0.6s ease-out both,
-                     greet-gradient-shift 6s ease-in-out infinite 0.6s;
-          display: inline-block;
+          transform: translateX(-100%) skewX(-15deg);
+          animation: greet-spotlight 3s ease-in-out infinite;
+          pointer-events: none;
         }
       `}</style>
-      <p className="text-xl font-bold mb-1">
-        <span className="greet-text">{icon} {greeting}, {name}</span>
+      <p className="text-xl font-bold mb-1" style={{ color: "var(--color-accent)" }}>
+        <span className="greet-wrapper">{icon} {greeting}, {name}</span>
       </p>
     </>
   );
