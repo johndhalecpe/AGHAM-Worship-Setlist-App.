@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/lib/type";
-import { getPasswordResets, resolvePasswordReset, signOut } from "@/lib/auth";
+import { getPasswordResets, signOut } from "@/lib/auth";
 import UserMenu from "./UserMenu";
 import ChangePasswordForm from "../auth/ChangePasswordForm";
 import Portal from "@/components/shared/Portal";
@@ -38,6 +38,7 @@ export default function Header() {
   const [loadingApprovals, setLoadingApprovals] = useState(false);
   const [quickActionId, setQuickActionId] = useState<string | null>(null);
   const [resolveResetId, setResolveResetId] = useState<string | null>(null);
+  const [resetPasswords, setResetPasswords] = useState<Record<string, string>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useNewUserNotification(isAdmin);
@@ -121,12 +122,45 @@ export default function Header() {
     setQuickActionId(null);
   }
 
-  async function handleResolveReset(id: string) {
-    setResolveResetId(id);
-    const { error } = await resolvePasswordReset(id);
-    if (!error) {
-      setPasswordResets((prev) => prev.filter((r) => r.id !== id));
+  async function handleSetPassword(resetId: string, email: string) {
+    const newPassword = resetPasswords[resetId];
+    if (!newPassword || newPassword.length < 4) {
+      toast.error("Password must be at least 4 characters");
+      return;
     }
+
+    setResolveResetId(resetId);
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      toast.error("Not authenticated");
+      setResolveResetId(null);
+      return;
+    }
+
+    const res = await fetch("/api/admin/set-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email, newPassword, resetId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      toast.error(err.error ?? "Failed to set password");
+      setResolveResetId(null);
+      return;
+    }
+
+    toast.success(`Password set for ${email}`);
+    setPasswordResets((prev) => prev.filter((r) => r.id !== resetId));
+    setResetPasswords((prev) => {
+      const next = { ...prev };
+      delete next[resetId];
+      return next;
+    });
     setResolveResetId(null);
   }
 
@@ -354,34 +388,49 @@ export default function Header() {
                           {passwordResets.map((reset) => (
                             <div
                               key={reset.id}
-                              className="flex items-center justify-between px-3 py-2.5 border-b last:border-b-0"
+                              className="flex flex-col px-3 py-2.5 border-b last:border-b-0 gap-2"
                               style={{ borderColor: "var(--color-border)" }}
                             >
-                              <div className="min-w-0 mr-2">
-                                <p
-                                  className="text-xs font-medium truncate"
-                                  style={{ color: "var(--color-text)" }}
-                                >
-                                  {reset.email}
-                                </p>
-                                <span
-                                  className="text-[10px]"
-                                  style={{ color: "var(--color-text-tertiary)" }}
-                                >
-                                  New password: {reset.requested_password}
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => handleResolveReset(reset.id)}
-                                disabled={resolveResetId === reset.id || quickActionId !== null}
-                                className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
-                                style={{
-                                  backgroundColor: "var(--color-accent-secondary)",
-                                  color: "#fff",
-                                }}
+                              <p
+                                className="text-xs font-medium"
+                                style={{ color: "var(--color-text)" }}
                               >
-                                {resolveResetId === reset.id ? "..." : "Resolved"}
-                              </button>
+                                {reset.email}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="New password"
+                                  value={resetPasswords[reset.id] ?? ""}
+                                  onChange={(e) =>
+                                    setResetPasswords((prev) => ({
+                                      ...prev,
+                                      [reset.id]: e.target.value,
+                                    }))
+                                  }
+                                  className="flex-1 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors"
+                                  style={{
+                                    border: "1px solid var(--color-border)",
+                                    backgroundColor: "var(--color-surface)",
+                                    color: "var(--color-text)",
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleSetPassword(reset.id, reset.email)}
+                                  disabled={
+                                    resolveResetId === reset.id ||
+                                    quickActionId !== null ||
+                                    !(resetPasswords[reset.id] ?? "").trim()
+                                  }
+                                  className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold shrink-0 whitespace-nowrap disabled:opacity-50"
+                                  style={{
+                                    backgroundColor: "var(--color-accent-secondary)",
+                                    color: "#fff",
+                                  }}
+                                >
+                                  {resolveResetId === reset.id ? "..." : "Set Password"}
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </>
@@ -593,19 +642,39 @@ export default function Header() {
                           Password Reset Requests
                         </div>
                         {passwordResets.map((reset) => (
-                          <div key={reset.id} className="flex items-center justify-between px-4 py-3 border-b last:border-b-0" style={{ borderColor: "var(--color-border)" }}>
-                            <div className="min-w-0 mr-2">
-                              <p className="text-sm font-medium truncate" style={{ color: "var(--color-text)" }}>{reset.email}</p>
-                              <span className="text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>New password: {reset.requested_password}</span>
+                          <div key={reset.id} className="flex flex-col px-4 py-3 border-b last:border-b-0 gap-2" style={{ borderColor: "var(--color-border)" }}>
+                            <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>{reset.email}</p>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="New password"
+                                value={resetPasswords[reset.id] ?? ""}
+                                onChange={(e) =>
+                                  setResetPasswords((prev) => ({
+                                    ...prev,
+                                    [reset.id]: e.target.value,
+                                  }))
+                                }
+                                className="flex-1 rounded-lg px-3 py-2 text-[13px] transition-colors"
+                                style={{
+                                  border: "1px solid var(--color-border)",
+                                  backgroundColor: "var(--color-surface)",
+                                  color: "var(--color-text)",
+                                }}
+                              />
+                              <button
+                                onClick={() => handleSetPassword(reset.id, reset.email)}
+                                disabled={
+                                  resolveResetId === reset.id ||
+                                  quickActionId !== null ||
+                                  !(resetPasswords[reset.id] ?? "").trim()
+                                }
+                                className="rounded-lg px-3 py-2 text-[11px] font-semibold shrink-0 whitespace-nowrap transition-all active:scale-95 disabled:opacity-50"
+                                style={{ backgroundColor: "var(--color-accent-secondary)", color: "#fff" }}
+                              >
+                                {resolveResetId === reset.id ? "..." : "Set Password"}
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleResolveReset(reset.id)}
-                              disabled={resolveResetId === reset.id || quickActionId !== null}
-                              className="rounded-lg px-3 py-2 text-[11px] font-semibold shrink-0 transition-all active:scale-95 disabled:opacity-50"
-                              style={{ backgroundColor: "var(--color-accent-secondary)", color: "#fff" }}
-                            >
-                              {resolveResetId === reset.id ? "..." : "Resolved"}
-                            </button>
                           </div>
                         ))}
                       </>

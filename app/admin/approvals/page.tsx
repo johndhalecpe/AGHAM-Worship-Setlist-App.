@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getPendingProfiles } from "@/lib/services/profileService";
-import { getPasswordResets, resolvePasswordReset } from "@/lib/auth";
+import { getPasswordResets } from "@/lib/auth";
 import type { Profile, PasswordReset } from "@/lib/type";
 import { ADMIN_EMAIL } from "@/lib/type";
 
@@ -14,6 +15,7 @@ export default function AdminApprovalsPage() {
   const [passwordResets, setPasswordResets] = useState<PasswordReset[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [resetPasswords, setResetPasswords] = useState<Record<string, string>>({});
 
   useEffect(() => {
     checkAccess();
@@ -52,12 +54,45 @@ export default function AdminApprovalsPage() {
     setUpdatingId(null);
   }
 
-  async function handleResolveReset(id: string) {
-    setUpdatingId(id);
-    const { error } = await resolvePasswordReset(id);
-    if (!error) {
-      setPasswordResets((prev) => prev.filter((r) => r.id !== id));
+  async function handleSetPassword(resetId: string, email: string) {
+    const newPassword = resetPasswords[resetId];
+    if (!newPassword || newPassword.length < 4) {
+      toast.error("Password must be at least 4 characters");
+      return;
     }
+
+    setUpdatingId(resetId);
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      toast.error("Not authenticated");
+      setUpdatingId(null);
+      return;
+    }
+
+    const res = await fetch("/api/admin/set-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email, newPassword, resetId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      toast.error(err.error ?? "Failed to set password");
+      setUpdatingId(null);
+      return;
+    }
+
+    toast.success(`Password set for ${email}`);
+    setPasswordResets((prev) => prev.filter((r) => r.id !== resetId));
+    setResetPasswords((prev) => {
+      const next = { ...prev };
+      delete next[resetId];
+      return next;
+    });
     setUpdatingId(null);
   }
 
@@ -97,31 +132,48 @@ export default function AdminApprovalsPage() {
             {passwordResets.map((reset) => (
               <div
                 key={reset.id}
-                className="rounded-xl p-4 flex items-center justify-between gap-4"
+                className="rounded-xl p-4 flex flex-col gap-3"
                 style={{
                   backgroundColor: "var(--color-surface-card)",
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "var(--color-text)" }}>
-                    {reset.email}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    Requested password: <span className="font-mono">{reset.requested_password}</span>
-                  </p>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                  {reset.email}
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    placeholder="Enter new password"
+                    value={resetPasswords[reset.id] ?? ""}
+                    onChange={(e) =>
+                      setResetPasswords((prev) => ({
+                        ...prev,
+                        [reset.id]: e.target.value,
+                      }))
+                    }
+                    className="flex-1 rounded-lg px-3 py-2 text-sm transition-colors"
+                    style={{
+                      border: "1px solid var(--color-border)",
+                      backgroundColor: "var(--color-surface)",
+                      color: "var(--color-text)",
+                    }}
+                  />
+                  <button
+                    onClick={() => handleSetPassword(reset.id, reset.email)}
+                    disabled={
+                      updatingId === reset.id ||
+                      !(resetPasswords[reset.id] ?? "").trim()
+                    }
+                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all shrink-0 whitespace-nowrap disabled:opacity-50"
+                    style={{
+                      backgroundColor: "var(--color-accent-secondary)",
+                      color: "white",
+                    }}
+                  >
+                    {updatingId === reset.id ? "..." : "Set Password"}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleResolveReset(reset.id)}
-                  disabled={updatingId === reset.id}
-                  className="rounded-lg px-4 py-2 text-sm font-medium transition-all shrink-0 disabled:opacity-50"
-                  style={{
-                    backgroundColor: "var(--color-accent-secondary)",
-                    color: "white",
-                  }}
-                >
-                  {updatingId === reset.id ? "..." : "Resolved"}
-                </button>
               </div>
             ))}
           </div>
