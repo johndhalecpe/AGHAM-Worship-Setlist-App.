@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
@@ -37,13 +37,26 @@ export default function SetlistContent({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const hasEditsRef = useRef(false);
 
   function startEditing() {
+    hasEditsRef.current = true;
     setEditing(true);
+  }
+
+  function handleSectionsChange(
+    sectionsOrUpdater: SetlistSectionWithSong[] | ((prev: SetlistSectionWithSong[]) => SetlistSectionWithSong[]),
+  ) {
+    hasEditsRef.current = true;
+    setSections(sectionsOrUpdater);
   }
 
   async function handleSaveAndExit(editData: { date: string; title: string; description: string; song_leader: string; branch: string }) {
     if (!editData.date) return;
+    if (!hasEditsRef.current) {
+      router.push("/setlists");
+      return;
+    }
     setIsSaving(true);
 
     const sectionsPayload = sections.map((s) => ({
@@ -159,7 +172,7 @@ export default function SetlistContent({
         sections={sections}
         isPast={isPast}
         isLocked={isLocked}
-        onSectionsChange={setSections}
+        onSectionsChange={handleSectionsChange}
       />
       <div className="mt-8 flex justify-center">
         {isPast ? (

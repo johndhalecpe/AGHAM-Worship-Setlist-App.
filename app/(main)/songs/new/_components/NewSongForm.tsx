@@ -103,18 +103,26 @@ export default function NewSongForm() {
     }
   }
 
+  useEffect(() => {
+    if (!title.trim()) {
+      setDuplicateWarning(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const existing = await checkDuplicate(title);
+      setDuplicateWarning(existing);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [title]);
+
   async function handleFormSubmit() {
     if (!title) {
       setError("Title is required");
       return;
     }
 
-    if (!duplicateWarning) {
-      const existing = await checkDuplicate(title);
-      if (existing) {
-        setDuplicateWarning(existing);
-        return;
-      }
+    if (duplicateWarning) {
+      setDuplicateWarning(null);
     }
 
     setLoading(true);
