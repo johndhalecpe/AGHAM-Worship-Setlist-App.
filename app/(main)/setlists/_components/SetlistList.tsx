@@ -26,15 +26,50 @@ function Greeting() {
   if (!name) return null;
 
   const hour = new Date().getHours();
+  const isMorning = hour < 12;
+  const isAfternoon = hour < 18;
   let greeting: string;
-  if (hour < 12) greeting = "Good morning";
-  else if (hour < 18) greeting = "Good afternoon";
-  else greeting = "Good evening";
+  let icon: string;
+  if (isMorning) { greeting = "Good morning"; icon = "\u{1F305}"; }
+  else if (isAfternoon) { greeting = "Good afternoon"; icon = "\u{2600}\u{FE0F}"; }
+  else { greeting = "Good evening"; icon = "\u{1F319}"; }
 
   return (
-    <p className="text-base font-medium mb-1" style={{ color: "var(--color-text-secondary)" }}>
-      {greeting}, {name}
-    </p>
+    <>
+      <style>{`
+        @keyframes greet-fade-slide {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes greet-gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .greet-text {
+          animation: greet-fade-slide 0.6s ease-out both;
+          background: linear-gradient(
+            90deg,
+            #f59e0b,
+            #ef4444,
+            #ec4899,
+            #8b5cf6,
+            #3b82f6,
+            #f59e0b
+          );
+          background-size: 300% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: greet-fade-slide 0.6s ease-out both,
+                     greet-gradient-shift 6s ease-in-out infinite 0.6s;
+          display: inline-block;
+        }
+      `}</style>
+      <p className="text-xl font-bold mb-1">
+        <span className="greet-text">{icon} {greeting}, {name}</span>
+      </p>
+    </>
   );
 }
 
@@ -82,24 +117,17 @@ export default function SetlistList({ setlists }: SetlistListProps) {
         </Link>
       </div>
 
-      <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
-        Upcoming lineups
-      </h3>
-      {upcomingSetlists.length > 0 ? (
-        <div className="flex flex-col gap-2 sm:gap-3">
-          {upcomingSetlists.map((setlist) => (
-            <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
-              <SetlistPreviewCard setlist={setlist} />
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <p
-          className="text-sm"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          No scheduled lineups for now...
-        </p>
+      {upcomingSetlists.length > 0 && (
+        <>
+          <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
+            Upcoming lineups
+          </h3>
+          <div className="flex flex-col gap-2 sm:gap-3 mb-8">
+            {upcomingSetlists.map((setlist) => (
+              <SetlistPreviewCard key={setlist.id} setlist={setlist} defaultOpen />
+            ))}
+          </div>
+        </>
       )}
 
       {pastSetlists.length > 0 && (
@@ -116,12 +144,19 @@ export default function SetlistList({ setlists }: SetlistListProps) {
           </h3>
           <div className="flex flex-col gap-2 sm:gap-3">
             {pastSetlists.map((setlist) => (
-              <Link key={setlist.id} href={`/setlists/${setlist.id}`}>
-                <SetlistPreviewCard setlist={setlist} dimmed />
-              </Link>
+              <SetlistPreviewCard key={setlist.id} setlist={setlist} defaultOpen={false} isPast />
             ))}
           </div>
         </>
+      )}
+
+      {upcomingSetlists.length === 0 && (
+        <p
+          className="text-sm"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          No scheduled lineups for now...
+        </p>
       )}
     </div>
   );
