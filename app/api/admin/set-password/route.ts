@@ -29,18 +29,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-  if (listError) {
-    return NextResponse.json({ error: listError.message }, { status: 500 });
+  let targetId: string | undefined;
+
+  try {
+    const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) {
+      return NextResponse.json({ error: listError.message }, { status: 500 });
+    }
+    targetId = listData?.users?.find((u: { email?: string | null }) => u.email === email)?.id;
+  } catch (e) {
+    console.warn("listUsers threw, falling back to RPC for set-password:", e);
+    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc("get_active_users");
+    if (rpcError) {
+      return NextResponse.json({ error: typeof rpcError === "string" ? rpcError : rpcError.message }, { status: 500 });
+    }
+    const found = ((rpcData ?? []) as { user_id: string; email: string }[]).find((u) => u.email === email);
+    if (found) targetId = found.user_id;
   }
 
-  const targetUser = users.users.find((u) => u.email === email);
-  if (!targetUser) {
+  if (!targetId) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-    targetUser.id,
+    targetId,
     { password: newPassword },
   );
   if (updateError) {
