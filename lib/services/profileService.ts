@@ -28,3 +28,25 @@ export async function getPendingProfiles(): Promise<Profile[]> {
   if (error || !data) return [];
   return data as Profile[];
 }
+
+export async function updateProfileName(name: string): Promise<{ error?: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) return { error: "Not authenticated" };
+
+  const res = await fetch("/api/profile/update-name", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!res.ok) {
+    const json = await res.json();
+    return { error: json.error ?? "Failed to update name" };
+  }
+
+  return {};
+}

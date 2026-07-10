@@ -10,6 +10,7 @@ import { ADMIN_EMAIL } from "@/lib/type";
 import { getPasswordResets, signOut } from "@/lib/auth";
 import UserMenu from "./UserMenu";
 import ChangePasswordForm from "../auth/ChangePasswordForm";
+import ChangeNameForm from "../auth/ChangeNameForm";
 import Portal from "@/components/shared/Portal";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { useNewUserNotification } from "@/lib/hooks/useNewUserNotification";
@@ -28,6 +29,7 @@ export default function Header() {
   const [userName, setUserName] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileUserActions, setShowMobileUserActions] = useState(false);
+  const [showMobileChangeName, setShowMobileChangeName] = useState(false);
   const [showMobileChangePassword, setShowMobileChangePassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
@@ -592,7 +594,7 @@ export default function Header() {
             >
               Sign in
             </Link>
-          ) : userName && <UserMenu userName={userName} />}
+          ) : userName && <UserMenu userName={userName} onNameChange={(newName) => setUserName(newName)} />}
           <button
             onClick={toggleDarkMode}
             className="ml-2 p-2 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -1091,6 +1093,25 @@ export default function Header() {
                   {showMobileUserActions && (
                     <div className="flex flex-col gap-0.5 px-2 pt-1 pb-1">
                       <button
+                        onClick={() => setShowMobileChangeName(true)}
+                        className="rounded-xl px-4 py-3 text-sm font-medium transition-all text-left min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
+                        style={{ color: "var(--color-text-secondary)" }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--color-accent) 5%, transparent)";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                          <path d="M16 3.13a4 4 0 010 7.75" />
+                        </svg>
+                        Change Name
+                      </button>
+                      <button
                         onClick={() => setShowMobileChangePassword(true)}
                         className="rounded-xl px-4 py-3 text-sm font-medium transition-all text-left min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
                         style={{ color: "var(--color-text-secondary)" }}
@@ -1135,6 +1156,14 @@ export default function Header() {
           </div>
         </div>
         </Portal>
+      )}
+
+      {showMobileChangeName && (
+        <ChangeNameForm
+          currentName={userName ?? ""}
+          onClose={() => setShowMobileChangeName(false)}
+          onNameUpdated={(newName) => setUserName(newName)}
+        />
       )}
 
       {showMobileChangePassword && (

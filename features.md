@@ -87,3 +87,23 @@ Status: working
 Where: `next.config.ts`
 What it does: Configured image formats (AVIF, WebP) and stale times (dynamic: 30s, static: 300s) for optimal caching behavior.
 Status: working
+
+## Time-based greeting with distinct icons
+Where: `app/(main)/setlists/_components/SetlistList.tsx`
+What it does: Greeting widget shows "Good morning" (sunrise icon), "Good afternoon" (sun icon), or "Good evening" (moon icon) with the user's name and an animated gradient text effect.
+Status: working
+
+## Route access guard
+Where: `app/(main)/RequireAuth.tsx`, `app/(main)/layout.tsx`
+What it does: Blocks unauthenticated/non-guest users from accessing main app pages (setlists, songs, admin) by direct URL. Redirects to landing page if neither session nor guest mode is present.
+Status: working
+
+## Change Name (profile)
+Where: `app/api/profile/update-name/route.ts`, `components/auth/ChangeNameForm.tsx`, `lib/services/profileService.ts`, `components/layout/UserMenu.tsx`, `components/layout/Header.tsx`
+What it does: Users can change their display name from the UserMenu dropdown (desktop) or mobile drawer. A modal shows the current name and a real-time preview of the change. Updated names reflect in the admin users section immediately.
+Status: working
+
+## Cache revalidation on data changes
+Where: `app/api/setlists/`, `app/api/songs/`
+What it does: All mutation API routes (create, update, delete) call `revalidatePath` to immediately invalidate the ISR cache for `/setlists` and `/songs`, so edits appear instantly on list pages instead of waiting up to 30 seconds.
+Status: working

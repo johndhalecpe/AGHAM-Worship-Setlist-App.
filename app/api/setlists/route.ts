@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { todayLocalISO } from "@/lib/dates";
 import { requireUser, unauthorized } from "@/lib/auth-server";
@@ -48,5 +49,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  revalidatePath("/setlists");
   return NextResponse.json(data, { status: 201 });
 }

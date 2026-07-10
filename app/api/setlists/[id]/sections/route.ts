@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { isSetlistDateInPast } from "@/app/api/_lib/setlistGuards";
 import { requireUser, unauthorized } from "@/lib/auth-server";
@@ -99,6 +100,7 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  revalidatePath("/setlists");
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -135,6 +137,7 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  revalidatePath("/setlists");
   return NextResponse.json({ message: "Song removed from setlist" });
 }
 
@@ -190,6 +193,7 @@ export async function PATCH(
       return NextResponse.json({ error: errors.join("; ") }, { status: 500 });
     }
 
+    revalidatePath("/setlists");
     return NextResponse.json({ message: "Updated" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown server error";

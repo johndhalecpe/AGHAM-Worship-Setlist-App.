@@ -85,7 +85,7 @@ export async function GET(request: Request) {
         return {
           user_id: u.id,
           email: u.email,
-          name: profile?.name ?? u.email.split("@")[0],
+          name: profile?.name ?? "",
           role: profile?.role ?? null,
           status: profile?.status ?? null,
         };

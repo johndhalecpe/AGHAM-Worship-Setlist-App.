@@ -142,26 +142,6 @@ export default function KeyPicker({
             ♯
           </button>
           <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>/</span>
-
-          <button
-            type="button"
-            onClick={handleMinorToggle}
-            disabled={!letter}
-            className="rounded-lg min-w-[32px] px-2 py-2.5 sm:py-1 text-xs font-medium transition-all disabled:opacity-30"
-            style={{
-              backgroundColor:
-                accidental === "sharp" ? "var(--color-accent)" : "var(--color-surface)",
-              color:
-                accidental === "sharp" ? "#fff" : "var(--color-text-secondary)",
-              border:
-                accidental === "sharp"
-                  ? "1px solid var(--color-accent)"
-                  : "1px solid var(--color-border)",
-            }}
-          >
-            ♯
-          </button>
-          <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>/</span>
           <button
             type="button"
             onClick={handleMinorToggle}
