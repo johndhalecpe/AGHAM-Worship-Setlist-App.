@@ -22,16 +22,35 @@ export async function POST(request: Request) {
   }
 
   const trimmed = name.trim();
+  const now = new Date().toISOString();
 
-  const { error } = await authClient
+  const { data: updated, error: updateError } = await authClient
     .from("profiles")
-    .upsert(
-      { id: user.id, name: trimmed, updated_at: new Date().toISOString() },
-      { onConflict: "id" }
-    );
+    .update({ name: trimmed, updated_at: now })
+    .eq("id", user.id)
+    .select();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (!updated || updated.length === 0) {
+    const role =
+      (user.user_metadata?.role as string) ?? "singer";
+    const { error: insertError } = await authClient
+      .from("profiles")
+      .insert({
+        id: user.id,
+        name: trimmed,
+        role,
+        status: "pending",
+        created_at: now,
+        updated_at: now,
+      });
+
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: true });
