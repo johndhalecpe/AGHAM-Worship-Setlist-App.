@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseWithToken } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/lib/type";
 
 export async function GET(request: Request) {
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
       }));
     }
 
-    const db = adminClient ?? getSupabase();
+    const db = adminClient ?? getSupabaseWithToken(token);
     const { data: profiles } = await db
       .from("profiles")
       .select("id, name, role, status");
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
         return {
           user_id: u.id,
           email: u.email,
-          name: profile?.name ?? "",
+          name: profile?.name ?? u.email,
           role: profile?.role ?? null,
           status: profile?.status ?? null,
         };
