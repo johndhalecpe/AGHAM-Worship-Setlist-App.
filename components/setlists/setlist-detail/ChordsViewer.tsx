@@ -16,6 +16,8 @@ const SECTION_LABELS: Record<string, string> = {
   special: "Special numbers",
 };
 
+const CHORD_NOTE_SUFFIXES = ["intro", "outro", "transition", "drummer_notes"] as const;
+
 type Props = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
@@ -39,7 +41,6 @@ export default function ChordsViewer({
   const filtered = sections.filter((s) => s.section_type === sectionType);
   const [zoomIndex, setZoomIndex] = useState(3);
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const initialNotesRef = useRef<Record<string, string>>({});
   const notesRef = useRef(notes);
   notesRef.current = notes;
   const [showDrummer, setShowDrummer] = useState(false);
@@ -48,9 +49,31 @@ export default function ChordsViewer({
   chordEditsRef.current = chordEdits;
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
+  const pendingSaveRef = useRef<Record<string, string> | null>(null);
   const isDirtyRef = useRef(false);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const editingSong = editingKeyId ? filtered.find((s) => s.id === editingKeyId) ?? null : null;
+  const savingToastId = useRef<string | number | null>(null);
+
+  function buildNotesFromSections() {
+    const result: Record<string, string> = {};
+    for (const s of filtered) {
+      if (s.chord_notes) {
+        for (const [key, val] of Object.entries(s.chord_notes)) {
+          if (typeof val === "string") {
+            result[`${s.id}-${key}`] = val;
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  useEffect(() => {
+    if (!isDirtyRef.current) {
+      setNotes(buildNotesFromSections());
+    }
+  }, [sections, sectionType]);
 
   async function handleKeyChange(s: SetlistSectionWithSong, key: string) {
     const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
@@ -71,20 +94,39 @@ export default function ChordsViewer({
   function buildItems(currentNotes: Record<string, string>) {
     return filtered.map((s) => {
       const chordNotes: Record<string, string> = {};
-      for (const suffix of ["intro", "outro", "transition", "drummer_notes"]) {
+      for (const suffix of CHORD_NOTE_SUFFIXES) {
         const val = currentNotes[`${s.id}-${suffix}`];
-        if (val) chordNotes[suffix] = val;
+        if (val !== undefined) chordNotes[suffix] = val;
       }
       return {
         id: s.id,
         chord_notes: Object.keys(chordNotes).length > 0 ? chordNotes : null,
+        merge_chord_notes: true,
       };
     });
   }
 
-  async function saveNotes(currentNotes: Record<string, string>, silent = false) {
-    if (isPast || isSavingRef.current) return;
+  function dismissSavingToast() {
+    if (savingToastId.current !== null) {
+      toast.dismiss(savingToastId.current);
+      savingToastId.current = null;
+    }
+  }
+
+  async function saveNotes(currentNotes: Record<string, string>) {
+    if (isPast) return false;
+
+    if (isSavingRef.current) {
+      pendingSaveRef.current = currentNotes;
+      return false;
+    }
     isSavingRef.current = true;
+    pendingSaveRef.current = null;
+
+    const label = showDrummer ? "Drummer notes" : "Chord notes";
+    const toastId = toast.loading(`Saving ${label.toLowerCase()}...`);
+    savingToastId.current = toastId;
+
     const currentChordEdits = chordEditsRef.current;
     const songPromises = filtered.map(async (s) => {
       const edited = currentChordEdits[`${s.id}-chords`];
@@ -99,27 +141,42 @@ export default function ChordsViewer({
         }
       }
     });
+
+    let chordsFailed = false;
     try {
       await Promise.all(songPromises);
     } catch (e) {
+      chordsFailed = true;
+      dismissSavingToast();
+      toast.error(e instanceof Error ? e.message : "Failed to save chords");
       isSavingRef.current = false;
-      if (!silent) toast.error(e instanceof Error ? e.message : "Failed to save chords");
+      flushPendingSave();
       return false;
     }
+
     const items = buildItems(currentNotes);
     const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items }),
     });
+
     isSavingRef.current = false;
+
     if (!res.ok) {
-      if (!silent) toast.error("Failed to save notes");
+      dismissSavingToast();
+      toast.error(`Failed to save ${label.toLowerCase()}`);
+      flushPendingSave();
       return false;
     }
-    initialNotesRef.current = { ...currentNotes };
-    isDirtyRef.current = false;
-    if (!silent) toast.success(showDrummer ? "Drummer notes saved" : "Chord notes saved");
+
+    dismissSavingToast();
+    const chordsSaved = !chordsFailed && songPromises.length > 0;
+    const parts: string[] = [];
+    if (chordsSaved) parts.push("chords");
+    parts.push(label.toLowerCase());
+    toast.success(`${parts.join(" and ")} saved!`);
+
     onSectionsChange((prev) =>
       prev.map((sec) => {
         const item = items.find((i) => i.id === sec.id);
@@ -133,15 +190,31 @@ export default function ChordsViewer({
         };
       })
     );
+
+    isDirtyRef.current = false;
+    flushPendingSave();
     return true;
+  }
+
+  function flushPendingSave() {
+    if (pendingSaveRef.current !== null) {
+      const pending = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      saveNotes(pending);
+    }
+  }
+
+  function scheduleAutoSave(updatedNotes: Record<string, string>) {
+    isDirtyRef.current = true;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => saveNotes(updatedNotes), AUTO_SAVE_DELAY);
   }
 
   function handleChordsChange(id: string, value: string) {
     isDirtyRef.current = true;
     setChordEdits((prev) => {
       const next = { ...prev, [id]: value };
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-      autoSaveTimer.current = setTimeout(() => saveNotes(notesRef.current, true), AUTO_SAVE_DELAY);
+      scheduleAutoSave(notesRef.current);
       return next;
     });
   }
@@ -150,8 +223,7 @@ export default function ChordsViewer({
     isDirtyRef.current = true;
     setNotes((prev) => {
       const next = { ...prev, [id]: value };
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-      autoSaveTimer.current = setTimeout(() => saveNotes(next, true), AUTO_SAVE_DELAY);
+      scheduleAutoSave(next);
       return next;
     });
   }
@@ -159,20 +231,8 @@ export default function ChordsViewer({
   useEffect(() => {
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      dismissSavingToast();
     };
-  }, []);
-
-  useEffect(() => {
-    const initial: Record<string, string> = {};
-    for (const s of filtered) {
-      if (s.chord_notes) {
-        for (const [key, val] of Object.entries(s.chord_notes)) {
-          if (val) initial[`${s.id}-${key}`] = val;
-        }
-      }
-    }
-    setNotes(initial);
-    initialNotesRef.current = initial;
   }, []);
 
   useEffect(() => {
@@ -193,11 +253,7 @@ export default function ChordsViewer({
     onClose();
 
     if (isDirtyRef.current) {
-      saveNotes(notesRef.current, true).then((ok) => {
-        if (ok === false) {
-          toast.error("Failed to save changes");
-        }
-      });
+      saveNotes(notesRef.current);
     }
   };
 
@@ -212,6 +268,99 @@ export default function ChordsViewer({
   }, []);
 
   const fontSize = ZOOM_STEPS[zoomIndex];
+
+  function renderTextarea(
+    noteKey: string,
+    placeholder: string,
+    extraClassName = "",
+    extraStyle: React.CSSProperties = {},
+  ) {
+    return (
+      <textarea
+        name={noteKey}
+        autoComplete="off"
+        ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+        value={notes[noteKey] ?? ""}
+        onChange={(e) => {
+          handleNotesChange(noteKey, e.target.value);
+          e.target.style.height = "auto";
+          e.target.style.height = e.target.scrollHeight + "px";
+        }}
+        readOnly={isPast}
+        onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
+        placeholder={placeholder}
+        rows={1}
+        className={`w-full rounded-lg px-3 py-1.5 leading-relaxed outline-none resize-none overflow-hidden ${extraClassName}`}
+        style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          fontSize,
+          fontWeight: "bold",
+          border: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-surface-card)",
+          color: "var(--color-accent)",
+          ...extraStyle,
+        }}
+      />
+    );
+  }
+
+  function renderChordsTextarea(s: SetlistSectionWithSong) {
+    return (
+      <textarea
+        name={`${s.id}-chords`}
+        autoComplete="off"
+        ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+        value={chordEdits[`${s.id}-chords`] ?? s.songs.chords ?? ""}
+        onChange={(e) => {
+          handleChordsChange(`${s.id}-chords`, e.target.value);
+          e.target.style.height = "auto";
+          e.target.style.height = e.target.scrollHeight + "px";
+        }}
+        readOnly={isPast}
+        onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
+        placeholder="No chords available."
+        className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
+        style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          fontSize,
+          fontWeight: "bold",
+          border: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-surface-card)",
+          color: "var(--color-accent)",
+        }}
+      />
+    );
+  }
+
+  function renderSongHeader(s: SetlistSectionWithSong) {
+    return (
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="text-base font-semibold break-words" style={{ color: "var(--color-text)" }}>
+            {s.songs.title}
+          </h3>
+          {s.songs.author && (
+            <p className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
+              {s.songs.author}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => { if (!isPast) setEditingKeyId(s.id); }}
+            disabled={isPast}
+            className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+            style={{
+              backgroundColor: "var(--color-badge-key)",
+              color: "var(--color-badge-key-text)",
+            }}
+          >
+            Key: {s.song_key ?? s.songs.default_key ?? "G"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -233,7 +382,7 @@ export default function ChordsViewer({
             style={{ color: "var(--color-text)" }}
           >
             {SECTION_LABELS[sectionType] || sectionType}
-        </h2>
+          </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDrummer(!showDrummer)}
@@ -257,8 +406,8 @@ export default function ChordsViewer({
               {showDrummer ? "Chords" : "Drums"}
             </button>
             <button
-                  onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
-                  disabled={zoomIndex === 0}
+              onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
+              disabled={zoomIndex === 0}
               className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
               style={{
                 backgroundColor: "var(--color-surface-muted)",
@@ -281,17 +430,17 @@ export default function ChordsViewer({
               onClick={() => setZoomIndex(Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1))}
               disabled={zoomIndex === ZOOM_STEPS.length - 1}
               className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
-                  style={{
-                    backgroundColor: "var(--color-surface-muted)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text)",
-                  }}
-                  aria-label="Zoom in"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path d="M10.75 3.25a.75.75 0 0 0-1.5 0v6h-6a.75.75 0 0 0 0 1.5h6v6a.75.75 0 0 0 1.5 0v-6h6a.75.75 0 0 0 0-1.5h-6v-6Z" />
-                  </svg>
-                </button>
+              style={{
+                backgroundColor: "var(--color-surface-muted)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text)",
+              }}
+              aria-label="Zoom in"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M10.75 3.25a.75.75 0 0 0-1.5 0v6h-6a.75.75 0 0 0 0 1.5h6v6a.75.75 0 0 0 1.5 0v-6h6a.75.75 0 0 0 0-1.5h-6v-6Z" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -306,59 +455,13 @@ export default function ChordsViewer({
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h3 className="text-base font-semibold truncate" style={{ color: "var(--color-text)" }}>
-                      {s.songs.title.length > 16 ? s.songs.title.slice(0, 16) + "…" : s.songs.title}
-                    </h3>
-                    {s.songs.author && (
-                      <p className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
-                        {s.songs.author.length > 15 ? s.songs.author.slice(0, 15) + "…" : s.songs.author}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => { if (!isPast) setEditingKeyId(s.id); }}
-                        disabled={isPast}
-                        className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
-                        style={{
-                          backgroundColor: "var(--color-badge-key)",
-                          color: "var(--color-badge-key-text)",
-                        }}
-                      >
-                        Key: {s.song_key ?? s.songs.default_key ?? "G"}
-                      </button>
-                  </div>
-                </div>
+                {renderSongHeader(s)}
                 {s.notes && (
                   <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
                     &ldquo;{s.notes}&rdquo;
                   </p>
                 )}
-                <textarea
-                  name={`${s.id}-drummer_notes`}
-                  autoComplete="off"
-                  ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                  value={notes[`${s.id}-drummer_notes`] ?? ""}
-                  onChange={(e) => {
-                    handleNotesChange(`${s.id}-drummer_notes`, e.target.value);
-                    e.target.style.height = "auto";
-                    e.target.style.height = e.target.scrollHeight + "px";
-                  }}
-                  readOnly={isPast}
-                  onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
-                  placeholder="Drummer notes for this song..."
-                  className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
-                  style={{
-                    fontFamily: "'Courier New', Courier, monospace",
-                    fontSize,
-                    fontWeight: "bold",
-                    border: "1px solid var(--color-border)",
-                    backgroundColor: "var(--color-surface)",
-                    color: "var(--color-accent)",
-                  }}
-                />
+                {renderTextarea(`${s.id}-drummer_notes`, "Drummer notes for this song...")}
               </div>
             ))}
             {filtered.length === 0 && (
@@ -371,36 +474,8 @@ export default function ChordsViewer({
           <div className="flex flex-col">
             {filtered.map((s, i) => (
               <div key={s.id}>
-                {i === 0 && (
-                  <textarea
-                    name={`${s.id}-intro`}
-                    autoComplete="off"
-                    ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                    value={notes[`${s.id}-intro`] ?? ""}
-                    onChange={(e) => {
-                      handleNotesChange(`${s.id}-intro`, e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = e.target.scrollHeight + "px";
-                    }}
-                    readOnly={isPast}
-                    onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
-                    placeholder="add intro"
-                    rows={1}
-                    className="w-full rounded-lg px-3 py-1.5 mb-4 leading-relaxed outline-none resize-none overflow-hidden"
-                    style={{
-                      fontFamily: "'Courier New', Courier, monospace",
-                      fontSize,
-                      fontWeight: "bold",
-                      border: "1px solid var(--color-border)",
-                      backgroundColor: "var(--color-surface-card)",
-                      color: "var(--color-accent)",
-                    }}
-                  />
-                )}
-                <hr
-                  className="mb-4"
-                  style={{ borderColor: "var(--color-border)" }}
-                />
+                {i === 0 && renderTextarea(`${s.id}-intro`, "add intro", "mb-4")}
+                <hr className="mb-4" style={{ borderColor: "var(--color-border)" }} />
                 <div
                   ref={s.id === activeSongId ? activeRef : undefined}
                   className="rounded-lg p-4 transition-colors"
@@ -415,123 +490,20 @@ export default function ChordsViewer({
                         : "1px solid transparent",
                   }}
                 >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h3
-                      className="text-base font-semibold truncate"
-                      style={{ color: "var(--color-text)" }}
-                    >
-                      {s.songs.title.length > 16 ? s.songs.title.slice(0, 16) + "…" : s.songs.title}
-                    </h3>
-                    {s.songs.author && (
-                      <p
-                        className="text-xs shrink-0"
-                        style={{ color: "var(--color-text-tertiary)" }}
-                      >
-                        {s.songs.author.length > 15 ? s.songs.author.slice(0, 15) + "…" : s.songs.author}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => { if (!isPast) setEditingKeyId(s.id); }}
-                        disabled={isPast}
-                        className="text-xs font-mono font-semibold rounded px-1.5 min-h-[22px] flex items-center transition-colors disabled:opacity-60"
-                        style={{
-                          backgroundColor: "var(--color-badge-key)",
-                          color: "var(--color-badge-key-text)",
-                        }}
-                      >
-                        Key: {s.song_key ?? s.songs.default_key ?? "G"}
-                      </button>
-                  </div>
+                  {renderSongHeader(s)}
+                  {s.notes && (
+                    <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
+                      &ldquo;{s.notes}&rdquo;
+                    </p>
+                  )}
+                  {renderChordsTextarea(s)}
                 </div>
-                {s.notes && (
-                  <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                    &ldquo;{s.notes}&rdquo;
-                  </p>
-                )}
-                <textarea
-                  name={`${s.id}-chords`}
-                  autoComplete="off"
-                  ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                  value={chordEdits[`${s.id}-chords`] ?? s.songs.chords ?? ""}
-                  onChange={(e) => {
-                    handleChordsChange(`${s.id}-chords`, e.target.value);
-                    e.target.style.height = "auto";
-                    e.target.style.height = e.target.scrollHeight + "px";
-                  }}
-                  readOnly={isPast}
-                  onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
-                  placeholder="No chords available."
-                  className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
-                  style={{
-                    fontFamily: "'Courier New', Courier, monospace",
-                    fontSize,
-                    fontWeight: "bold",
-                    border: "1px solid var(--color-border)",
-                    backgroundColor: "var(--color-surface-card)",
-                    color: "var(--color-accent)",
-                  }}
-                />
-                </div>
-                <textarea
-                  name={`${s.id}-outro`}
-                  autoComplete="off"
-                  ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                  value={notes[`${s.id}-outro`] ?? ""}
-                  onChange={(e) => {
-                    handleNotesChange(`${s.id}-outro`, e.target.value);
-                    e.target.style.height = "auto";
-                    e.target.style.height = e.target.scrollHeight + "px";
-                  }}
-                  readOnly={isPast}
-                  onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
-                  placeholder="add outro"
-                  rows={1}
-                  className="w-full rounded-lg px-3 py-1.5 mt-4 leading-relaxed outline-none resize-none overflow-hidden"
-                  style={{
-                    fontFamily: "'Courier New', Courier, monospace",
-                    fontSize,
-                    fontWeight: "bold",
-                    border: "1px solid var(--color-border)",
-                    backgroundColor: "var(--color-surface-card)",
-                    color: "var(--color-accent)",
-                  }}
-                />
-                {i < filtered.length - 1 && (
-                  <textarea
-                    name={`${s.id}-transition`}
-                    autoComplete="off"
-                    ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                    value={notes[`${s.id}-transition`] ?? ""}
-                    onChange={(e) => {
-                      handleNotesChange(`${s.id}-transition`, e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = e.target.scrollHeight + "px";
-                    }}
-                    readOnly={isPast}
-                    onFocus={(e) => { if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); } }}
-                    placeholder="add transition"
-                    rows={1}
-                    className="w-full rounded-lg px-3 py-1.5 mt-2 mb-4 leading-relaxed outline-none resize-none overflow-hidden"
-                    style={{
-                      fontFamily: "'Courier New', Courier, monospace",
-                      fontSize,
-                      fontWeight: "bold",
-                      border: "1px solid var(--color-border)",
-                      backgroundColor: "var(--color-surface-card)",
-                      color: "var(--color-accent)",
-                    }}
-                  />
-                )}
+                {renderTextarea(`${s.id}-outro`, "add outro", "mt-4")}
+                {i < filtered.length - 1 && renderTextarea(`${s.id}-transition`, "add transition", "mt-2 mb-4")}
               </div>
             ))}
             {filtered.length === 0 && (
-              <p
-                className="text-sm"
-                style={{ color: "var(--color-text-tertiary)" }}
-              >
+              <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
                 No songs in this section.
               </p>
             )}

@@ -111,7 +111,7 @@ export default function LyricsViewer({
                 <div className="flex items-center justify-between mb-2 gap-2">
                   <div className="min-w-0 flex-1 flex items-center gap-2">
                     <h3
-                      className="text-base font-semibold truncate"
+                      className="text-base font-semibold break-words"
                       style={{ color: "var(--color-text)" }}
                     >
                       {s.songs.title}

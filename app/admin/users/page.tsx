@@ -30,7 +30,7 @@ export default function AdminAllUsersPage() {
     });
     if (res.ok) {
       const json = await res.json();
-      setUsers(json.users);
+      setUsers(json.users.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)));
     }
     setLoading(false);
   }

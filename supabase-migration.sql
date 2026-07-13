@@ -211,3 +211,28 @@ BEGIN
   ORDER BY s.user_id, s.updated_at DESC;
 END;
 $$;
+
+-- ============================================================
+-- All users function (admin dashboard - shows every registered user)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_all_users()
+RETURNS TABLE (
+  user_id UUID,
+  email TEXT,
+  name TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    u.id,
+    u.email::TEXT,
+    COALESCE(p.name, u.email::TEXT) AS name
+  FROM auth.users u
+  LEFT JOIN public.profiles p ON p.id = u.id
+  ORDER BY u.created_at DESC;
+END;
+$$;

@@ -174,7 +174,31 @@ export async function PATCH(
         if ("notes" in sectionUpdate && sectionUpdate.notes !== undefined) updatePayload.notes = sectionUpdate.notes;
         if ("song_key" in sectionUpdate && sectionUpdate.song_key !== undefined) updatePayload.song_key = sectionUpdate.song_key;
         if ("override_lyrics" in sectionUpdate && sectionUpdate.override_lyrics !== undefined) updatePayload.override_lyrics = sectionUpdate.override_lyrics;
-        if ("chord_notes" in sectionUpdate && sectionUpdate.chord_notes !== undefined) updatePayload.chord_notes = sectionUpdate.chord_notes;
+
+        if ("chord_notes" in sectionUpdate && sectionUpdate.chord_notes !== undefined) {
+          const incoming = sectionUpdate.chord_notes as Record<string, string> | null;
+          if (incoming === null) {
+            updatePayload.chord_notes = null;
+          } else if (sectionUpdate.merge_chord_notes) {
+            const { data: existing } = await supabase
+              .from("setlist_sections")
+              .select("chord_notes")
+              .eq("id", sectionUpdate.id)
+              .single();
+            const existingNotes = (existing?.chord_notes as Record<string, string> | null) ?? {};
+            const merged: Record<string, string> = {};
+            for (const key of ["intro", "outro", "transition", "drummer_notes"]) {
+              if (key in incoming) {
+                if (incoming[key] !== "") merged[key] = incoming[key];
+              } else if (key in existingNotes) {
+                merged[key] = existingNotes[key] as string;
+              }
+            }
+            updatePayload.chord_notes = Object.keys(merged).length > 0 ? merged : null;
+          } else {
+            updatePayload.chord_notes = incoming;
+          }
+        }
 
         if (Object.keys(updatePayload).length === 0) return null;
 

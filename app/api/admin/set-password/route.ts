@@ -32,14 +32,14 @@ export async function POST(request: Request) {
   let targetId: string | undefined;
 
   try {
-    const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 10000 });
     if (listError) {
       return NextResponse.json({ error: listError.message }, { status: 500 });
     }
     targetId = listData?.users?.find((u: { email?: string | null }) => u.email === email)?.id;
   } catch (e) {
     console.warn("listUsers threw, falling back to RPC for set-password:", e);
-    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc("get_active_users");
+    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc("get_all_users");
     if (rpcError) {
       return NextResponse.json({ error: typeof rpcError === "string" ? rpcError : rpcError.message }, { status: 500 });
     }

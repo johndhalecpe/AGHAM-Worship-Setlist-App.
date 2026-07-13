@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     if (adminClient) {
       try {
-        const { data: usersData, error: usersError } = await adminClient.auth.admin.listUsers();
+        const { data: usersData, error: usersError } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 10000 });
         if (!usersError && usersData?.users) {
           rawUsers = usersData.users;
         } else {
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       }
 
       if (rawUsers.length === 0) {
-        const { data: rpcData, error: rpcError } = await adminClient.rpc("get_active_users");
+        const { data: rpcData, error: rpcError } = await adminClient.rpc("get_all_users");
         if (rpcError) {
           console.warn("admin RPC failed, will try regular client:", rpcError);
         } else {
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     }
 
     if (rawUsers.length === 0) {
-      const { data: rpcData, error: rpcError } = await getSupabase().rpc("get_active_users");
+      const { data: rpcData, error: rpcError } = await getSupabase().rpc("get_all_users");
       if (rpcError) {
         const message = typeof rpcError === "string" ? rpcError : rpcError.message;
         return NextResponse.json({ error: message }, { status: 500 });
