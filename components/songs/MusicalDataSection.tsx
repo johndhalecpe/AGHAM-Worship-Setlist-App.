@@ -281,6 +281,9 @@ export default function MusicalDataSection({
             type="text"
             name="song-bpm"
             autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            autoCapitalize="off"
             value={displayBpm}
             onChange={(e) => handleBpmInputChange(e.target.value)}
             onBlur={handleBpmInputBlur}

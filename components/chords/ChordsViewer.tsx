@@ -13,6 +13,10 @@ export default function ChordsViewer({ chords, editable, onChange }: ChordsViewe
         value={chords}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder="Enter chords..."
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        autoCapitalize="off"
         rows={6}
         className="w-full rounded-lg px-3 py-2 text-sm mt-1.5"
         style={{

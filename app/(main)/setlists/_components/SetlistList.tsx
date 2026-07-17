@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import SetlistPreviewCard from "./SetlistPreviewCard";
 
 function Greeting() {
@@ -111,6 +113,7 @@ type SetlistListProps = {
 };
 
 export default function SetlistList({ setlists }: SetlistListProps) {
+  const isGuest = useIsGuest();
   const [todayLocal, setTodayLocal] = useState("");
 
   useEffect(() => {
@@ -139,7 +142,13 @@ export default function SetlistList({ setlists }: SetlistListProps) {
           Lineups
         </h2>
         <Link
-          href="/setlists/new"
+          href={isGuest ? "#" : "/setlists/new"}
+          onClick={(e) => {
+            if (isGuest) {
+              e.preventDefault();
+              toast.error("Guests can't schedule a lineup");
+            }
+          }}
           className="rounded-lg px-4 py-2 text-sm font-medium text-center transition-all hover:-translate-y-0.5 w-full sm:w-auto"
           style={{
             backgroundColor: "var(--color-accent)",

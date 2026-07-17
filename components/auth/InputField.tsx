@@ -14,6 +14,9 @@ interface InputFieldProps {
   name?: string;
   id?: string;
   autoComplete?: string;
+  autoCorrect?: string;
+  spellCheck?: boolean;
+  autoCapitalize?: string;
 }
 
 function ClearButton({ onClick }: { onClick: () => void }) {
@@ -45,6 +48,9 @@ export default function InputField({
   name,
   id,
   autoComplete,
+  autoCorrect = "off",
+  spellCheck = false,
+  autoCapitalize = "off",
 }: InputFieldProps) {
   return (
     <div>
@@ -79,6 +85,9 @@ export default function InputField({
           name={name}
           id={id}
           autoComplete={autoComplete}
+          autoCorrect={autoCorrect}
+          spellCheck={spellCheck}
+          autoCapitalize={autoCapitalize}
           className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-60"
           style={{ color: "var(--color-text)", paddingRight: rightElement ? "3rem" : undefined }}
         />

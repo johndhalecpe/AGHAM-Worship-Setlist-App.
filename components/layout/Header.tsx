@@ -449,6 +449,10 @@ export default function Header() {
                                 <input
                                   type="text"
                                   placeholder="New password"
+                                  autoComplete="off"
+                                  autoCorrect="off"
+                                  spellCheck={false}
+                                  autoCapitalize="off"
                                   value={resetPasswords[reset.id] ?? ""}
                                   onChange={(e) =>
                                     setResetPasswords((prev) => ({
@@ -801,6 +805,10 @@ export default function Header() {
                               <input
                                 type="text"
                                 placeholder="New password"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
+                                autoCapitalize="off"
                                 value={resetPasswords[reset.id] ?? ""}
                                 onChange={(e) =>
                                   setResetPasswords((prev) => ({

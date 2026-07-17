@@ -49,6 +49,9 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           type="text"
           name="setlist-edit-title"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           placeholder="e.g. Sunday Morning Service"
@@ -86,6 +89,9 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           type="text"
           name="setlist-edit-song-leader"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={editSongLeader}
           onChange={(e) => setEditSongLeader(e.target.value)}
           placeholder="e.g. Kevin Acebuche"
@@ -114,6 +120,10 @@ export default function SetlistEditForm({ setlist, onSave, onCancel, isSaving }:
           value={editDescription}
           onChange={(e) => setEditDescription(e.target.value)}
           placeholder="e.g. Sunday Service"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
           style={{
             border: "1px solid var(--color-border)",

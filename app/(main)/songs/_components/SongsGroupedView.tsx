@@ -221,7 +221,13 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link
-            href="/songs/new"
+            href={isGuest ? "#" : "/songs/new"}
+            onClick={(e) => {
+              if (isGuest) {
+                e.preventDefault();
+                toast.error("Guests can't edit lineups");
+              }
+            }}
             className="rounded-lg px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 min-h-[44px] flex items-center"
             style={{
               backgroundColor: "var(--color-accent)",
@@ -236,7 +242,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
           <button
             onClick={() => {
               if (isGuest) {
-                toast.error("Guests can only view — sign in to make changes");
+                toast.error("Guests can't edit lineups");
                 return;
               }
               setIsLocked(!isLocked);

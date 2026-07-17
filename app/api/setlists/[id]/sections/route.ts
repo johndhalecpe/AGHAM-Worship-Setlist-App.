@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseWithToken } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { isSetlistDateInPast } from "@/app/api/_lib/setlistGuards";
-import { requireUser, unauthorized } from "@/lib/auth-server";
+
+function getTokenFromRequest(request: Request): string | null {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.slice(7);
+}
+
+function getAuthClient(request: Request) {
+  const token = getTokenFromRequest(request);
+  if (!token) return null;
+  return getSupabaseWithToken(token);
+}
 
 export async function GET(
   _request: Request,
@@ -10,7 +22,9 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const { data, error } = await supabase
+  const authClient = getAuthClient(_request) ?? getSupabaseAdmin();
+
+  const { data, error } = await authClient
     .from("setlist_sections")
     .select(
       `
@@ -45,12 +59,20 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await requireUser(request);
-  if (!user) return unauthorized();
+  const authClient = getAuthClient(request);
+  if (!authClient) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = getTokenFromRequest(request)!;
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { id } = await params;
 
-  if (await isSetlistDateInPast(id)) {
+  if (await isSetlistDateInPast(id, authClient)) {
     return NextResponse.json(
       { error: "Cannot modify a past setlist" },
       { status: 403 }
@@ -59,7 +81,7 @@ export async function POST(
 
   const body = await request.json();
 
-    const { data: existingSectionsCount, error: countError } = await supabase
+  const { data: existingSectionsCount, error: countError } = await authClient
     .from("setlist_sections")
     .select("id")
     .eq("setlist_id", id)
@@ -69,7 +91,7 @@ export async function POST(
     return NextResponse.json({ error: countError.message }, { status: 500 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await authClient
     .from("setlist_sections")
     .insert({
       setlist_id: id,
@@ -108,12 +130,20 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await requireUser(request);
-  if (!user) return unauthorized();
+  const authClient = getAuthClient(request);
+  if (!authClient) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = getTokenFromRequest(request)!;
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { id } = await params;
 
-  if (await isSetlistDateInPast(id)) {
+  if (await isSetlistDateInPast(id, authClient)) {
     return NextResponse.json(
       { error: "Cannot modify a past setlist" },
       { status: 403 }
@@ -127,7 +157,7 @@ export async function DELETE(
     return NextResponse.json({ error: "sectionId is required" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error } = await authClient
     .from("setlist_sections")
     .delete()
     .eq("id", sectionId)
@@ -145,13 +175,21 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await requireUser(request);
-  if (!user) return unauthorized();
+  const authClient = getAuthClient(request);
+  if (!authClient) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = getTokenFromRequest(request)!;
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const { id } = await params;
 
-    if (await isSetlistDateInPast(id)) {
+    if (await isSetlistDateInPast(id, authClient)) {
       return NextResponse.json(
         { error: "Cannot modify a past setlist" },
         { status: 403 }
@@ -175,34 +213,9 @@ export async function PATCH(
         if ("song_key" in sectionUpdate && sectionUpdate.song_key !== undefined) updatePayload.song_key = sectionUpdate.song_key;
         if ("override_lyrics" in sectionUpdate && sectionUpdate.override_lyrics !== undefined) updatePayload.override_lyrics = sectionUpdate.override_lyrics;
 
-        if ("chord_notes" in sectionUpdate && sectionUpdate.chord_notes !== undefined) {
-          const incoming = sectionUpdate.chord_notes as Record<string, string> | null;
-          if (incoming === null) {
-            updatePayload.chord_notes = null;
-          } else if (sectionUpdate.merge_chord_notes) {
-            const { data: existing } = await supabase
-              .from("setlist_sections")
-              .select("chord_notes")
-              .eq("id", sectionUpdate.id)
-              .single();
-            const existingNotes = (existing?.chord_notes as Record<string, string> | null) ?? {};
-            const merged: Record<string, string> = {};
-            for (const key of ["intro", "outro", "transition", "drummer_notes"]) {
-              if (key in incoming) {
-                if (incoming[key] !== "") merged[key] = incoming[key];
-              } else if (key in existingNotes) {
-                merged[key] = existingNotes[key] as string;
-              }
-            }
-            updatePayload.chord_notes = Object.keys(merged).length > 0 ? merged : null;
-          } else {
-            updatePayload.chord_notes = incoming;
-          }
-        }
-
         if (Object.keys(updatePayload).length === 0) return null;
 
-        const { error } = await supabase
+        const { error } = await authClient
           .from("setlist_sections")
           .update(updatePayload)
           .eq("id", sectionUpdate.id)

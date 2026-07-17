@@ -115,6 +115,9 @@ export default function SongPicker({
           type="text"
           name="song-picker-search"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={search}
           onChange={(e) => handleSearchInput(e.target.value)}
           placeholder="Search by title, author, or lyrics..."

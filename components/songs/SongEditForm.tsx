@@ -138,6 +138,9 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
         type="text"
         name="song-edit-title"
         autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        autoCapitalize="off"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="e.g. Lihim"
@@ -156,6 +159,9 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           type="text"
           name="song-edit-author"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={author}
           onChange={(e) => {
             setAuthor(e.target.value);
@@ -239,6 +245,9 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           type="text"
           name="song-edit-category"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={customCategory}
           onChange={(e) => setCustomCategory(e.target.value)}
           placeholder="Specify category"
@@ -282,6 +291,10 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           value={lyrics}
           onChange={(e) => setLyrics(e.target.value)}
           placeholder="Enter song lyrics..."
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           rows={8}
           className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
           style={{
@@ -306,6 +319,10 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
           value={chords}
           onChange={(e) => setChords(e.target.value)}
           placeholder="Enter chord chart..."
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           rows={8}
           className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
           style={{

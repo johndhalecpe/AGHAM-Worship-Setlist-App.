@@ -38,6 +38,9 @@ export default function SongsSearchBar({ value, onChange }: SongsSearchBarProps)
         type="text"
         name="songs-search"
         autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        autoCapitalize="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search by title, author, or lyrics..."

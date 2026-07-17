@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import DatePicker from "@/components/ui/DatePicker";
 import { BRANCHES } from "@/lib/branches";
 import { todayLocalISO } from "@/lib/dates";
 
 export default function NewSetlistForm() {
   const router = useRouter();
+  const isGuest = useIsGuest();
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -18,6 +20,10 @@ export default function NewSetlistForm() {
   const [error, setError] = useState("");
 
   async function handleFormSubmit() {
+    if (isGuest) {
+      toast.error("Guests can't schedule a lineup");
+      return;
+    }
     if (!date) {
       setError("Date is required");
       return;
@@ -87,6 +93,9 @@ export default function NewSetlistForm() {
               type="text"
               name="new-setlist-title"
               autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              autoCapitalize="off"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Sunday Morning Service"
@@ -128,6 +137,9 @@ export default function NewSetlistForm() {
               type="text"
               name="new-setlist-song-leader"
               autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              autoCapitalize="off"
               value={songLeader}
               onChange={(e) => setSongLeader(e.target.value)}
               placeholder="e.g. Kevin Acebuche"
@@ -188,6 +200,10 @@ export default function NewSetlistForm() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Sunday Service"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              autoCapitalize="off"
               className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
               style={{
                 border: "1px solid var(--color-border)",

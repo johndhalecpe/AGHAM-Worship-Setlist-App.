@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import MusicalDataSection from "@/components/songs/MusicalDataSection";
 
 export default function NewSongForm() {
   const router = useRouter();
+  const isGuest = useIsGuest();
   const titleRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -116,6 +118,10 @@ export default function NewSongForm() {
   }, [title]);
 
   async function handleFormSubmit() {
+    if (isGuest) {
+      toast.error("Guests can't edit lineups");
+      return;
+    }
     if (!title) {
       setError("Title is required");
       return;
@@ -229,6 +235,9 @@ export default function NewSongForm() {
             type="text"
             name="new-song-title"
             autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            autoCapitalize="off"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
@@ -268,6 +277,9 @@ export default function NewSongForm() {
               type="text"
               name="new-song-author"
               autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              autoCapitalize="off"
               value={author}
               onChange={(e) => {
                 setAuthor(e.target.value);
@@ -367,6 +379,9 @@ export default function NewSongForm() {
               type="text"
               name="new-song-category"
               autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              autoCapitalize="off"
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
               placeholder="e.g. Hymn"
@@ -420,6 +435,10 @@ export default function NewSongForm() {
               }
             }}
             placeholder="Enter song lyrics..."
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            autoCapitalize="off"
             rows={8}
             className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
             style={{
@@ -444,6 +463,10 @@ export default function NewSongForm() {
             value={chords}
             onChange={(e) => setChords(e.target.value)}
             placeholder="Enter chord chart..."
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            autoCapitalize="off"
             rows={8}
             className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 transition-colors"
             style={{

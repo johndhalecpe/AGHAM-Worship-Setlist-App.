@@ -34,7 +34,6 @@ export type SetlistSectionWithSong = {
   notes: string | null;
   song_key: string | null;
   override_lyrics: string | null;
-  chord_notes: Record<string, string> | null;
   created_at: string;
   songs: {
     id: string;

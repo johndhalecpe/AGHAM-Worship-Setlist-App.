@@ -72,6 +72,10 @@ export default function ChangeNameForm({
               </label>
               <input
                 type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoCapitalize="off"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={currentName}

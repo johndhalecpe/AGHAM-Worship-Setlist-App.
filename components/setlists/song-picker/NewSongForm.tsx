@@ -151,6 +151,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         type="text"
         name="inline-new-song-title"
         autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        autoCapitalize="off"
         value={newTitle}
         onChange={(e) => setNewTitle(e.target.value)}
         placeholder="Title"
@@ -173,6 +176,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           type="text"
           name="inline-new-song-author"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={newAuthor}
           onChange={(e) => {
             setNewAuthor(e.target.value);
@@ -256,6 +262,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           type="text"
           name="inline-new-song-category"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
           value={customCategory}
           onChange={(e) => setCustomCategory(e.target.value)}
           placeholder="Describe the category"
@@ -317,6 +326,9 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
             type="number"
             name="inline-new-song-bpm"
             autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            autoCapitalize="off"
             value={defaultBpm ?? ""}
             onChange={(e) => setDefaultBpm(e.target.value ? Number(e.target.value) : null)}
             placeholder="120"

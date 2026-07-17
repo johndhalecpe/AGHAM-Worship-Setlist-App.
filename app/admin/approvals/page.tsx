@@ -155,6 +155,10 @@ export default function AdminApprovalsPage() {
                   <input
                     type="text"
                     placeholder="Enter new password"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoCapitalize="off"
                     value={resetPasswords[reset.id] ?? ""}
                     onChange={(e) =>
                       setResetPasswords((prev) => ({

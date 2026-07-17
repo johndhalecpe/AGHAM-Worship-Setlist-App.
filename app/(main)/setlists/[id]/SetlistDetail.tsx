@@ -36,7 +36,7 @@ export default function SetlistDetail({
 
   const toggleLock = useCallback(() => {
     if (isGuest) {
-      toast.error("Guests can only view — sign in to make changes");
+      toast.error("Guests can't edit lineups");
       return;
     }
     setIsLocked((prev) => {
