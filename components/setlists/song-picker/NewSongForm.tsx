@@ -24,7 +24,8 @@ const SECTION_TO_CATEGORY: Record<string, string | null> = {
 export default function NewSongForm({ initialTitle, sectionType, setlistId, onCreated, onCancel }: NewSongFormProps) {
   const [newTitle, setNewTitle] = useState(initialTitle);
   const [newAuthor, setNewAuthor] = useState("");
-  const [newCategory, setNewCategory] = useState("worship");
+  const initialCategory = SECTION_TO_CATEGORY[sectionType] ?? "worship";
+  const [newCategory, setNewCategory] = useState(initialCategory);
   const [newLanguage, setNewLanguage] = useState("english");
   const [customCategory, setCustomCategory] = useState("");
   const [defaultKey, setDefaultKey] = useState("");

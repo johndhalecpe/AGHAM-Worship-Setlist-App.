@@ -111,6 +111,11 @@ html.dark {
 html.dark[data-palette="ember"] {
   --color-surface: #1b2432;
   --color-text: #e9e3e6;
+  --color-accent: #8a3033;
+  --color-accent-secondary: #c9443a;
+  --color-danger: #6b2025;
+  --color-success: #4a6b3a;
+  --color-text-on-accent-secondary: #FFFFFF;
   --glass-bg: rgba(27, 36, 50, 0.85);
   --glass-panel-bg: rgba(27, 36, 50, 0.38);
   --glass-border: rgba(255, 255, 255, 0.12);
