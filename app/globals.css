@@ -28,30 +28,31 @@
 
 :root {
   --color-surface: #F6F4EF;
-  --color-surface-card: #FFFFFF;
-  --color-surface-elevated: #FAF8F4;
-  --color-surface-muted: #F0EDE6;
-  --color-border: #E5E1D8;
-  --color-border-hover: #D4CEBF;
   --color-text: #2D2B28;
-  --color-text-secondary: #5C5852;
-  --color-text-tertiary: #595551;
   --color-accent: #D84F0B;
   --color-accent-secondary: #0D9488;
-  --color-text-on-accent-secondary: #FFFFFF;
   --color-danger: #DC2626;
   --color-success: #16A34A;
+
+  --color-surface-card: color-mix(in srgb, var(--color-surface), white 100%);
+  --color-surface-elevated: color-mix(in srgb, var(--color-surface), white 20%);
+  --color-surface-muted: color-mix(in srgb, var(--color-surface), black 4%);
+  --color-border: color-mix(in srgb, var(--color-surface), var(--color-text) 10%);
+  --color-border-hover: color-mix(in srgb, var(--color-surface), var(--color-text) 18%);
+  --color-text-secondary: color-mix(in srgb, var(--color-text), white 20%);
+  --color-text-tertiary: color-mix(in srgb, var(--color-text), white 30%);
   --color-text-on-accent: #FFFFFF;
-  --color-badge-key: #FEF0E6;
-  --color-badge-key-text: #B84A0A;
-  --color-badge-bpm: #E8F0FE;
-  --color-badge-bpm-text: #2563EB;
+  --color-text-on-accent-secondary: #FFFFFF;
+
+  --color-badge-key: color-mix(in srgb, var(--color-accent), white 85%);
+  --color-badge-key-text: color-mix(in srgb, var(--color-accent), black 15%);
+  --color-badge-bpm: color-mix(in srgb, var(--color-accent-secondary), white 85%);
+  --color-badge-bpm-text: var(--color-accent-secondary);
   --color-badge-ts: #F0FDF4;
-  --color-badge-ts-text: #16A34A;
+  --color-badge-ts-text: var(--color-success);
   --color-badge-lyrics: #F3E8FF;
   --color-badge-lyrics-text: #9333EA;
 
-  /* Glassmorphism — light mode */
   --glass-bg: rgba(246, 244, 239, 0.88);
   --glass-panel-bg: rgba(246, 244, 239, 0.55);
   --glass-border: rgba(0, 0, 0, 0.08);
@@ -63,34 +64,59 @@ html {
 
 html.dark {
   --color-surface: #1A1916;
-  --color-surface-card: #252320;
-  --color-surface-elevated: #2E2B27;
-  --color-surface-muted: #33302C;
-  --color-border: #3D3A35;
-  --color-border-hover: #504C45;
   --color-text: #E8E3D8;
-  --color-text-secondary: #9C978E;
-  --color-text-tertiary: #6B665E;
   --color-accent: #D84F0B;
   --color-accent-secondary: #2DD4BF;
-  --color-text-on-accent-secondary: #1A1916;
   --color-danger: #DC2626;
   --color-success: #16A34A;
+
+  --color-surface-card: color-mix(in srgb, var(--color-surface), white 12%);
+  --color-surface-elevated: color-mix(in srgb, var(--color-surface), white 8%);
+  --color-surface-muted: color-mix(in srgb, var(--color-surface), white 5%);
+  --color-border: color-mix(in srgb, var(--color-surface), var(--color-text) 18%);
+  --color-border-hover: color-mix(in srgb, var(--color-surface), var(--color-text) 28%);
+  --color-text-secondary: color-mix(in srgb, var(--color-text), black 30%);
+  --color-text-tertiary: color-mix(in srgb, var(--color-text), black 50%);
   --color-text-on-accent: #FFFFFF;
-  --color-badge-key: #3A2818;
-  --color-badge-key-text: #F5A623;
-  --color-badge-bpm: #1A2A3A;
-  --color-badge-bpm-text: #60A5FA;
+  --color-text-on-accent-secondary: #1A1916;
+
+  --color-badge-key: color-mix(in srgb, var(--color-accent), black 80%);
+  --color-badge-key-text: color-mix(in srgb, var(--color-accent), white 40%);
+  --color-badge-bpm: color-mix(in srgb, var(--color-accent-secondary), black 80%);
+  --color-badge-bpm-text: color-mix(in srgb, var(--color-accent-secondary), white 20%);
   --color-badge-ts: #1A2A1A;
   --color-badge-ts-text: #4ADE80;
   --color-badge-lyrics: #2D1B3D;
   --color-badge-lyrics-text: #C084FC;
 
-  /* Glassmorphism — dark mode */
   --glass-bg: rgba(23, 21, 18, 0.85);
   --glass-panel-bg: rgba(23, 21, 18, 0.38);
   --glass-border: rgba(255, 255, 255, 0.12);
 }
+
+/* ===== Palettes ===== */
+
+[data-palette="ember"] {
+  --color-surface: #e9e3e6;
+  --color-text: #1b2432;
+  --color-accent: #8a3033;
+  --color-accent-secondary: #c9443a;
+  --color-danger: #6b2025;
+  --color-success: #4a6b3a;
+  --glass-bg: rgba(233, 227, 230, 0.88);
+  --glass-panel-bg: rgba(233, 227, 230, 0.55);
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
+html.dark[data-palette="ember"] {
+  --color-surface: #1b2432;
+  --color-text: #e9e3e6;
+  --glass-bg: rgba(27, 36, 50, 0.85);
+  --glass-panel-bg: rgba(27, 36, 50, 0.38);
+  --glass-border: rgba(255, 255, 255, 0.12);
+}
+
+
 
 body {
   background-color: var(--color-surface);

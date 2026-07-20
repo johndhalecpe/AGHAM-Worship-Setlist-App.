@@ -14,6 +14,7 @@ ALTER TABLE songs ADD COLUMN IF NOT EXISTS chords TEXT DEFAULT NULL;
 -- ============================================================
 
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected'));
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS palette text DEFAULT 'default';
 
 DROP POLICY IF EXISTS "Anyone can read profiles" ON public.profiles;
 CREATE POLICY "Anyone can read profiles"

@@ -18,6 +18,7 @@ type SongCardProps = {
 const categoryLabels: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
+  altar_call: "Altar Call",
 };
 
 function isPredefinedCategory(cat: string | null): cat is keyof typeof categoryLabels {

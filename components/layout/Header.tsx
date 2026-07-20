@@ -14,6 +14,8 @@ import ChangeNameForm from "../auth/ChangeNameForm";
 import Portal from "@/components/shared/Portal";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { useNewUserNotification } from "@/lib/hooks/useNewUserNotification";
+import { updatePalette } from "@/lib/services/profileService";
+import { PALETTES } from "@/lib/palettes";
 import type { PasswordReset } from "@/lib/type";
 
 const navLinks = [
@@ -25,6 +27,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [currentPalette, setCurrentPalette] = useState("default");
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -57,6 +60,13 @@ export default function Header() {
     const dark = stored !== "light";
     setIsDarkMode(dark);
     document.documentElement.classList.toggle("dark", dark);
+
+    const storedPalette = localStorage.getItem("palette") || "default";
+    setCurrentPalette(storedPalette);
+    if (storedPalette !== "default") {
+      document.documentElement.setAttribute("data-palette", storedPalette);
+    }
+
     checkSession();
   }, []);
 
@@ -98,10 +108,22 @@ export default function Header() {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("name")
+        .select("name, palette")
         .eq("id", user.id)
         .single();
-      if (profile) setUserName(profile.name);
+      if (profile) {
+        setUserName(profile.name);
+        if (profile.palette && profile.palette !== currentPalette) {
+          const pal = profile.palette;
+          setCurrentPalette(pal);
+          localStorage.setItem("palette", pal);
+          if (pal !== "default") {
+            document.documentElement.setAttribute("data-palette", pal);
+          } else {
+            document.documentElement.removeAttribute("data-palette");
+          }
+        }
+      }
     }
   }
 
@@ -228,6 +250,16 @@ export default function Header() {
     setIsDarkMode(next);
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
+  }
+
+  function handlePaletteChange(palette: string) {
+    setCurrentPalette(palette);
+    localStorage.setItem("palette", palette);
+    if (palette !== "default") {
+      document.documentElement.setAttribute("data-palette", palette);
+    } else {
+      document.documentElement.removeAttribute("data-palette");
+    }
   }
 
   function isNavLinkActive(href: string) {
@@ -602,7 +634,7 @@ export default function Header() {
             >
               Sign in
             </Link>
-          ) : userName && <UserMenu userName={userName} onNameChange={(newName) => setUserName(newName)} />}
+          ) : userName && <UserMenu userName={userName} onNameChange={(newName) => setUserName(newName)} currentPalette={currentPalette} onPaletteChange={handlePaletteChange} />}
           <button
             onClick={toggleDarkMode}
             className="ml-2 p-2 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -1140,6 +1172,53 @@ export default function Header() {
                         </svg>
                         Change Password
                       </button>
+
+                      <div className="px-4 pt-4 pb-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
+                          Personalization
+                        </p>
+                      </div>
+
+                      <div className="px-2 pb-2 flex flex-col gap-0.5">
+                        {PALETTES.map((p) => {
+                          const isActive = (currentPalette || "default") === p.name;
+                          return (
+                            <button
+                              key={p.name}
+                              onClick={() => {
+                                handlePaletteChange(p.name);
+                                updatePalette(p.name);
+                              }}
+                              className="w-full rounded-xl px-4 py-3 text-sm font-medium transition-all text-left flex items-center gap-3 active:scale-[0.98]"
+                              style={{
+                                color: "var(--color-text-secondary)",
+                                backgroundColor: isActive ? "color-mix(in srgb, var(--color-accent) 5%, transparent)" : "transparent",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isActive)
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--color-accent) 5%, transparent)";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isActive)
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                              }}
+                            >
+                              <span className="flex gap-0.5 shrink-0">
+                                <span className="w-4 h-4 rounded-[3px]" style={{ backgroundColor: p.accent }} />
+                                <span className="w-4 h-4 rounded-[3px]" style={{ backgroundColor: p.accentSecondary }} />
+                                <span className="w-4 h-4 rounded-[3px]" style={{ backgroundColor: p.surface, border: "1px solid color-mix(in srgb, var(--color-text) 20%, transparent)" }} />
+                              </span>
+                              <span className="flex-1">{p.label}</span>
+                              {isActive && (
+                                <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" style={{ color: "var(--color-accent)" }}>
+                                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       <button
                         onClick={handleMobileLogout}
                         disabled={loggingOut}

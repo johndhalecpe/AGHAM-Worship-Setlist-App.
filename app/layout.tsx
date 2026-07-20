@@ -35,8 +35,15 @@ export const viewport: Viewport = {
 const themeScript = `
   (function(){
     var t = localStorage.getItem('theme');
-    if (t === 'light') return;
-    document.documentElement.classList.add('dark');
+    var p = localStorage.getItem('palette');
+    if (t === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+    if (p && p !== 'default') {
+      document.documentElement.setAttribute('data-palette', p);
+    }
   })();
 `;
 
