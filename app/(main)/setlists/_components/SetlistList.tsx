@@ -180,10 +180,10 @@ export default function SetlistList({ setlists }: SetlistListProps) {
             onClick={() => setShowPast((prev) => !prev)}
             className="flex items-center gap-3 w-full mb-3 text-left transition-opacity hover:opacity-80"
           >
-            <hr className="flex-1" style={{ border: "none", borderTop: "1px solid var(--color-border)" }} />
             <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "var(--color-text)" }}>
               Past lineups
             </span>
+            <hr className="flex-1" style={{ border: "none", borderTop: "1px solid var(--color-border)" }} />
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
