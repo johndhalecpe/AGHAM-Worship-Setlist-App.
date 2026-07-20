@@ -63,37 +63,39 @@ export default function AdminApprovalsPage() {
     }
 
     setUpdatingId(resetId);
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) {
-      toast.error("Not authenticated");
-      setUpdatingId(null);
-      return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const res = await fetch("/api/admin/set-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email, newPassword, resetId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to set password" }));
+        toast.error(err.error ?? "Failed to set password");
+        return;
+      }
+
+      toast.success(`Password set for ${email}`);
+      setPasswordResets((prev) => prev.filter((r) => r.id !== resetId));
+      setResetPasswords((prev) => {
+        const next = { ...prev };
+        delete next[resetId];
+        return next;
+      });
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     }
-
-    const res = await fetch("/api/admin/set-password", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ email, newPassword, resetId }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      toast.error(err.error ?? "Failed to set password");
-      setUpdatingId(null);
-      return;
-    }
-
-    toast.success(`Password set for ${email}`);
-    setPasswordResets((prev) => prev.filter((r) => r.id !== resetId));
-    setResetPasswords((prev) => {
-      const next = { ...prev };
-      delete next[resetId];
-      return next;
-    });
     setUpdatingId(null);
   }
 

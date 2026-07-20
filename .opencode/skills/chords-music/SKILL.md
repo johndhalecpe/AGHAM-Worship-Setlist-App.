@@ -1,7 +1,7 @@
 ---
 name: chords-music
 description: Music data structures, key system, chord_notes JSONB, and rendering patterns for the worship setlist app
----
+task---
 
 ## Song-level fields (`songs` table)
 
@@ -44,30 +44,10 @@ Constraint notes:
 
 Parsing pattern: `letter + accidental (#/b) + minor (m)`. E.g. `"C#m"` → `{ letter: "C", accidental: "sharp", isMinor: true }`.
 
-## `chord_notes` JSONB structure
-
-4 named string fields:
-
-| Key | Purpose | Where rendered |
-|-----|---------|---------------|
-| `intro` | Chord diagram/text before the first song | Top of section in ChordsViewer |
-| `outro` | Chord diagram/text after each song | Below each song's chords |
-| `transition` | Chord diagram/text between consecutive songs | Between songs (only if more songs follow) |
-| `drummer_notes` | Drummer-specific instructions | In Drummer mode toggle view |
-
-Stored on `setlist_sections` as JSONB. `NULL` means no notes. Empty `{}` is not used (converted to null).
-
-## Saving pattern
-
-When saving chord_notes via PATCH `/api/setlists/:id/sections`:
-- Set `merge_chord_notes: true` in each item
-- The API reads existing JSONB, merges incoming keys, drops empty-string keys, preserves unmentioned keys
-- Send ALL 4 keys in the payload for each song being updated; send empty `""` for cleared fields
-- Use `chord_notes: null` when a song has zero notes in all 4 fields
 
 ## Chords text editing
 
-The `chords` field on `songs` is plain monospace text. Editing flows:
+`chords` field on `songs` is plain monospace text. Editing flows:
 - **Inline (SongCard):** PATCH `/api/songs/:id` with `{ chords }`
 - **Setlist overlay (ChordsViewer):** PATCH `/api/songs/:song_id` per-song when changed, tracked via separate `chordEdits` state keyed `"${sectionId}-chords"`
 
@@ -94,7 +74,3 @@ Otherwise status stays `"draft"`.
 - Stored as text on `songs.default_time_signature`, default `'4/4'`
 - Valid options: `"4/4"`, `"3/4"`, `"6/8"`
 - Display format: `time: {value}`
-
-## No transposition logic exists
-
-The app does NOT have any algorithmic key transposition. Chords are stored and displayed as plain text only.

@@ -66,7 +66,7 @@ export type Profile = {
 export type PasswordReset = {
   id: string;
   email: string;
-  requested_password: string;
+  requested_password: string | null;
   created_at: string;
   resolved: boolean;
 };
