@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       supabaseAdmin = getSupabaseAdmin();
     } catch {
       return NextResponse.json({
-        error: "Server configuration error — SUPABASE_SERVICE_ROLE_KEY is missing or not loading on the deployed server.",
+        error: "Server config error — SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL is missing on the deployed server.",
       }, { status: 500 });
     }
 
