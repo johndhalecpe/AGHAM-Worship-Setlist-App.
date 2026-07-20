@@ -59,7 +59,6 @@ export type Profile = {
   name: string;
   role: "singer" | "musician" | "staff" | "admin";
   status: "pending" | "approved" | "rejected";
-  palette: string | null;
   created_at: string;
   updated_at: string;
 };

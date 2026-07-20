@@ -10,11 +10,10 @@ import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
 import EditSongModal from "./EditSongModal";
 
-const PRIORITY_CATEGORIES = ["worship", "praise", "altar_call", "tithes_offering", "special"];
+const PRIORITY_CATEGORIES = ["worship", "praise", "tithes_offering", "special"];
 const CATEGORY_LABELS: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
-  altar_call: "Altar Call",
   tithes_offering: "Tithes and offering",
   special: "Special numbers",
   other: "Other",
@@ -65,7 +64,7 @@ function groupSongsByCategoryAndLanguage(songs: SongListItem[]): Group[] {
   return songGroups;
 }
 
-const CATEGORY_FILTERS = ["worship", "praise", "altar_call", "other", "draft"] as const;
+const CATEGORY_FILTERS = ["worship", "praise", "other", "draft"] as const;
 const LANGUAGE_FILTERS = ["english", "filipino"] as const;
 const TIME_SIG_FILTERS = ["4/4", "3/4", "6/8"] as const;
 
@@ -333,7 +332,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
                     border: selectedCategory === cat ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                   }}
                 >
-                  {cat === "worship" ? "Worship" : cat === "praise" ? "Praise" : cat === "altar_call" ? "Altar Call" : cat === "other" ? "Other" : "Draft"}
+                  {cat === "worship" ? "Worship" : cat === "praise" ? "Praise" : cat === "other" ? "Other" : "Draft"}
                 </button>
               ))}
             </div>
