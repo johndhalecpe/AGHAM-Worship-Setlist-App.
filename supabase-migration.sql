@@ -9,6 +9,10 @@ ALTER TABLE setlist_sections ADD COLUMN IF NOT EXISTS override_lyrics TEXT DEFAU
 ALTER TABLE songs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
 ALTER TABLE songs ADD COLUMN IF NOT EXISTS chords TEXT DEFAULT NULL;
 
+ALTER TABLE setlists ADD COLUMN IF NOT EXISTS spotify_playlist_id TEXT DEFAULT NULL;
+ALTER TABLE setlists ADD COLUMN IF NOT EXISTS spotify_playlist_url TEXT DEFAULT NULL;
+ALTER TABLE setlists ADD COLUMN IF NOT EXISTS section_order JSONB DEFAULT NULL;
+
 -- ============================================================
 -- Admin approval system
 -- ============================================================
@@ -120,6 +124,46 @@ DROP POLICY IF EXISTS "Authenticated users can read password_resets" ON public.p
 CREATE POLICY "Authenticated users can read password_resets"
   ON public.password_resets FOR SELECT
   USING (auth.role() = 'authenticated');
+
+-- ============================================================
+-- User connections for Spotify OAuth tokens (admin)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.user_connections (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('spotify')),
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  token_expires_at TIMESTAMPTZ,
+  provider_user_id TEXT,
+  provider_user_name TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (user_id, provider)
+);
+
+ALTER TABLE public.user_connections ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own connections" ON public.user_connections;
+CREATE POLICY "Users can read own connections"
+  ON public.user_connections FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own connections" ON public.user_connections;
+CREATE POLICY "Users can insert own connections"
+  ON public.user_connections FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own connections" ON public.user_connections;
+CREATE POLICY "Users can update own connections"
+  ON public.user_connections FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own connections" ON public.user_connections;
+CREATE POLICY "Users can delete own connections"
+  ON public.user_connections FOR DELETE
+  USING (auth.uid() = user_id);
 
 -- ============================================================
 -- Auto-create profile on signup

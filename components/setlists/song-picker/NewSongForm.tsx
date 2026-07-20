@@ -16,7 +16,6 @@ type NewSongFormProps = {
 const SECTION_TO_CATEGORY: Record<string, string | null> = {
   worship: "worship",
   praise: "praise",
-  altar_call: "altar_call",
   tithes_offering: null,
   special: null,
 };
@@ -234,7 +233,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         )}
       </div>
       <div className="flex gap-2">
-        {(["worship", "praise", "altar_call", "other"] as const).map((opt) => (
+        {(["worship", "praise", "other"] as const).map((opt) => (
           <button
             key={opt}
             type="button"
@@ -255,7 +254,7 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
                   : "1px solid var(--color-border)",
             }}
           >
-            {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : opt === "altar_call" ? "Altar Call" : "Other"}
+            {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : "Other"}
           </button>
         ))}
       </div>

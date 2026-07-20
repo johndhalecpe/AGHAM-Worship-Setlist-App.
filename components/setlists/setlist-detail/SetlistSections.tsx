@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
@@ -13,25 +13,30 @@ import ChordsViewer from "./ChordsViewer";
 type SetlistSectionsProps = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
+  sectionOrder: string[] | null;
   isPast: boolean;
   isLocked: boolean;
   onSectionsChange: (sections: SetlistSectionWithSong[] | ((prev: SetlistSectionWithSong[]) => SetlistSectionWithSong[])) => void;
+  onSectionOrderChange: (order: string[]) => void;
 };
 
-const SECTION_TYPES = [
-  { key: "worship", label: "Worship songs" },
-  { key: "praise", label: "Praise songs" },
-  { key: "altar_call", label: "Altar Call" },
-  { key: "tithes_offering", label: "Tithes and offering" },
-  { key: "special", label: "Special numbers" },
-];
+const DEFAULT_SECTION_ORDER = ["worship", "praise", "altar_call", "tithes_offering", "special"];
+const SECTION_LABELS: Record<string, string> = {
+  worship: "Worship songs",
+  praise: "Praise songs",
+  altar_call: "Altar Call",
+  tithes_offering: "Tithes and offering",
+  special: "Special numbers",
+};
 
 export default function SetlistSections({
   setlist,
   sections,
+  sectionOrder,
   isPast,
   isLocked,
   onSectionsChange,
+  onSectionOrderChange,
 }: SetlistSectionsProps) {
   const isGuest = useIsGuest();
   const effectiveLock = isPast || isLocked || isGuest;
@@ -43,6 +48,43 @@ export default function SetlistSections({
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [isSavingSong, setIsSavingSong] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [draggedSectionKey, setDraggedSectionKey] = useState<string | null>(null);
+  const [dragOverSectionKey, setDragOverSectionKey] = useState<string | null>(null);
+  const dropTargetKey = useRef<string | null>(null);
+  const activeSectionOrder = sectionOrder ?? DEFAULT_SECTION_ORDER;
+
+  function handleSectionDragStart(key: string) {
+    setDraggedSectionKey(key);
+  }
+
+  function handleSectionDragOver(e: React.DragEvent, key: string) {
+    e.preventDefault();
+    setDragOverSectionKey(key);
+    dropTargetKey.current = key;
+  }
+
+  function handleSectionDragLeave() {
+    setDragOverSectionKey(null);
+  }
+
+  function handleSectionDragEnd() {
+    const fromKey = draggedSectionKey;
+    const toKey = dropTargetKey.current;
+    setDraggedSectionKey(null);
+    setDragOverSectionKey(null);
+    dropTargetKey.current = null;
+
+    if (!fromKey || !toKey || fromKey === toKey) return;
+
+    const fromIndex = activeSectionOrder.indexOf(fromKey);
+    const toIndex = activeSectionOrder.indexOf(toKey);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const next = [...activeSectionOrder];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    onSectionOrderChange(next);
+  }
 
   function getSectionSongs(sectionType: string) {
     return sections
@@ -72,6 +114,7 @@ export default function SetlistSections({
     setDragOverSectionId(null);
 
     if (isGuest) return;
+    if (draggedSectionKey) return;
 
     if (!draggedSectionId || draggedSectionId === targetId) {
       setDraggedSectionId(null);
@@ -201,30 +244,56 @@ export default function SetlistSections({
 
   return (
     <>
-      {SECTION_TYPES.map((section) => {
-        const sectionSongs = getSectionSongs(section.key);
+      {activeSectionOrder.map((sectionKey, sectionIndex) => {
+        const sectionSongs = getSectionSongs(sectionKey);
+        const isSectionDragging = draggedSectionKey === sectionKey;
+        const isSectionDragOver = dragOverSectionKey === sectionKey;
         return (
           <div
-            key={section.key}
-            className={`rounded-xl p-4 transition-colors ${
-              draggedSectionId !== null ? "min-h-[80px]" : ""
-            }`}
+            key={sectionKey}
+            draggable={!effectiveLock}
+            onDragStart={() => handleSectionDragStart(sectionKey)}
+            onDragOver={(e) => handleSectionDragOver(e, sectionKey)}
+            onDragLeave={handleSectionDragLeave}
+            onDragEnd={handleSectionDragEnd}
+            className="rounded-xl p-4 transition-colors"
             style={{
-              backgroundColor: "var(--color-surface-card)",
-              border: "1px solid var(--color-border)",
+              backgroundColor: isSectionDragOver ? "var(--color-surface-muted)" : "var(--color-surface-card)",
+              border: isSectionDragOver && draggedSectionKey !== sectionKey
+                ? "2px solid var(--color-accent)"
+                : "1px solid var(--color-border)",
+              opacity: isSectionDragging ? 0.4 : 1,
             }}
           >
             <div className="flex items-center justify-between mb-2">
-              <h3
-                className="font-semibold"
-                style={{ color: "var(--color-text)" }}
-              >
-                {section.label}
-              </h3>
+              <div className="flex items-center gap-2">
+                {!effectiveLock && (
+                  <div
+                    className="flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
+                    title="Drag to reorder section"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                      style={{ color: "var(--color-text-tertiary)", opacity: 0.4 }}
+                    >
+                      <path d="M15.5 17C16.3284 17 17 17.6716 17 18.5C17 19.3284 16.3284 20 15.5 20C14.6716 20 14 19.3284 14 18.5C14 17.6716 14.6716 17 15.5 17ZM8.5 17C9.32843 17 10 17.6716 10 18.5C10 19.3284 9.32843 20 8.5 20C7.67157 20 7 19.3284 7 18.5C7 17.6716 7.67157 17 8.5 17ZM15.5 10C16.3284 10 17 10.6716 17 11.5C17 12.3284 16.3284 13 15.5 13C14.6716 13 14 12.3284 14 11.5C14 10.6716 14.6716 10 15.5 10ZM8.5 10C9.32843 10 10 10.6716 10 11.5C10 12.3284 9.32843 13 8.5 13C7.67157 13 7 12.3284 7 11.5C7 10.6716 7.67157 10 8.5 10ZM15.5 3C16.3284 3 17 3.67157 17 4.5C17 5.32843 16.3284 6 15.5 6C14.6716 6 14 5.32843 14 4.5C14 3.67157 14.6716 3 15.5 3ZM8.5 3C9.32843 3 10 3.67157 10 4.5C10 5.32843 9.32843 6 8.5 6C7.67157 6 7 5.32843 7 4.5C7 3.67157 7.67157 3 8.5 3Z" />
+                    </svg>
+                  </div>
+                )}
+                <h3
+                  className="font-semibold"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  {SECTION_LABELS[sectionKey] ?? sectionKey}
+                </h3>
+              </div>
               <div className="flex items-center gap-2">
                 {!effectiveLock && (
                   <button
-                    onClick={() => setActiveSection(section.key)}
+                    onClick={() => setActiveSection(sectionKey)}
                     className="rounded-xl px-8 py-2.5 text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 min-h-[44px]"
                     style={{ backgroundColor: "var(--color-accent)", color: "var(--color-text-on-accent)", boxShadow: "0 2px 8px color-mix(in srgb, var(--color-accent) 30%, transparent)" }}
                   >
@@ -247,7 +316,7 @@ export default function SetlistSections({
             {sectionSongs.length > 0 && (
               <div className="flex items-center gap-2 mb-2">
                 <button
-                  onClick={() => setChordsView({ sectionType: section.key, songId: sectionSongs[0].id })}
+                  onClick={() => setChordsView({ sectionType: sectionKey, songId: sectionSongs[0].id })}
                   className="flex-1 text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
                   style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
                 >
@@ -257,7 +326,7 @@ export default function SetlistSections({
                   Chords
                 </button>
                 <button
-                  onClick={() => setLyricsView({ sectionType: section.key, songId: sectionSongs[0].id })}
+                  onClick={() => setLyricsView({ sectionType: sectionKey, songId: sectionSongs[0].id })}
                   className="flex-1 text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
                   style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
                 >
@@ -281,7 +350,7 @@ export default function SetlistSections({
                         onDragStart={() => handleDragStart(s.id)}
                         onDragOver={(e) => handleDragOver(e, s.id)}
                         onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, section.key, s.id)}
+                        onDrop={(e) => handleDrop(e, sectionKey, s.id)}
                         onDragEnd={handleDragEnd}
                         className="flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg -mx-3 transition-colors"
                         style={{

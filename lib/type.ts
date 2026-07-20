@@ -22,6 +22,9 @@ export type Setlist = {
   description: string | null;
   song_leader: string | null;
   branch: string;
+  spotify_playlist_id: string | null;
+  spotify_playlist_url: string | null;
+  section_order: string[] | null;
   created_at: string;
 };
 

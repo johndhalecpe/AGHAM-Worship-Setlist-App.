@@ -123,6 +123,7 @@ export async function POST(
   }
 
   revalidatePath("/setlists");
+  revalidatePath(`/setlists/${id}`);
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -168,6 +169,7 @@ export async function DELETE(
   }
 
   revalidatePath("/setlists");
+  revalidatePath(`/setlists/${id}`);
   return NextResponse.json({ message: "Song removed from setlist" });
 }
 
@@ -231,6 +233,7 @@ export async function PATCH(
     }
 
     revalidatePath("/setlists");
+    revalidatePath(`/setlists/${id}`);
     return NextResponse.json({ message: "Updated" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown server error";

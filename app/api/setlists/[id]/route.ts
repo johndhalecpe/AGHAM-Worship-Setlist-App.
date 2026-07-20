@@ -19,9 +19,7 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 404 });
   }
 
-  return NextResponse.json(data, {
-    headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=600" },
-  });
+  return NextResponse.json(data);
 }
 
 export async function PATCH(
@@ -42,15 +40,20 @@ export async function PATCH(
 
   const body = await request.json();
 
+  const updatePayload: Record<string, unknown> = {
+    date: body.date,
+    title: body.title,
+    description: body.description,
+    song_leader: body.song_leader,
+    branch: body.branch,
+  };
+  if (body.section_order !== undefined) {
+    updatePayload.section_order = body.section_order;
+  }
+
   const { data, error } = await supabase
     .from("setlists")
-    .update({
-      date: body.date,
-      title: body.title,
-      description: body.description,
-      song_leader: body.song_leader,
-      branch: body.branch,
-    })
+    .update(updatePayload)
     .eq("id", id)
     .select()
     .single();
@@ -60,6 +63,7 @@ export async function PATCH(
   }
 
   revalidatePath("/setlists");
+  revalidatePath(`/setlists/${id}`);
   return NextResponse.json(data);
 }
 
@@ -89,5 +93,6 @@ export async function DELETE(
   }
 
   revalidatePath("/setlists");
+  revalidatePath(`/setlists/${id}`);
   return NextResponse.json({ message: "Setlist deleted" });
 }

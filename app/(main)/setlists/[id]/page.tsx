@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { getBranchLabel } from "@/lib/branches";
 import SetlistDetail from "./SetlistDetail";
 
-const getSetlist = cache(async (id: string) => {
-  const { data, error } = await supabase
-    .from("setlists")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) return null;
-  return data as Setlist;
-});
+const getSetlist = unstable_cache(
+  async (id: string) => {
+    const { data, error } = await supabase
+      .from("setlists")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) return null;
+    return data as Setlist;
+  },
+  ["setlist-detail"],
+  { tags: ["setlists"], revalidate: 30 }
+);
 
 export async function generateMetadata({
   params,
@@ -53,33 +57,37 @@ export async function generateMetadata({
   };
 }
 
-const fetchSectionsBySetlistId = cache(async (id: string) => {
-  const { data, error } = await supabase
-    .from("setlist_sections")
-    .select(
+const fetchSectionsBySetlistId = unstable_cache(
+  async (id: string) => {
+    const { data, error } = await supabase
+      .from("setlist_sections")
+      .select(
+        `
+        *,
+        songs (
+          id,
+          title,
+          author,
+          category,
+          language,
+          default_key,
+          default_bpm,
+          default_time_signature,
+          lyrics,
+          chords,
+          status
+        )
       `
-      *,
-      songs (
-        id,
-        title,
-        author,
-        category,
-        language,
-        default_key,
-        default_bpm,
-        default_time_signature,
-        lyrics,
-        chords,
-        status
       )
-    `
-    )
-    .eq("setlist_id", id)
-    .order("sort_order", { ascending: true });
+      .eq("setlist_id", id)
+      .order("sort_order", { ascending: true });
 
-  if (error) return [];
-  return data as unknown as SetlistSectionWithSong[];
-});
+    if (error) return [];
+    return data as unknown as SetlistSectionWithSong[];
+  },
+  ["setlist-sections"],
+  { tags: ["setlists"], revalidate: 30 }
+);
 
 export default async function SetlistDetailPage({
   params,

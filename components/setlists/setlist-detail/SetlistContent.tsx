@@ -27,10 +27,12 @@ export default function SetlistContent({
   const router = useRouter();
   const [setlist, setSetlist] = useState(initialSetlist);
   const [sections, setSections] = useState(initialSections);
+  const [sectionOrder, setSectionOrder] = useState<string[] | null>(initialSetlist.section_order ?? null);
 
   useEffect(() => {
     setSetlist(initialSetlist);
     setSections(initialSections);
+    setSectionOrder(initialSetlist.section_order ?? null);
   }, [initialSetlist, initialSections]);
 
   const [editing, setEditing] = useState(false);
@@ -49,6 +51,18 @@ export default function SetlistContent({
   ) {
     hasEditsRef.current = true;
     setSections(sectionsOrUpdater);
+  }
+
+  async function handleSectionOrderChange(order: string[]) {
+    setSectionOrder(order);
+    const res = await fetch(`/api/setlists/${setlist.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ section_order: order }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to save section order");
+    }
   }
 
   async function handleSaveAndExit(editData: { date: string; title: string; description: string; song_leader: string; branch: string }) {
@@ -85,6 +99,7 @@ export default function SetlistContent({
         description: editData.description || null,
         song_leader: editData.song_leader || null,
         branch: editData.branch,
+        section_order: sectionOrder,
       }),
     });
     if (!response.ok) {
@@ -93,6 +108,7 @@ export default function SetlistContent({
       return;
     }
     toast.success("Lineup saved");
+
     setIsSaving(false);
     router.push("/setlists");
   }
@@ -170,9 +186,11 @@ export default function SetlistContent({
       <SetlistSections
         setlist={setlist}
         sections={sections}
+        sectionOrder={sectionOrder}
         isPast={isPast}
         isLocked={isLocked}
         onSectionsChange={handleSectionsChange}
+        onSectionOrderChange={handleSectionOrderChange}
       />
       <div className="mt-8 flex justify-center">
         {isPast ? (

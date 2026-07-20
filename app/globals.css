@@ -107,15 +107,14 @@ html {
 }
 
 [data-palette="ember-dark"] {
-  --color-surface: #1b2432;
-  --color-text: #e9e3e6;
-  --color-accent: #8a3033;
-  --color-accent-secondary: #c9443a;
-  --color-danger: #6b2025;
+  --color-surface: #283040;
+  --color-text: #ece6e4;
+  --color-accent: #d45a4a;
+  --color-accent-secondary: #e07060;
+  --color-danger: #993030;
   --color-success: #4a6b3a;
-  --color-text-on-accent-secondary: #FFFFFF;
-  --glass-bg: rgba(27, 36, 50, 0.85);
-  --glass-panel-bg: rgba(27, 36, 50, 0.38);
+  --glass-bg: rgba(40, 48, 64, 0.85);
+  --glass-panel-bg: rgba(40, 48, 64, 0.38);
   --glass-border: rgba(255, 255, 255, 0.12);
 }
 
