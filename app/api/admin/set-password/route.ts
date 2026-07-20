@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   try {
@@ -19,14 +19,19 @@ export async function POST(request: Request) {
       }, { status: 401 });
     }
 
-    let supabaseAdmin;
-    try {
-      supabaseAdmin = getSupabaseAdmin();
-    } catch {
-      return NextResponse.json({
-        error: "Server config error — SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL is missing on the deployed server.",
-      }, { status: 500 });
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl) {
+      return NextResponse.json({ error: "Missing env: NEXT_PUBLIC_SUPABASE_URL" }, { status: 500 });
     }
+    if (!serviceKey) {
+      return NextResponse.json({ error: "Missing env: SUPABASE_SERVICE_ROLE_KEY" }, { status: 500 });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const { email, newPassword, resetId } = await request.json();
     if (!email || !newPassword || !resetId) {
