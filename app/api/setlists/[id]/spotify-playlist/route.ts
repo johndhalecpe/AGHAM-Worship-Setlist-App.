@@ -53,7 +53,7 @@ export async function POST(
     month: "long", day: "numeric", year: "numeric",
   });
   const branch = setlist.branch.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  const playlistName = setlist.title || `AGHAM Worship — ${branch} — ${date}`;
+  const playlistName = setlist.title ? `${setlist.title} — ${date}` : `AGHAM Worship — ${branch} — ${date}`;
   const playlistDesc = [
     `AGHAM Worship Team Lineup`,
     setlist.song_leader && `Song leader: ${setlist.song_leader}`,

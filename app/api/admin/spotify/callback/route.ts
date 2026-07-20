@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { exchangeCode, getSpotifyMe } from "@/lib/services/spotifyService";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -40,7 +40,8 @@ export async function GET(request: Request) {
 
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-    await supabase.from("user_connections").upsert(
+    const admin = getSupabaseAdmin();
+    await admin.from("user_connections").upsert(
       {
         user_id: savedUserId,
         provider: "spotify",

@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
@@ -84,7 +84,8 @@ export async function refreshAccessToken(refreshToken: string): Promise<{ access
 }
 
 export async function getValidAccessToken(userId: string): Promise<string> {
-  const { data } = await supabase
+  const admin = getSupabaseAdmin();
+  const { data } = await admin
     .from("user_connections")
     .select("*")
     .eq("user_id", userId)
@@ -101,7 +102,7 @@ export async function getValidAccessToken(userId: string): Promise<string> {
     const tokens = await refreshAccessToken(conn.refresh_token);
     const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-    await supabase
+    await admin
       .from("user_connections")
       .update({
         access_token: tokens.access_token,

@@ -115,6 +115,7 @@ type SetlistListProps = {
 export default function SetlistList({ setlists }: SetlistListProps) {
   const isGuest = useIsGuest();
   const [todayLocal, setTodayLocal] = useState("");
+  const [showPast, setShowPast] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -174,21 +175,32 @@ export default function SetlistList({ setlists }: SetlistListProps) {
 
       {pastSetlists.length > 0 && (
         <>
-          <hr
-            className="my-8"
-            style={{
-              border: "none",
-              borderTop: "1px solid var(--color-border)",
-            }}
-          />
-          <h3 className="text-sm font-semibold uppercase tracking-wider mb-3">
-            Past lineups
-          </h3>
-          <div className="flex flex-col gap-2 sm:gap-3">
-            {pastSetlists.map((setlist) => (
-              <SetlistPreviewCard key={setlist.id} setlist={setlist} defaultOpen={false} isPast />
-            ))}
-          </div>
+          <hr className="my-8" style={{ border: "none", borderTop: "1px solid var(--color-border)" }} />
+          <button
+            onClick={() => setShowPast((prev) => !prev)}
+            className="flex items-center gap-3 w-full mb-3 text-left transition-opacity hover:opacity-80"
+          >
+            <hr className="flex-1" style={{ border: "none", borderTop: "1px solid var(--color-border)" }} />
+            <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "var(--color-text)" }}>
+              Past lineups
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className={`w-5 h-5 shrink-0 transition-transform duration-200 ${showPast ? "rotate-180" : ""}`}
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+            </svg>
+          </button>
+          {showPast && (
+            <div className="flex flex-col gap-2 sm:gap-3">
+              {pastSetlists.map((setlist) => (
+                <SetlistPreviewCard key={setlist.id} setlist={setlist} defaultOpen={false} isPast />
+              ))}
+            </div>
+          )}
         </>
       )}
 
