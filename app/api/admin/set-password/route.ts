@@ -19,7 +19,15 @@ export async function POST(request: Request) {
       }, { status: 401 });
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
+    let supabaseAdmin;
+    try {
+      supabaseAdmin = getSupabaseAdmin();
+    } catch {
+      return NextResponse.json({
+        error: "Server configuration error — SUPABASE_SERVICE_ROLE_KEY is missing or not loading on the deployed server.",
+      }, { status: 500 });
+    }
+
     const { email, newPassword, resetId } = await request.json();
     if (!email || !newPassword || !resetId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

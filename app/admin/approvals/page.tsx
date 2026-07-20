@@ -68,6 +68,7 @@ export default function AdminApprovalsPage() {
       const token = session?.access_token;
       if (!token) {
         toast.error("Not authenticated");
+        setUpdatingId(null);
         return;
       }
 
@@ -83,6 +84,7 @@ export default function AdminApprovalsPage() {
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Failed to set password" }));
         toast.error(err.error ?? "Failed to set password");
+        setUpdatingId(null);
         return;
       }
 
