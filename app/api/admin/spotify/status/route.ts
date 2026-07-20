@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
-import { requireUser, unauthorized } from "@/lib/auth-server";
-import { supabase } from "@/lib/supabase";
+import { unauthorized } from "@/lib/auth-server";
+import { getSupabaseWithToken } from "@/lib/supabase";
 
 export async function GET(request: Request) {
-  const user = await requireUser(request);
-  if (!user) return unauthorized();
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return unauthorized();
+  const token = authHeader.slice(7);
+
+  const supabase = getSupabaseWithToken(token);
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  if (userError || !userData?.user) return unauthorized();
+  const user = userData.user;
 
   const { data } = await supabase
     .from("user_connections")

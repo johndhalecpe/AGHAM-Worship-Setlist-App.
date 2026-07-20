@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { requireUser, unauthorized } from "@/lib/auth-server";
-import { supabase } from "@/lib/supabase";
-import { getValidAccessToken, getSpotifyMe, searchTrack, createPlaylist, addTracks } from "@/lib/services/spotifyService";
+import { unauthorized } from "@/lib/auth-server";
+import { getSupabaseWithToken } from "@/lib/supabase";
+import { getValidAccessToken, searchTrack, createPlaylist, addTracks } from "@/lib/services/spotifyService";
 import type { Setlist, SetlistSectionWithSong } from "@/lib/type";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireUser(request);
-  if (!user) return unauthorized();
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return unauthorized();
+  const token = authHeader.slice(7);
+
+  const supabase = getSupabaseWithToken(token);
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  if (userError || !userData?.user) return unauthorized();
+  const user = userData.user;
 
   const { id } = await params;
 
@@ -62,8 +69,7 @@ export async function POST(
     date,
   ].filter(Boolean).join(" · ");
 
-  const me = await getSpotifyMe(accessToken);
-  const playlist = await createPlaylist(accessToken, me.id, playlistName, playlistDesc);
+  const playlist = await createPlaylist(accessToken, playlistName, playlistDesc);
 
   const trackUris: string[] = [];
   for (const title of songTitles) {

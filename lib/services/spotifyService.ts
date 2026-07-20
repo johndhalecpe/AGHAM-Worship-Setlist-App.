@@ -138,11 +138,10 @@ export async function searchTrack(accessToken: string, query: string): Promise<s
 
 export async function createPlaylist(
   accessToken: string,
-  userId: string,
   name: string,
   description: string
 ): Promise<{ id: string; external_urls: { spotify: string } }> {
-  const res = await fetch(`${SPOTIFY_API_BASE}/users/${userId}/playlists`, {
+  const res = await fetch(`${SPOTIFY_API_BASE}/me/playlists`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -159,7 +158,7 @@ export async function createPlaylist(
 
 export async function addTracks(accessToken: string, playlistId: string, uris: string[]): Promise<void> {
   if (uris.length === 0) return;
-  const res = await fetch(`${SPOTIFY_API_BASE}/playlists/${playlistId}/tracks`, {
+  const res = await fetch(`${SPOTIFY_API_BASE}/playlists/${playlistId}/items`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
