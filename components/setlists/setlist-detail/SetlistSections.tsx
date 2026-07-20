@@ -411,7 +411,6 @@ export default function SetlistSections({
           setlist={setlist}
           sections={sections}
           sectionType={chordsView.sectionType}
-          activeSongId={chordsView.songId}
           isPast={isPast}
           onClose={() => setChordsView(null)}
           onSectionsChange={onSectionsChange}
@@ -421,7 +420,6 @@ export default function SetlistSections({
         <LyricsViewer
           sections={sections}
           sectionType={lyricsView.sectionType}
-          activeSongId={lyricsView.songId}
           onClose={() => setLyricsView(null)}
         />
       )}

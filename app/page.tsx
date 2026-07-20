@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import AuthCard, { type AuthView } from "@/components/auth/AuthCard";
@@ -117,13 +117,7 @@ export default function Home() {
               "0 4px 6px -1px rgba(0,0,0,.05), 0 10px 24px -4px rgba(0,0,0,.08)",
           }}
         >
-          <Image
-            src="/transparent-logo.svg"
-            alt="Agham Setlist"
-            className="mx-auto mb-8 w-36 h-36 sm:w-44 sm:h-44 object-contain"
-            width={176}
-            height={176}
-          />
+          <Logo className="mx-auto mb-8 w-36 h-36 sm:w-44 sm:h-44" style={{ color: "var(--color-accent)" }} />
           <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
             Plan your{" "}
             <span style={{ color: "var(--color-accent)" }}>Worship</span>
@@ -167,13 +161,7 @@ export default function Home() {
         >
           {view === "landing" ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-              <Image
-                src="/transparent-logo.svg"
-                alt="Agham Setlist"
-                className="mb-8 w-36 h-36 object-contain"
-                width={144}
-                height={144}
-              />
+              <Logo className="mb-8 w-36 h-36" style={{ color: "var(--color-accent)" }} />
               <h1 className="text-3xl font-bold leading-tight tracking-tight">
                 Plan your{" "}
                 <span style={{ color: "var(--color-accent)" }}>Worship</span>
@@ -213,13 +201,7 @@ export default function Home() {
           ) : (
             <>
               <div className="w-[45%] flex flex-col items-center justify-center text-center p-12">
-                <Image
-                  src="/transparent-logo.svg"
-                  alt="Agham Setlist"
-                  className="mb-6 w-36 h-36 object-contain"
-                  width={144}
-                  height={144}
-                />
+                <Logo className="mb-6 w-36 h-36" style={{ color: "var(--color-accent)" }} />
                 <h1 className="text-3xl font-bold leading-tight tracking-tight">
                   Plan your{" "}
                   <span style={{ color: "var(--color-accent)" }}>Worship</span>

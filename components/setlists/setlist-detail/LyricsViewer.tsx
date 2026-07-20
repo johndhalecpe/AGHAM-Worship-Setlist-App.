@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SetlistSectionWithSong } from "@/lib/type";
 
 type Props = {
   sections: SetlistSectionWithSong[];
   sectionType: string;
-  activeSongId: string;
   onClose: () => void;
 };
 
@@ -21,10 +20,8 @@ const SECTION_LABELS: Record<string, string> = {
 export default function LyricsViewer({
   sections,
   sectionType,
-  activeSongId,
   onClose,
 }: Props) {
-  const activeRef = useRef<HTMLDivElement>(null);
   const filtered = sections.filter((s) => s.section_type === sectionType);
   const [copiedSongId, setCopiedSongId] = useState<string | null>(null);
 
@@ -94,20 +91,7 @@ export default function LyricsViewer({
                   style={{ borderColor: "var(--color-border)" }}
                 />
               )}
-              <div
-                ref={s.id === activeSongId ? activeRef : undefined}
-                className="rounded-lg p-4 transition-colors"
-                style={{
-                  backgroundColor:
-                    s.id === activeSongId
-                      ? "var(--color-surface-muted)"
-                      : "transparent",
-                  border:
-                    s.id === activeSongId
-                      ? "1px solid var(--color-border)"
-                      : "1px solid transparent",
-                }}
-              >
+              <div className="rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2 gap-2">
                   <div className="min-w-0 flex-1 flex items-center gap-2">
                     <h3

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/lib/type";
@@ -15,6 +15,8 @@ import Portal from "@/components/shared/Portal";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { useNewUserNotification } from "@/lib/hooks/useNewUserNotification";
 import type { PasswordReset } from "@/lib/type";
+import { PALETTES } from "@/lib/palettes";
+import { updatePalette } from "@/lib/services/profileService";
 
 const navLinks = [
   { href: "/setlists", label: "Lineups" },
@@ -24,7 +26,7 @@ const navLinks = [
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [currentPalette, setCurrentPalette] = useState("default");
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -53,10 +55,14 @@ export default function Header() {
   const isGuest = useIsGuest();
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    const dark = stored !== "light";
-    setIsDarkMode(dark);
-    document.documentElement.classList.toggle("dark", dark);
+    const storedPalette = localStorage.getItem("palette") || "default";
+    setCurrentPalette(storedPalette);
+    if (storedPalette !== "default") {
+      document.documentElement.setAttribute("data-palette", storedPalette);
+      document.documentElement.setAttribute("data-palette-mode", storedPalette.endsWith("-dark") ? "dark" : "light");
+    } else {
+      document.documentElement.setAttribute("data-palette-mode", "light");
+    }
     checkSession();
   }, []);
 
@@ -98,10 +104,25 @@ export default function Header() {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("name")
+        .select("name, palette")
         .eq("id", user.id)
         .single();
-      if (profile) setUserName(profile.name);
+      if (profile) {
+        setUserName(profile.name);
+        const localPalette = localStorage.getItem("palette") || "default";
+        if (profile.palette && profile.palette !== localPalette) {
+          const pal = profile.palette;
+          setCurrentPalette(pal);
+          localStorage.setItem("palette", pal);
+          if (pal !== "default") {
+            document.documentElement.setAttribute("data-palette", pal);
+            document.documentElement.setAttribute("data-palette-mode", pal.endsWith("-dark") ? "dark" : "light");
+          } else {
+            document.documentElement.removeAttribute("data-palette");
+            document.documentElement.setAttribute("data-palette-mode", "light");
+          }
+        }
+      }
     }
   }
 
@@ -223,11 +244,17 @@ export default function Header() {
     }
   }
 
-  function toggleDarkMode() {
-    const next = !isDarkMode;
-    setIsDarkMode(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
+  function handlePaletteChange(palette: string) {
+    setCurrentPalette(palette);
+    localStorage.setItem("palette", palette);
+    if (palette !== "default") {
+      document.documentElement.setAttribute("data-palette", palette);
+      const isDark = palette.endsWith("-dark");
+      document.documentElement.setAttribute("data-palette-mode", isDark ? "dark" : "light");
+    } else {
+      document.documentElement.removeAttribute("data-palette");
+      document.documentElement.setAttribute("data-palette-mode", "light");
+    }
   }
 
   function isNavLinkActive(href: string) {
@@ -276,14 +303,8 @@ export default function Header() {
               <path fillRule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75ZM2 10a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Zm0 5.25a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
             </svg>
           </button>
-          <button onClick={handleLogoClick} className="inline-flex items-center cursor-pointer">
-            <Image
-              src="/transparent-logo.svg"
-              alt="Agham Setlist"
-              className="h-15 sm:h-18 w-auto mt-0.5"
-              width={40}
-              height={40}
-            />
+          <button onClick={handleLogoClick} className="inline-flex items-center cursor-pointer" style={{ color: "var(--color-accent)" }}>
+            <Logo className="h-15 sm:h-18 w-auto mt-0.5" />
           </button>
         </div>
 
@@ -603,103 +624,7 @@ export default function Header() {
               Sign in
             </Link>
           ) : userName && <UserMenu userName={userName} onNameChange={(newName) => setUserName(newName)} />}
-          <button
-            onClick={toggleDarkMode}
-            className="ml-2 p-2 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            style={{
-              backgroundColor: "var(--color-surface-muted)",
-              touchAction: "manipulation",
-            }}
-            aria-label="Toggle theme"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              className="w-4 h-4"
-              style={{
-                color: "var(--color-text)",
-                display: isDarkMode ? "block" : "none",
-              }}
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2" />
-              <path d="M12 20v2" />
-              <path d="m4.93 4.93 1.41 1.41" />
-              <path d="m17.66 17.66 1.41 1.41" />
-              <path d="M2 12h2" />
-              <path d="M20 12h2" />
-              <path d="m6.34 17.66-1.41 1.41" />
-              <path d="m19.07 4.93-1.41 1.41" />
-            </svg>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-4 h-4"
-              style={{
-                color: "var(--color-text)",
-                display: isDarkMode ? "none" : "block",
-              }}
-            >
-              <path
-                fillRule="evenodd"
-                d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-              />
-            </svg>
-          </button>
         </nav>
-
-        {/* Mobile theme toggle - visible only on small screens */}
-        <button
-          onClick={toggleDarkMode}
-          className="lg:hidden p-2 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
-          style={{
-            backgroundColor: "var(--color-surface-muted)",
-            touchAction: "manipulation",
-          }}
-          aria-label="Toggle theme"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            className="w-4 h-4"
-            style={{
-              color: "var(--color-text)",
-              display: isDarkMode ? "block" : "none",
-            }}
-          >
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2" />
-            <path d="M12 20v2" />
-            <path d="m4.93 4.93 1.41 1.41" />
-            <path d="m17.66 17.66 1.41 1.41" />
-            <path d="M2 12h2" />
-            <path d="M20 12h2" />
-            <path d="m6.34 17.66-1.41 1.41" />
-            <path d="m19.07 4.93-1.41 1.41" />
-          </svg>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-4 h-4"
-            style={{
-              color: "var(--color-text)",
-              display: isDarkMode ? "none" : "block",
-            }}
-          >
-            <path
-              fillRule="evenodd"
-              d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-            />
-          </svg>
-        </button>
       </div>
 
       {/* Mobile drawer */}
@@ -1074,6 +999,55 @@ export default function Header() {
                 )}
               </div>
 
+              {userName && (
+                <div className="border-t p-3" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="px-1 pb-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
+                      Personalization
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1 px-1 pb-2">
+                    {PALETTES.map((p) => {
+                      const isActive = (currentPalette || "default") === p.name;
+                      return (
+                        <button
+                          key={p.name}
+                          onClick={() => {
+                            if (p.name === (currentPalette || "default")) return;
+                            handlePaletteChange(p.name);
+                            updatePalette(p.name);
+                          }}
+                          className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-all flex items-center gap-2.5 active:scale-[0.98]"
+                          style={{
+                            color: "var(--color-text-secondary)",
+                            backgroundColor: isActive ? "color-mix(in srgb, var(--color-accent) 8%, transparent)" : "transparent",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive)
+                              (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--color-accent) 5%, transparent)";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive)
+                              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                          }}
+                        >
+                          <span className="flex gap-0.5 shrink-0">
+                            <span className="w-3.5 h-3 rounded-[3px]" style={{ backgroundColor: p.accent }} />
+                            <span className="w-3.5 h-3 rounded-[3px]" style={{ backgroundColor: p.accentSecondary }} />
+                            <span className="w-3.5 h-3 rounded-[3px]" style={{ backgroundColor: p.surface, border: "1px solid color-mix(in srgb, var(--color-text) 20%, transparent)" }} />
+                          </span>
+                          <span className="flex-1">{p.label}</span>
+                          {isActive && (
+                            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5" style={{ color: "var(--color-accent)" }}>
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {userName && (
                 <div className="border-t p-3" style={{ borderColor: "var(--color-border)" }}>
                   <button

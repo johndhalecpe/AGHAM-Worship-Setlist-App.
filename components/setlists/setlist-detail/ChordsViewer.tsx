@@ -21,7 +21,6 @@ type Props = {
   setlist: Setlist;
   sections: SetlistSectionWithSong[];
   sectionType: string;
-  activeSongId: string;
   isPast?: boolean;
   onClose: () => void;
   onSectionsChange: (sections: SetlistSectionWithSong[] | ((prev: SetlistSectionWithSong[]) => SetlistSectionWithSong[])) => void;
@@ -31,13 +30,11 @@ export default function ChordsViewer({
   setlist,
   sections,
   sectionType,
-  activeSongId,
   isPast = false,
   onClose,
   onSectionsChange,
 }: Props) {
   const isGuest = useIsGuest();
-  const activeRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const filtered = sections.filter((s) => s.section_type === sectionType);
   const [zoomIndex, setZoomIndex] = useState(3);
@@ -294,20 +291,7 @@ export default function ChordsViewer({
           {filtered.map((s, i) => (
             <div key={s.id}>
               {i > 0 && <hr className="mb-4" style={{ borderColor: "var(--color-border)" }} />}
-              <div
-                ref={s.id === activeSongId ? activeRef : undefined}
-                className="rounded-lg p-4 transition-colors"
-                style={{
-                  backgroundColor:
-                    s.id === activeSongId
-                      ? "var(--color-surface-muted)"
-                      : "transparent",
-                  border:
-                    s.id === activeSongId
-                      ? "1px solid var(--color-border)"
-                      : "1px solid transparent",
-                }}
-              >
+              <div className="rounded-lg p-4">
                 {renderSongHeader(s)}
                 {s.notes && (
                   <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>

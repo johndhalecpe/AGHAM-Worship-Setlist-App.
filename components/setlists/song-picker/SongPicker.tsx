@@ -16,7 +16,7 @@ type SongPickerProps = {
 const SECTION_TO_CATEGORY: Record<string, string | null> = {
   worship: "worship",
   praise: "praise",
-  altar_call: "altar_call",
+  altar_call: null,
   tithes_offering: null,
   special: null,
 };

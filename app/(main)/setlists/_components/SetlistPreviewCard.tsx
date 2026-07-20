@@ -278,7 +278,6 @@ export default function SetlistPreviewCard({
           setlist={setlist}
           sections={sections}
           sectionType={chordsView.sectionType}
-          activeSongId={chordsView.songId}
           onClose={() => setChordsView(null)}
           onSectionsChange={(updater) => setSections(updater)}
         />
@@ -288,7 +287,6 @@ export default function SetlistPreviewCard({
         <LyricsViewer
           sections={sections}
           sectionType={lyricsView.sectionType}
-          activeSongId={lyricsView.songId}
           onClose={() => setLyricsView(null)}
         />
       )}
