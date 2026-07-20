@@ -193,7 +193,7 @@ export default function Home() {
                 className="mt-8 text-[10px] leading-relaxed select-none"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
-                Agham Setlist 0.1.3<br />
+                Agham Setlist 0.1.4<br />
                 Property of AGHAM &copy; {new Date().getFullYear()}<br />
                 dev - johndhalecpe
               </p>
