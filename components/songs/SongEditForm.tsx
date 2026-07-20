@@ -25,6 +25,7 @@ type SongEditFormProps = {
 const categoryLabels: Record<string, string> = {
   worship: "Worship",
   praise: "Praise",
+  altar_call: "Altar Call",
 };
 
 const languageOptions = ["english", "filipino"] as const;
@@ -215,7 +216,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
         )}
       </div>
       <div className="flex gap-2">
-        {(["worship", "praise", "other"] as const).map((opt) => (
+        {(["worship", "praise", "altar_call", "other"] as const).map((opt) => (
           <button
             key={opt}
             type="button"
@@ -236,7 +237,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
                   : "1px solid var(--color-border)",
             }}
           >
-            {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : "Other"}
+            {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : opt === "altar_call" ? "Altar Call" : "Other"}
           </button>
         ))}
       </div>

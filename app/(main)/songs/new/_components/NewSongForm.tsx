@@ -341,7 +341,7 @@ export default function NewSongForm() {
             Category
           </label>
           <div className="flex gap-2 mt-1.5">
-            {(["worship", "praise", "other"] as const).map((opt) => (
+            {(["worship", "praise", "altar_call", "other"] as const).map((opt) => (
               <button
                 key={opt}
                 type="button"
@@ -362,7 +362,7 @@ export default function NewSongForm() {
                       : "1px solid var(--color-border)",
                 }}
               >
-                {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : "Other"}
+                {opt === "worship" ? "Worship" : opt === "praise" ? "Praise" : opt === "altar_call" ? "Altar Call" : "Other"}
               </button>
             ))}
           </div>

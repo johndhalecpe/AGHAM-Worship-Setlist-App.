@@ -21,6 +21,7 @@ type SetlistSectionsProps = {
 const SECTION_TYPES = [
   { key: "worship", label: "Worship songs" },
   { key: "praise", label: "Praise songs" },
+  { key: "altar_call", label: "Altar Call" },
   { key: "tithes_offering", label: "Tithes and offering" },
   { key: "special", label: "Special numbers" },
 ];
