@@ -175,14 +175,13 @@ export default function SetlistList({ setlists }: SetlistListProps) {
 
       {pastSetlists.length > 0 && (
         <>
-          <hr className="my-8" style={{ border: "none", borderTop: "1px solid var(--color-border)" }} />
           <button
             onClick={() => setShowPast((prev) => !prev)}
             className="flex items-center gap-3 w-full mb-3 text-left transition-opacity hover:opacity-80"
           >
-            <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "var(--color-text)" }}>
+            <h3 className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: "var(--color-text)" }}>
               Past lineups
-            </span>
+            </h3>
             <hr className="flex-1" style={{ border: "none", borderTop: "1px solid var(--color-border)" }} />
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -194,6 +193,11 @@ export default function SetlistList({ setlists }: SetlistListProps) {
               <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
             </svg>
           </button>
+          {!showPast && (
+            <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+              Click to view past lineups
+            </p>
+          )}
           {showPast && (
             <div className="flex flex-col gap-2 sm:gap-3">
               {pastSetlists.map((setlist) => (
