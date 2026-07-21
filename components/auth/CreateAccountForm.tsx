@@ -364,15 +364,6 @@ export default function CreateAccountForm({ onBack, onPending }: CreateAccountFo
       >
         {loading ? "Creating..." : "Create Account"}
       </button>
-
-      <p
-        className="mt-6 text-[10px] leading-relaxed text-center select-none"
-        style={{ color: "var(--color-text-tertiary)" }}
-      >
-        Agham Setlist 0.1.3<br />
-        Property of AGHAM &copy; {new Date().getFullYear()}<br />
-        dev - johndhalecpe
-      </p>
     </form>
   );
 }
