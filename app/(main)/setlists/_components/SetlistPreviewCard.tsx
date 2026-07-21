@@ -10,7 +10,7 @@ import { getBranchLabel } from "@/lib/branches";
 import ChordsViewer from "@/components/setlists/setlist-detail/ChordsViewer";
 import LyricsViewer from "@/components/setlists/setlist-detail/LyricsViewer";
 
-const SECTION_TYPES = ["worship", "praise", "altar_call", "tithes_offering", "special"];
+const DEFAULT_SECTION_ORDER = ["worship", "praise", "altar_call", "tithes_offering", "special"];
 
 const SECTION_LABELS: Record<string, string> = {
   worship: "Worship",
@@ -48,6 +48,7 @@ export default function SetlistPreviewCard({
   const [spotifyUrl, setSpotifyUrl] = useState(setlist.spotify_playlist_url);
   const [chordsView, setChordsView] = useState<{ sectionType: string; songId: string } | null>(null);
   const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
+  const sectionOrder = setlist.section_order ?? DEFAULT_SECTION_ORDER;
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function SetlistPreviewCard({
     if (setlist.song_leader) text += ` — ${setlist.song_leader}`;
     if (setlist.title) text += `\n${setlist.title}`;
     if (setlist.description) text += `\n${setlist.description}`;
-    for (const type of SECTION_TYPES) {
+    for (const type of sectionOrder) {
       const sectionSongs = getSongsForType(type);
       if (sectionSongs.length > 0) {
         text += `\n\n${sectionLabels[type] ?? type}`;
@@ -533,7 +534,7 @@ export default function SetlistPreviewCard({
               </svg>
             )}
             <div className="relative z-10 flex flex-col gap-1.5 pt-2">
-              {SECTION_TYPES.map((type) => {
+              {sectionOrder.map((type) => {
                 const sectionSongs = getSongsForType(type);
                 if (sectionSongs.length === 0) return null;
                 return (

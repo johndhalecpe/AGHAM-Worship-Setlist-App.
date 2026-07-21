@@ -11,7 +11,7 @@ const fetchAllSetlists = unstable_cache(
     .from("setlists")
     .select(
       `
-      id, date, title, description, song_leader, branch, spotify_playlist_id, spotify_playlist_url, created_at,
+      id, date, title, description, song_leader, branch, spotify_playlist_id, spotify_playlist_url, section_order, created_at,
       sections:setlist_sections(
         id, setlist_id, section_type, sort_order, song_id, notes, song_key,
         songs(id, title, author, category, language, lyrics, chords, default_key, default_bpm, default_time_signature, status)

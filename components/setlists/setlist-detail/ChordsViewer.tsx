@@ -188,7 +188,7 @@ export default function ChordsViewer({
           fontWeight: "bold",
           border: "1px solid var(--color-border)",
           backgroundColor: "var(--color-surface-card)",
-          color: "var(--color-accent)",
+          color: "var(--color-chord-text)",
         }}
       />
     );
@@ -196,29 +196,31 @@ export default function ChordsViewer({
 
   function renderSongHeader(s: SetlistSectionWithSong) {
     return (
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-base font-semibold break-words" style={{ color: "var(--color-text)" }}>
-            {s.songs.title}
-          </h3>
-          {s.songs.author && (
-            <p className="text-xs shrink-0" style={{ color: "var(--color-text-tertiary)" }}>
-              {s.songs.author}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => { if (!isPast && !isGuest) setEditingKeyId(s.id); }}
-            disabled={isPast || isGuest}
-            className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
-            style={{
-              backgroundColor: "var(--color-badge-key)",
-              color: "var(--color-badge-key-text)",
-            }}
-          >
-            Key: {s.song_key ?? s.songs.default_key ?? "G"}
-          </button>
+      <div className="mb-2">
+        <h3 className="text-base font-semibold break-words" style={{ color: "var(--color-text)" }}>
+          {s.songs.title}
+        </h3>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {s.songs.author && (
+              <p className="text-xs truncate" style={{ color: "var(--color-text-tertiary)" }}>
+                {s.songs.author}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => { if (!isPast && !isGuest) setEditingKeyId(s.id); }}
+              disabled={isPast || isGuest}
+              className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+              style={{
+                backgroundColor: "var(--color-badge-key)",
+                color: "var(--color-badge-key-text)",
+              }}
+            >
+              Key: {s.song_key ?? s.songs.default_key ?? "G"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -312,7 +314,7 @@ export default function ChordsViewer({
       {editingSong && (
         <div
           className="absolute inset-0 z-10 flex items-center justify-center p-4"
-          onClick={() => setEditingKeyId(null)}
+          onClick={(e) => { e.stopPropagation(); setEditingKeyId(null); }}
         >
           <div
             className="rounded-xl p-4 shadow-2xl"

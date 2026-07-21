@@ -46,6 +46,7 @@
   --color-text-tertiary: color-mix(in srgb, var(--color-text), white 30%);
   --color-text-on-accent: #FFFFFF;
   --color-text-on-accent-secondary: #FFFFFF;
+  --color-chord-text: var(--color-accent);
   --color-badge-key: color-mix(in srgb, var(--color-accent), white 85%);
   --color-badge-key-text: color-mix(in srgb, var(--color-accent), black 15%);
   --color-badge-bpm: color-mix(in srgb, var(--color-accent-secondary), white 85%);
@@ -73,6 +74,7 @@
   --color-text-tertiary: color-mix(in srgb, var(--color-text), black 50%);
   --color-text-on-accent: #FFFFFF;
   --color-text-on-accent-secondary: #1A1916;
+  --color-chord-text: color-mix(in srgb, var(--color-accent) 70%, white);
   --color-badge-key: color-mix(in srgb, var(--color-accent), black 80%);
   --color-badge-key-text: color-mix(in srgb, var(--color-accent), white 40%);
   --color-badge-bpm: color-mix(in srgb, var(--color-accent-secondary), black 80%);

@@ -200,6 +200,12 @@ export default function SetlistList({ setlists }: SetlistListProps) {
               ))}
             </div>
           )}
+          <p
+            className="text-center text-xs mt-2"
+            style={{ color: "var(--color-text-tertiary)", opacity: 0.8 }}
+          >
+                ↑ Tap to view all lineups ↑
+          </p>
         </>
       )}
 

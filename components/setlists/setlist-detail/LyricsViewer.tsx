@@ -92,17 +92,17 @@ export default function LyricsViewer({
                 />
               )}
               <div className="rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2 gap-2">
-                  <div className="min-w-0 flex-1 flex items-center gap-2">
-                    <h3
-                      className="text-base font-semibold break-words"
-                      style={{ color: "var(--color-text)" }}
-                    >
-                      {s.songs.title}
-                    </h3>
+                <h3
+                  className="text-base font-semibold break-words mb-1"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  {s.songs.title}
+                </h3>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     {s.songs.author && (
                       <p
-                        className="text-xs truncate shrink-0"
+                        className="text-xs truncate"
                         style={{ color: "var(--color-text-tertiary)" }}
                       >
                         {s.songs.author}
@@ -145,7 +145,6 @@ export default function LyricsViewer({
                         </>
                       )}
                     </button>
-
                   </div>
                 </div>
                 {s.notes && (
