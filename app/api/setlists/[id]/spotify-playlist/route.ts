@@ -21,7 +21,7 @@ export async function POST(
 
   const { id } = await params;
 
-  if (!process.env.SPOTIFY_CLIENT_ID) {
+  if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
     return NextResponse.json({ error: "Spotify integration not configured" }, { status: 501 });
   }
 
@@ -52,9 +52,9 @@ export async function POST(
     return NextResponse.json({ error: "Spotify not connected. Go to Admin → Spotify to connect." }, { status: 400 });
   }
 
-  const songTitles = sections
+  const songs = sections
     .filter((s) => s.songs?.title)
-    .map((s) => s.songs.title);
+    .map((s) => ({ title: s.songs.title, author: s.songs.author }));
 
   const date = new Date(setlist.date + "T00:00:00").toLocaleDateString("en-US", {
     month: "long", day: "numeric", year: "numeric",
@@ -72,8 +72,8 @@ export async function POST(
   const playlist = await createPlaylist(accessToken, playlistName, playlistDesc);
 
   const trackUris: string[] = [];
-  for (const title of songTitles) {
-    const query = `${title}`;
+  for (const song of songs) {
+    const query = song.author ? `${song.title} ${song.author}` : song.title;
     const uri = await searchTrack(accessToken, query);
     if (uri) trackUris.push(uri);
   }
@@ -97,6 +97,6 @@ export async function POST(
     success: true,
     playlistUrl: playlist.external_urls.spotify,
     tracksAdded: trackUris.length,
-    totalSongs: songTitles.length,
+    totalSongs: songs.length,
   });
 }

@@ -23,7 +23,7 @@ type UserConnection = {
 };
 
 function getRedirectUri(): string {
-  const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const origin = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
   return `${origin}/api/admin/spotify/callback`;
 }
 
@@ -39,17 +39,24 @@ export function getSpotifyAuthUrl(state: string): string {
 }
 
 export async function exchangeCode(code: string): Promise<SpotifyTokens> {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Spotify credentials not configured");
+  }
+
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
     redirect_uri: getRedirectUri(),
-    client_id: process.env.SPOTIFY_CLIENT_ID!,
-    client_secret: process.env.SPOTIFY_CLIENT_SECRET!,
   });
 
   const res = await fetch(SPOTIFY_TOKEN_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+    },
     body: body.toString(),
   });
 
@@ -62,16 +69,23 @@ export async function exchangeCode(code: string): Promise<SpotifyTokens> {
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expires_in: number }> {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Spotify credentials not configured");
+  }
+
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
-    client_id: process.env.SPOTIFY_CLIENT_ID!,
-    client_secret: process.env.SPOTIFY_CLIENT_SECRET!,
   });
 
   const res = await fetch(SPOTIFY_TOKEN_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+    },
     body: body.toString(),
   });
 

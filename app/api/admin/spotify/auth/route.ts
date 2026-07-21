@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!process.env.SPOTIFY_CLIENT_ID) {
+  if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
     return NextResponse.json({ error: "Spotify integration not configured" }, { status: 501 });
   }
 

@@ -54,6 +54,13 @@
   --color-badge-ts-text: var(--color-success);
   --color-badge-lyrics: #F3E8FF;
   --color-badge-lyrics-text: #9333EA;
+  --card-anniversary-bg: color-mix(in srgb, var(--color-accent) 4%, var(--color-surface-card));
+  --card-anniversary-glow: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  --card-anniversary-bevel:
+    inset 0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, white 40%),
+    inset 1px 0 0 0 color-mix(in srgb, var(--color-surface) 60%, white 40%),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--color-surface) 50%, black 8%),
+    inset -1px 0 0 0 color-mix(in srgb, var(--color-surface) 50%, black 8%);
 }
 
 [data-palette-mode="dark"] {
@@ -74,6 +81,13 @@
   --color-badge-ts-text: #4ADE80;
   --color-badge-lyrics: #2D1B3D;
   --color-badge-lyrics-text: #C084FC;
+  --card-anniversary-bg: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface-card));
+  --card-anniversary-glow: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --card-anniversary-bevel:
+    inset 0 1px 0 0 color-mix(in srgb, var(--color-surface) 40%, white 20%),
+    inset 1px 0 0 0 color-mix(in srgb, var(--color-surface) 40%, white 20%),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--color-surface) 50%, black 12%),
+    inset -1px 0 0 0 color-mix(in srgb, var(--color-surface) 50%, black 12%);
 }
 
 html {
@@ -341,4 +355,37 @@ button, a, input, textarea, select {
   background: var(--glass-panel-bg);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+}
+
+/* Anniversary celebration shimmer */
+@keyframes celebration-shimmer {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(400%) skewX(-15deg); }
+}
+
+.celebration-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.celebration-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 60px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-accent) 8%, transparent),
+    transparent
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  animation: celebration-shimmer 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration-shimmer::after {
+    animation: none;
+  }
 }
