@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import AuthCard, { type AuthView } from "@/components/auth/AuthCard";
 import StatusBanner, { type StatusInfo } from "@/components/ui/StatusBanner";
-import { CURRENT_VERSION } from "@/lib/whatsNew";
 
 
 function HomePageSkeleton() {
@@ -147,14 +146,6 @@ export default function Home() {
             onRejected={(name) => setStatusInfo({ type: "rejected", name })}
             onPending={(name) => setStatusInfo({ type: "pending", name })}
           />
-          <p
-            className="mt-6 text-[10px] leading-relaxed select-none"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Agham Setlist {CURRENT_VERSION}<br />
-            Property of AGHAM &copy; {new Date().getFullYear()}<br />
-            dev - johndhalecpe
-          </p>
         </div>
 
         {/* Desktop — glassmorphism card for all views */}
@@ -197,15 +188,6 @@ export default function Home() {
                 onGoToLanding={goToLanding}
                 direction={direction}
               />
-
-              <p
-                className="mt-8 text-[10px] leading-relaxed select-none"
-                style={{ color: "var(--color-text-tertiary)" }}
-              >
-                Agham Setlist {CURRENT_VERSION}<br />
-                Property of AGHAM &copy; {new Date().getFullYear()}<br />
-                dev - johndhalecpe
-              </p>
             </div>
           ) : (
             <>
@@ -242,14 +224,6 @@ export default function Home() {
                   onRejected={(name) => setStatusInfo({ type: "rejected", name })}
                   onPending={(name) => setStatusInfo({ type: "pending", name })}
                 />
-                <p
-                  className="mt-8 text-[10px] leading-relaxed select-none text-center"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  Agham Setlist {CURRENT_VERSION}<br />
-                  Property of AGHAM &copy; {new Date().getFullYear()}<br />
-                  dev - johndhalecpe
-                </p>
               </div>
             </>
           )}
