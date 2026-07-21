@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import InputField from "./InputField";
@@ -18,6 +18,11 @@ function MailIcon() {
 export default function ForgotPasswordForm({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const isEmailValid = email.includes("@") && email.includes(".");
 
