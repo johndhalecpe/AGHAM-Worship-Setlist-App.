@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getPendingProfiles } from "@/lib/services/profileService";
 
-export function useNewUserNotification(isAdmin: boolean) {
+export function useNewUserNotification(isAdmin: boolean, onRefresh?: () => void) {
   const notifiedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -22,6 +22,7 @@ export function useNewUserNotification(isAdmin: boolean) {
       if (!notifiedIdsRef.current.has(profile.id)) {
         notifiedIdsRef.current.add(profile.id);
         toast.success(`${profile.name} signed up!`);
+        onRefresh?.();
       }
     }
 
@@ -42,5 +43,5 @@ export function useNewUserNotification(isAdmin: boolean) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAdmin]);
+  }, [isAdmin, onRefresh]);
 }

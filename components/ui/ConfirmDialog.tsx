@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 type ConfirmDialogProps = {
   title: string;
   message: string;
@@ -17,6 +19,11 @@ export default function ConfirmDialog({
   isLoading = false,
   confirmLabel = "Delete",
 }: ConfirmDialogProps) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"

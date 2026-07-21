@@ -13,14 +13,7 @@ export default function MainLayout({
         <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-8 pt-[calc(3.5rem+2rem)] w-full">
           {children}
         </main>
-        <footer
-          className="pb-6 text-center text-xs"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Agham Setlist 0.1.3 <br />
-          Property of AGHAM &copy; 2026 <br />
-          dev - johndhalecpe
-        </footer>
+
       </div>
     </RequireAuth>
   );

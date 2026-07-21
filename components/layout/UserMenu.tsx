@@ -46,6 +46,15 @@ export default function UserMenu({ userName, onNameChange }: { userName: string;
     }
   }, [open]);
 
+  useEffect(() => {
+    if (showConfirm) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showConfirm]);
+
   async function handleLogout() {
     setLoggingOut(true);
     try {

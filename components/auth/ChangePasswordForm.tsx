@@ -23,6 +23,11 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) setEmail(session.user.email);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
@@ -52,6 +52,15 @@ export default function SetlistSections({
   const [dragOverSectionKey, setDragOverSectionKey] = useState<string | null>(null);
   const dropTargetKey = useRef<string | null>(null);
   const activeSectionOrder = sectionOrder ?? DEFAULT_SECTION_ORDER;
+
+  useEffect(() => {
+    if (activeSection || editingSong || confirmRemoveId) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [activeSection, editingSong, confirmRemoveId]);
 
   function handleSectionDragStart(key: string) {
     setDraggedSectionKey(key);

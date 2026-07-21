@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { updateProfileName } from "@/lib/services/profileService";
 import Portal from "@/components/shared/Portal";
@@ -17,6 +17,11 @@ export default function ChangeNameForm({
   const [name, setName] = useState(currentName);
   const [loading, setLoading] = useState(false);
   const hasChanges = name.trim() !== currentName && name.trim().length > 0;
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

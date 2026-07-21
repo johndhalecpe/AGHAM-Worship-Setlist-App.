@@ -145,7 +145,7 @@ export default function SetlistPreviewCard({
   return (
     <>
       <div
-        className={`relative rounded-xl transition-all overflow-visible ${isPast ? "opacity-60" : ""}`}
+        className={`relative rounded-xl transition-all overflow-visible ${isPast ? "opacity-90" : ""}`}
         style={{
           backgroundColor: isAnniversary ? "var(--card-anniversary-bg)" : "var(--color-surface-card)",
           border: "1px solid var(--color-border)",
