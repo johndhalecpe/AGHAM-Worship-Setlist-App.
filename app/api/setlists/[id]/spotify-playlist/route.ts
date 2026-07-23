@@ -47,7 +47,8 @@ export async function POST(
   let accessToken: string;
   try {
     accessToken = await getValidAccessToken();
-  } catch {
+  } catch (err) {
+    console.error("getValidAccessToken error:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: "Spotify not connected. Go to Admin → Spotify to connect." }, { status: 400 });
   }
 
