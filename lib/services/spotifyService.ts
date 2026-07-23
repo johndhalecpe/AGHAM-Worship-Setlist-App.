@@ -99,11 +99,16 @@ export async function refreshAccessToken(refreshToken: string): Promise<{ access
 
 export async function getValidAccessToken(): Promise<string> {
   const admin = getSupabaseAdmin();
-  const { data } = await admin
+  const { data, error } = await admin
     .from("user_connections")
     .select("*")
     .eq("provider", "spotify")
     .single();
+
+  if (error) {
+    console.error("user_connections query error:", error);
+    throw new Error(`Spotify not connected (${error.code || "unknown"})`);
+  }
 
   const conn = data as UserConnection | null;
   if (!conn) throw new Error("Spotify not connected");
