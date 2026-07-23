@@ -243,7 +243,7 @@ export default function SetlistPreviewCard({
                 </p>
               )}
               <div className="shrink-0 flex items-center gap-1.5">
-                {spotifyUrl ? (
+                {isAdmin && spotifyUrl ? (
                   <>
                     <a
                       href={spotifyUrl}
@@ -258,21 +258,19 @@ export default function SetlistPreviewCard({
                       </svg>
                       Spotify
                     </a>
-                    {isAdmin && (
-                      <button
-                        onClick={handleCreatePlaylist}
-                        disabled={isCreatingPlaylist}
-                        title="Regenerate playlist"
-                        className="rounded-lg px-2 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
-                        style={{ border: "1px solid var(--color-border)", color: "var(--color-text-tertiary)" }}
-                      >
-                        {isCreatingPlaylist ? (
-                          <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          "↻"
-                        )}
-                      </button>
-                    )}
+                    <button
+                      onClick={handleCreatePlaylist}
+                      disabled={isCreatingPlaylist}
+                      title="Regenerate playlist"
+                      className="rounded-lg px-2 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                      style={{ border: "1px solid var(--color-border)", color: "var(--color-text-tertiary)" }}
+                    >
+                      {isCreatingPlaylist ? (
+                        <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        "↻"
+                      )}
+                    </button>
                   </>
                 ) : (
                   <button
@@ -406,7 +404,7 @@ export default function SetlistPreviewCard({
               )}
             </div>
             <div className="flex items-start gap-1.5 shrink-0 pt-0.5">
-              {spotifyUrl ? (
+              {isAdmin && spotifyUrl ? (
                 <>
                   <a
                     href={spotifyUrl}
@@ -421,21 +419,19 @@ export default function SetlistPreviewCard({
                     </svg>
                     Spotify
                   </a>
-                  {isAdmin && (
-                    <button
-                      onClick={handleCreatePlaylist}
-                      disabled={isCreatingPlaylist}
-                      title="Regenerate playlist"
-                      className="rounded-lg px-2 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
-                      style={{ border: "1px solid var(--color-border)", color: "var(--color-text-tertiary)" }}
-                    >
-                      {isCreatingPlaylist ? (
-                        <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "↻"
-                      )}
-                    </button>
-                  )}
+                  <button
+                    onClick={handleCreatePlaylist}
+                    disabled={isCreatingPlaylist}
+                    title="Regenerate playlist"
+                    className="rounded-lg px-2 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                    style={{ border: "1px solid var(--color-border)", color: "var(--color-text-tertiary)" }}
+                  >
+                    {isCreatingPlaylist ? (
+                      <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "↻"
+                    )}
+                  </button>
                 </>
               ) : (
                 <button
