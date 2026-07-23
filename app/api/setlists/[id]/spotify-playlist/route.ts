@@ -17,7 +17,6 @@ export async function POST(
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
   if (userError || !userData?.user) return unauthorized();
-  const user = userData.user;
 
   const { id } = await params;
 
@@ -47,7 +46,7 @@ export async function POST(
 
   let accessToken: string;
   try {
-    accessToken = await getValidAccessToken(user.id);
+    accessToken = await getValidAccessToken();
   } catch {
     return NextResponse.json({ error: "Spotify not connected. Go to Admin → Spotify to connect." }, { status: 400 });
   }

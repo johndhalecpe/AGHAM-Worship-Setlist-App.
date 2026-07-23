@@ -97,12 +97,11 @@ export async function refreshAccessToken(refreshToken: string): Promise<{ access
   return res.json();
 }
 
-export async function getValidAccessToken(userId: string): Promise<string> {
+export async function getValidAccessToken(): Promise<string> {
   const admin = getSupabaseAdmin();
   const { data } = await admin
     .from("user_connections")
     .select("*")
-    .eq("user_id", userId)
     .eq("provider", "spotify")
     .single();
 
@@ -123,7 +122,7 @@ export async function getValidAccessToken(userId: string): Promise<string> {
         token_expires_at: newExpiresAt,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", userId)
+      .eq("user_id", conn.user_id)
       .eq("provider", "spotify");
 
     return tokens.access_token;
