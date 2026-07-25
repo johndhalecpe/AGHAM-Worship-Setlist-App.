@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { useUpdateSong } from "@/lib/hooks/use-songs";
+import { useRemoveSection, useUpdateSections } from "@/lib/hooks/use-sections";
 import SongPicker from "@/components/setlists/song-picker/SongPicker";
 import SongEditForm from "@/components/songs/SongEditForm";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -40,13 +42,15 @@ export default function SetlistSections({
 }: SetlistSectionsProps) {
   const isGuest = useIsGuest();
   const effectiveLock = isPast || isLocked || isGuest;
+  const updateSong = useUpdateSong();
+  const removeSection = useRemoveSection(setlist.id);
+  const updateSections = useUpdateSections(setlist.id);
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
   const [chordsView, setChordsView] = useState<{ sectionType: string; songId: string } | null>(null);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
-  const [isSavingSong, setIsSavingSong] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [draggedSectionKey, setDraggedSectionKey] = useState<string | null>(null);
   const [dragOverSectionKey, setDragOverSectionKey] = useState<string | null>(null);
@@ -62,12 +66,15 @@ export default function SetlistSections({
     return () => { document.body.style.overflow = ""; };
   }, [activeSection, editingSong, confirmRemoveId]);
 
-  function handleSectionDragStart(key: string) {
+  function handleSectionDragStart(e: React.DragEvent, key: string) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", key);
     setDraggedSectionKey(key);
   }
 
   function handleSectionDragOver(e: React.DragEvent, key: string) {
     e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
     setDragOverSectionKey(key);
     dropTargetKey.current = key;
   }
@@ -105,12 +112,15 @@ export default function SetlistSections({
     onSectionsChange((prev) => [...prev, newSection]);
   }
 
-  function handleDragStart(sectionId: string) {
+  function handleDragStart(e: React.DragEvent, sectionId: string) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", sectionId);
     setDraggedSectionId(sectionId);
   }
 
   function handleDragOver(e: React.DragEvent, sectionId: string) {
     e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
     setDragOverSectionId(sectionId);
   }
 
@@ -186,17 +196,9 @@ export default function SetlistSections({
     });
   }
 
-  async function handleRemoveSongFromSection(sectionId: string) {
-    const res = await fetch(
-      `/api/setlists/${setlist.id}/sections?sectionId=${sectionId}`,
-      { method: "DELETE" }
-    );
-    if (!res.ok) {
-      toast.error("Failed to remove song from lineup");
-      return;
-    }
-    toast.success("Song removed from lineup");
+  function handleRemoveSongFromSection(sectionId: string) {
     onSectionsChange((prev) => prev.filter((s) => s.id !== sectionId));
+    removeSection.mutate(sectionId);
   }
 
   function buildSong(s: SetlistSectionWithSong): Song {
@@ -216,7 +218,7 @@ export default function SetlistSections({
     };
   }
 
-  async function handleEditSongSave(songId: string, data: {
+  function handleEditSongSave(songId: string, data: {
     title: string;
     author: string;
     category: string;
@@ -227,28 +229,21 @@ export default function SetlistSections({
     lyrics: string;
     chords: string;
   }) {
-    setIsSavingSong(true);
-    const res = await fetch(`/api/songs/${songId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      toast.error("Failed to save song");
-      setIsSavingSong(false);
-      return;
-    }
-    const updatedSong: Song = await res.json();
-    toast.success("Song details saved");
-    onSectionsChange((prev: SetlistSectionWithSong[]) =>
-      prev.map((sec) =>
-        sec.song_id === songId
-          ? { ...sec, songs: { ...sec.songs, ...updatedSong } }
-          : sec
-      )
+    updateSong.mutate(
+      { id: songId, data: data as Record<string, unknown> },
+      {
+        onSuccess: (updatedSong) => {
+          onSectionsChange((prev: SetlistSectionWithSong[]) =>
+            prev.map((sec) =>
+              sec.song_id === songId
+                ? { ...sec, songs: { ...sec.songs, ...updatedSong } }
+                : sec
+            )
+          );
+          setEditingSong(null);
+        },
+      }
     );
-    setIsSavingSong(false);
-    setEditingSong(null);
   }
 
   return (
@@ -261,7 +256,7 @@ export default function SetlistSections({
           <div
             key={sectionKey}
             draggable={!effectiveLock}
-            onDragStart={() => handleSectionDragStart(sectionKey)}
+            onDragStart={(e) => handleSectionDragStart(e, sectionKey)}
             onDragOver={(e) => handleSectionDragOver(e, sectionKey)}
             onDragLeave={handleSectionDragLeave}
             onDragEnd={handleSectionDragEnd}
@@ -356,7 +351,7 @@ export default function SetlistSections({
                   <div key={s.id}>
                       <div
                         draggable={!effectiveLock}
-                        onDragStart={() => handleDragStart(s.id)}
+                        onDragStart={(e) => handleDragStart(e, s.id)}
                         onDragOver={(e) => handleDragOver(e, s.id)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, sectionKey, s.id)}
@@ -535,7 +530,7 @@ export default function SetlistSections({
               song={editingSong}
               onSave={(data) => handleEditSongSave(editingSong.id, data)}
               onCancel={() => setEditingSong(null)}
-              isSaving={isSavingSong}
+              isSaving={updateSong.isPending}
             />
           </div>
         </div>
