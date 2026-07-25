@@ -50,6 +50,7 @@ export default function Header() {
   const [loadingApprovals, setLoadingApprovals] = useState(false);
   const [quickActionId, setQuickActionId] = useState<string | null>(null);
   const [resolveResetId, setResolveResetId] = useState<string | null>(null);
+  const [deleteProfileId, setDeleteProfileId] = useState<string | null>(null);
   const [resetPasswords, setResetPasswords] = useState<Record<string, string>>({});
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [showReadMe, setShowReadMe] = useState(true);
@@ -200,6 +201,14 @@ export default function Header() {
       .eq("id", id);
     setPendingProfiles((prev) => prev.filter((p) => p.id !== id));
     setQuickActionId(null);
+  }
+
+  async function handleDeleteProfile(id: string) {
+    setDeleteProfileId(id);
+    await supabase.from("profiles").delete().eq("id", id);
+    setPendingProfiles((prev) => prev.filter((p) => p.id !== id));
+    setDeleteProfileId(null);
+    toast.success("Profile deleted");
   }
 
   async function handleSetPassword(resetId: string, email: string) {
@@ -566,6 +575,15 @@ export default function Header() {
                             >
                               {quickActionId === profile.id ? "..." : "Reject"}
                             </button>
+                            <button
+                              onClick={() => handleDeleteProfile(profile.id)}
+                              disabled={deleteProfileId === profile.id || quickActionId !== null || resolveResetId !== null}
+                              className="rounded-lg w-7 h-7 flex items-center justify-center text-xs font-bold transition-all disabled:opacity-30"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                              title="Delete profile"
+                            >
+                              {deleteProfileId === profile.id ? "..." : "X"}
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -858,6 +876,15 @@ export default function Header() {
                             style={{ backgroundColor: "var(--color-danger)", color: "#fff" }}
                           >
                             {quickActionId === profile.id ? "..." : "Reject"}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProfile(profile.id)}
+                            disabled={deleteProfileId === profile.id || quickActionId !== null || resolveResetId !== null}
+                            className="rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold transition-all disabled:opacity-30"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                            title="Delete profile"
+                          >
+                            {deleteProfileId === profile.id ? "..." : "X"}
                           </button>
                         </div>
                       </div>
