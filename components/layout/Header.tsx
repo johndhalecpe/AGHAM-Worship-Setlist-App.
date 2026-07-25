@@ -40,6 +40,7 @@ export default function Header() {
   const [showMobileApprovals, setShowMobileApprovals] = useState(false);
   const [showMobileUsers, setShowMobileUsers] = useState(false);
   const [showAllPalettes, setShowAllPalettes] = useState(false);
+  const [showPaletteDropdown, setShowPaletteDropdown] = useState(false);
   const [activeUsers, setActiveUsers] = useState<{ user_id: string; email: string; name: string; role: string | null; status: string | null }[]>([]);
   const [loadingActiveUsers, setLoadingActiveUsers] = useState(false);
   const [pendingProfiles, setPendingProfiles] = useState<
@@ -54,6 +55,7 @@ export default function Header() {
   const [showReadMe, setShowReadMe] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const usersDropdownRef = useRef<HTMLDivElement>(null);
+  const paletteDropdownRef = useRef<HTMLDivElement>(null);
 
   useNewUserNotification(isAdmin, fetchPendingApprovals);
   const isGuest = useIsGuest();
@@ -83,6 +85,12 @@ export default function Header() {
         !usersDropdownRef.current.contains(event.target as Node)
       ) {
         setShowUsers(false);
+      }
+      if (
+        paletteDropdownRef.current &&
+        !paletteDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowPaletteDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -352,6 +360,79 @@ export default function Header() {
               />
             </svg>
           </button>
+          <div className="relative hidden lg:block">
+            <button
+              onClick={() => setShowPaletteDropdown((prev) => !prev)}
+              className="rounded-lg p-2 transition-colors hover:bg-(--color-surface-muted) min-h-[44px] min-w-[44px] flex items-center justify-center"
+              style={{ color: "var(--color-text-secondary)" }}
+              aria-label="Palette"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.24-1.16-.61-1.59-.37-.42-.61-.97-.61-1.59 0-1.38 1.12-2.5 2.5-2.5H17c3.31 0 6-2.69 6-6 0-4.96-4.49-9-11-9zm-5.5 9C5.67 11 5 10.33 5 9.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+              </svg>
+            </button>
+            {showPaletteDropdown && (
+              <div
+                ref={paletteDropdownRef}
+                className="absolute right-0 top-full mt-2 w-64 rounded-xl shadow-lg border overflow-hidden"
+                style={{
+                  backgroundColor: "var(--color-surface-card)",
+                  borderColor: "var(--color-border)",
+                }}
+              >
+                <div className="p-3 border-b" style={{ borderColor: "var(--color-border)" }}>
+                  <p className="text-xs font-semibold" style={{ color: "var(--color-text)" }}>
+                    Personalization
+                  </p>
+                </div>
+                <div className="p-2 max-h-80 overflow-y-auto">
+                  {(showAllPalettes ? PALETTES : PALETTES.slice(0, 4)).map((p) => {
+                    const isActive = (currentPalette || "default") === p.name;
+                    return (
+                      <button
+                        key={p.name}
+                        onClick={() => {
+                          if (p.name === (currentPalette || "default")) return;
+                          handlePaletteChange(p.name);
+                          updatePalette(p.name);
+                          setShowPaletteDropdown(false);
+                        }}
+                        className="w-full rounded-lg px-3 py-2 text-sm text-left transition-all flex items-center gap-2.5"
+                        style={{
+                          color: "var(--color-text-secondary)",
+                          backgroundColor: isActive ? "color-mix(in srgb, var(--color-accent) 8%, transparent)" : "transparent",
+                        }}
+                      >
+                        <span className="flex gap-0.5 shrink-0">
+                          <span className="w-3.5 h-3 rounded-[3px]" style={{ backgroundColor: p.accent }} />
+                          <span className="w-3.5 h-3 rounded-[3px]" style={{ backgroundColor: p.accentSecondary }} />
+                          <span className="w-3.5 h-3 rounded-[3px]" style={{ backgroundColor: p.surface, border: "1px solid color-mix(in srgb, var(--color-text) 20%, transparent)" }} />
+                        </span>
+                        <span className="flex-1">{p.label}</span>
+                        {isActive && (
+                          <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5" style={{ color: "var(--color-accent)" }}>
+                            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {PALETTES.length > 4 && (
+                    <button
+                      onClick={() => setShowAllPalettes(!showAllPalettes)}
+                      className="w-full rounded-lg px-3 py-2 text-xs text-left transition-all flex items-center justify-center gap-1.5"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      {showAllPalettes ? "Show less" : "See more"}
+                      <svg viewBox="0 0 20 20" fill="currentColor" className={`w-3.5 h-3.5 transition-transform duration-200 ${showAllPalettes ? "rotate-180" : ""}`}>
+                        <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         <nav className="hidden lg:flex items-center gap-3 sm:gap-6">
           {navLinks.map((link) => (
             <Link
@@ -1085,7 +1166,7 @@ export default function Header() {
                 )}
               </div>
 
-              {userName && (
+              {(userName || isGuest) && (
                 <div className="border-t p-3" style={{ borderColor: "var(--color-border)" }}>
                   <div className="px-1 pb-2">
                     <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
