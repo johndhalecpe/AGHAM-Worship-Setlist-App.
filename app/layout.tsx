@@ -34,13 +34,15 @@ export const viewport: Viewport = {
 
 const themeScript = `
   (function(){
-    var p = localStorage.getItem('palette');
-    if (p && p !== 'default') {
-      document.documentElement.setAttribute('data-palette', p);
-      document.documentElement.setAttribute('data-palette-mode', p.indexOf('-dark') > -1 ? 'dark' : 'light');
-    } else {
-      document.documentElement.setAttribute('data-palette-mode', 'light');
-    }
+    try {
+      var p = localStorage.getItem('palette');
+      if (p && p !== 'default') {
+        document.documentElement.setAttribute('data-palette', p);
+        document.documentElement.setAttribute('data-palette-mode', p.indexOf('-dark') > -1 ? 'dark' : 'light');
+      } else {
+        document.documentElement.setAttribute('data-palette-mode', 'light');
+      }
+    } catch(e) {}
   })();
 `;
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { requireUser, unauthorized } from "@/lib/auth-server";
 
@@ -70,6 +70,7 @@ export async function PATCH(
 
     revalidatePath("/setlists");
     revalidatePath("/songs");
+    revalidateTag("songs", "max");
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";
@@ -94,6 +95,7 @@ export async function DELETE(
 
     revalidatePath("/setlists");
     revalidatePath("/songs");
+    revalidateTag("songs", "max");
     return NextResponse.json({ message: "Song deleted" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";

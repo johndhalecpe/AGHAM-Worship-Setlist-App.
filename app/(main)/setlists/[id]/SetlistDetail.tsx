@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import SetlistContent from "@/components/setlists/setlist-detail/SetlistContent";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { useRealtimeSections } from "@/lib/hooks/use-realtime-setlist";
 
 type SetlistDetailProps = {
   id: string;
@@ -21,6 +22,7 @@ export default function SetlistDetail({
 }: SetlistDetailProps) {
   const isGuest = useIsGuest();
   const [isLocked, setIsLocked] = useState(isPast || isGuest);
+  useRealtimeSections(id);
 
   useEffect(() => {
     if (isPast) return;

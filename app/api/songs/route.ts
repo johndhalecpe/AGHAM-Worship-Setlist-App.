@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { requireUser, unauthorized } from "@/lib/auth-server";
 
@@ -66,5 +66,6 @@ export async function POST(request: Request) {
 
   revalidatePath("/setlists");
   revalidatePath("/songs");
+  revalidateTag("songs", "max");
   return NextResponse.json(data, { status: 201 });
 }

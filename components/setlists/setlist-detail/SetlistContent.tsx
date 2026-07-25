@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
+import { useUpdateSetlist, useDeleteSetlist } from "@/lib/hooks/use-setlists";
+import { useUpdateSections } from "@/lib/hooks/use-sections";
 import SetlistEditForm from "@/components/setlists/setlist-detail/SetlistEditForm";
 import SetlistHeader from "@/components/setlists/setlist-detail/SetlistHeader";
 import SetlistSections from "@/components/setlists/setlist-detail/SetlistSections";
@@ -29,6 +31,10 @@ export default function SetlistContent({
   const [sections, setSections] = useState(initialSections);
   const [sectionOrder, setSectionOrder] = useState<string[] | null>(initialSetlist.section_order ?? null);
 
+  const updateSetlist = useUpdateSetlist();
+  const deleteSetlist = useDeleteSetlist();
+  const updateSections = useUpdateSections(setlist.id);
+
   useEffect(() => {
     setSetlist(initialSetlist);
     setSections(initialSections);
@@ -53,16 +59,9 @@ export default function SetlistContent({
     setSections(sectionsOrUpdater);
   }
 
-  async function handleSectionOrderChange(order: string[]) {
+  function handleSectionOrderChange(order: string[]) {
     setSectionOrder(order);
-    const res = await fetch(`/api/setlists/${setlist.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ section_order: order }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to save section order");
-    }
+    updateSetlist.mutate({ id: setlist.id, data: { section_order: order } });
   }
 
   async function handleSaveAndExit(editData: { date: string; title: string; description: string; song_leader: string; branch: string }) {
@@ -79,52 +78,42 @@ export default function SetlistContent({
       ...(s.notes !== undefined ? { notes: s.notes } : {}),
       ...(s.song_key !== undefined ? { song_key: s.song_key } : {}),
     }));
-    const sectionsRes = await fetch(`/api/setlists/${setlist.id}/sections`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: sectionsPayload }),
-    });
-    if (!sectionsRes.ok) {
-      toast.error("Failed to save lineup changes");
-      setIsSaving(false);
-      return;
-    }
 
-    const response = await fetch(`/api/setlists/${setlist.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date: editData.date,
-        title: editData.title || null,
-        description: editData.description || null,
-        song_leader: editData.song_leader || null,
-        branch: editData.branch,
-        section_order: sectionOrder,
-      }),
-    });
-    if (!response.ok) {
-      toast.error("Failed to save lineup metadata");
+    try {
+      await Promise.all([
+        updateSections.mutateAsync(sectionsPayload),
+        updateSetlist.mutateAsync({
+          id: setlist.id,
+          data: {
+            date: editData.date,
+            title: editData.title || null,
+            description: editData.description || null,
+            song_leader: editData.song_leader || null,
+            branch: editData.branch,
+            section_order: sectionOrder,
+          },
+        }),
+      ]);
+      toast.success("Lineup saved");
       setIsSaving(false);
-      return;
+      router.push("/setlists");
+    } catch {
+      toast.error("Failed to save lineup");
+      setIsSaving(false);
     }
-    toast.success("Lineup saved");
-
-    setIsSaving(false);
-    router.push("/setlists");
   }
 
-  async function handleDeleteConfirm() {
+  function handleDeleteConfirm() {
     setIsDeleting(true);
     setShowDeleteConfirm(false);
-    const response = await fetch(`/api/setlists/${setlist.id}`, { method: "DELETE" });
-    if (!response.ok) {
-      toast.error("Failed to delete lineup");
-      setIsDeleting(false);
-      return;
-    }
-    toast.success("Lineup deleted");
-    router.push("/setlists");
-    router.refresh();
+    deleteSetlist.mutate(setlist.id, {
+      onSuccess: () => {
+        router.push("/setlists");
+      },
+      onSettled: () => {
+        setIsDeleting(false);
+      },
+    });
   }
 
   function formatDate(dateStr: string) {

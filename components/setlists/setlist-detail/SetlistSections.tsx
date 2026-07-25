@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { useUpdateSong } from "@/lib/hooks/use-songs";
@@ -66,24 +65,13 @@ export default function SetlistSections({
     return () => { document.body.style.overflow = ""; };
   }, [activeSection, editingSong, confirmRemoveId]);
 
-  function handleSectionDragStart(e: React.DragEvent, key: string) {
+  function handleSectionGripDragStart(e: React.DragEvent, key: string) {
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", key);
     setDraggedSectionKey(key);
   }
 
-  function handleSectionDragOver(e: React.DragEvent, key: string) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDragOverSectionKey(key);
-    dropTargetKey.current = key;
-  }
-
-  function handleSectionDragLeave() {
-    setDragOverSectionKey(null);
-  }
-
-  function handleSectionDragEnd() {
+  function handleSectionGripDragEnd() {
     const fromKey = draggedSectionKey;
     const toKey = dropTargetKey.current;
     setDraggedSectionKey(null);
@@ -100,6 +88,25 @@ export default function SetlistSections({
     const [moved] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, moved);
     onSectionOrderChange(next);
+  }
+
+  function handleSectionDragOver(e: React.DragEvent, key: string) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (!draggedSectionKey) return;
+    setDragOverSectionKey(key);
+    dropTargetKey.current = key;
+  }
+
+  function handleSectionDragLeave() {
+    if (!draggedSectionKey) return;
+    setDragOverSectionKey(null);
+  }
+
+  function handleSectionDrop(e: React.DragEvent) {
+    e.preventDefault();
+    if (!draggedSectionKey) return;
+    handleSectionGripDragEnd();
   }
 
   function getSectionSongs(sectionType: string) {
@@ -120,21 +127,22 @@ export default function SetlistSections({
 
   function handleDragOver(e: React.DragEvent, sectionId: string) {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     setDragOverSectionId(sectionId);
   }
 
-  function handleDragLeave() {
+  function handleDragLeave(e: React.DragEvent) {
+    e.stopPropagation();
     setDragOverSectionId(null);
   }
 
   function handleDrop(e: React.DragEvent, sectionType: string, targetId: string) {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverSectionId(null);
 
     if (isGuest) return;
-    if (draggedSectionKey) return;
-
     if (!draggedSectionId || draggedSectionId === targetId) {
       setDraggedSectionId(null);
       return;
@@ -158,6 +166,12 @@ export default function SetlistSections({
       sort_order: i,
     }));
 
+    const updatedPayload = updatedSections.map((s) => ({
+      id: s.id,
+      sort_order: s.sort_order,
+    }));
+    updateSections.mutate(updatedPayload);
+
     onSectionsChange((prev: SetlistSectionWithSong[]) => {
       const otherSections = prev.filter(
         (s) => s.section_type !== sectionType
@@ -168,7 +182,8 @@ export default function SetlistSections({
     setDraggedSectionId(null);
   }
 
-  function handleDragEnd() {
+  function handleDragEnd(e: React.DragEvent) {
+    e.stopPropagation();
     setDraggedSectionId(null);
     setDragOverSectionId(null);
   }
@@ -255,11 +270,9 @@ export default function SetlistSections({
         return (
           <div
             key={sectionKey}
-            draggable={!effectiveLock}
-            onDragStart={(e) => handleSectionDragStart(e, sectionKey)}
             onDragOver={(e) => handleSectionDragOver(e, sectionKey)}
             onDragLeave={handleSectionDragLeave}
-            onDragEnd={handleSectionDragEnd}
+            onDrop={handleSectionDrop}
             className="rounded-xl p-4 transition-colors"
             style={{
               backgroundColor: isSectionDragOver ? "var(--color-surface-muted)" : "var(--color-surface-card)",
@@ -273,6 +286,9 @@ export default function SetlistSections({
               <div className="flex items-center gap-2">
                 {!effectiveLock && (
                   <div
+                    draggable
+                    onDragStart={(e) => handleSectionGripDragStart(e, sectionKey)}
+                    onDragEnd={handleSectionGripDragEnd}
                     className="flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
                     title="Drag to reorder section"
                   >

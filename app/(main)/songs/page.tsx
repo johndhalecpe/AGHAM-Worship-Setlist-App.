@@ -1,21 +1,26 @@
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { SongListItem } from "@/lib/type";
 import SongsGroupedView from "./_components/SongsGroupedView";
 
-export const revalidate = 30;
+export const revalidate = 60;
 
-async function fetchAllSongs(): Promise<SongListItem[]> {
-  const { data, error } = await supabase
-    .from("songs")
-    .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, status, created_at")
-    .order("title", { ascending: true });
+const fetchAllSongs = unstable_cache(
+  async (): Promise<SongListItem[]> => {
+    const { data, error } = await supabase
+      .from("songs")
+      .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, status, created_at")
+      .order("title", { ascending: true });
 
-  if (error) {
-    throw new Error(error.message);
-  }
+    if (error) {
+      throw new Error(error.message);
+    }
 
-  return data;
-}
+    return data;
+  },
+  ["songs-list"],
+  { tags: ["songs"], revalidate: 60 }
+);
 
 export default async function SongsPage() {
   const songs = await fetchAllSongs();

@@ -154,6 +154,17 @@ export async function searchTrack(accessToken: string, query: string): Promise<s
   return data.tracks?.items?.[0]?.uri ?? null;
 }
 
+export async function unfollowPlaylist(accessToken: string, playlistId: string): Promise<void> {
+  const res = await fetch(`${SPOTIFY_API_BASE}/playlists/${playlistId}/followers`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok && res.status !== 404) {
+    const err = await res.text();
+    console.error(`Failed to unfollow playlist ${playlistId}: ${err}`);
+  }
+}
+
 export async function createPlaylist(
   accessToken: string,
   name: string,
@@ -188,4 +199,17 @@ export async function addTracks(accessToken: string, playlistId: string, uris: s
     const err = await res.text();
     throw new Error(`Failed to add tracks: ${err}`);
   }
+}
+
+export async function checkPlaylistExists(accessToken: string, playlistId: string): Promise<boolean> {
+  const res = await fetch(`${SPOTIFY_API_BASE}/playlists/${playlistId}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (res.status === 404) return false;
+  if (!res.ok) {
+    const err = await res.text();
+    console.error(`Failed to check playlist ${playlistId}: ${err}`);
+  }
+  return res.ok;
 }

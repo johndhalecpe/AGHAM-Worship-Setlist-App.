@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { requireUser, unauthorized } from "@/lib/auth-server";
 import { isSetlistDateInPast } from "@/app/api/_lib/setlistGuards";
@@ -64,6 +64,7 @@ export async function PATCH(
 
   revalidatePath("/setlists");
   revalidatePath(`/setlists/${id}`);
+  revalidateTag("setlists", "max");
   return NextResponse.json(data);
 }
 
@@ -94,5 +95,6 @@ export async function DELETE(
 
   revalidatePath("/setlists");
   revalidatePath(`/setlists/${id}`);
+  revalidateTag("setlists", "max");
   return NextResponse.json({ message: "Setlist deleted" });
 }

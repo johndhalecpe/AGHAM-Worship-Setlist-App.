@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { Song, SetlistSectionWithSong } from "@/lib/type";
+import { useSongs } from "@/lib/hooks/use-songs";
+import { useAddSection } from "@/lib/hooks/use-sections";
 import SongSearchList from "@/components/setlists/song-picker/SongSearchList";
 import NewSongForm from "@/components/setlists/song-picker/NewSongForm";
 
@@ -27,25 +28,18 @@ export default function SongPicker({
   onSongAdded,
   onCancel,
 }: SongPickerProps) {
-  const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [showNewSongForm, setShowNewSongForm] = useState(false);
-  const [loadingSongs, setLoadingSongs] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/songs")
-      .then((res) => res.json())
-      .then(setAllSongs)
-      .catch(() => toast.error("Failed to load songs"))
-      .finally(() => setLoadingSongs(false));
-  }, []);
+  const { data: allSongs, isLoading: loadingSongs } = useSongs();
+  const addSection = useAddSection(setlistId);
 
   const categoryFilter = SECTION_TO_CATEGORY[sectionType];
 
   const searchMatches = (() => {
     const query = search.trim().toLowerCase();
-    if (!query) return null;
+    if (!query || !allSongs) return null;
     const title: Song[] = [];
     const author: Song[] = [];
     const lyrics: Song[] = [];
@@ -79,28 +73,18 @@ export default function SongPicker({
 
   async function handleSelectSong(songId: string) {
     setLoading(true);
-
-    const res = await fetch(`/api/setlists/${setlistId}/sections`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        song_id: songId,
-        section_type: sectionType,
-      }),
-    });
-
-    if (!res.ok) {
-      toast.error("Failed to add song to lineup");
-      setLoading(false);
-      return;
-    }
-
-    const newSection: SetlistSectionWithSong = await res.json();
-
-    toast.success("Song added to lineup");
-    setLoading(false);
-    setSearch("");
-    onSongAdded(newSection);
+    addSection.mutate(
+      { sectionType, songId },
+      {
+        onSuccess: (newSection) => {
+          setSearch("");
+          onSongAdded(newSection);
+        },
+        onSettled: () => {
+          setLoading(false);
+        },
+      }
+    );
   }
 
   return (
@@ -154,7 +138,7 @@ export default function SongPicker({
             loading={loading}
             onSelect={handleSelectSong}
           />
-        ) : search.trim() === "" && allSongs.length === 0 ? (
+        ) : search.trim() === "" && (!allSongs || allSongs.length === 0) ? (
           <p className="text-xs py-4 text-center" style={{ color: "var(--color-text-tertiary)" }}>
             No songs found. Add one above.
           </p>

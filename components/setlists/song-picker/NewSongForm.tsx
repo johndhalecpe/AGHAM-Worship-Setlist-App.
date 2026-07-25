@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SetlistSectionWithSong } from "@/lib/type";
+import { useAuthors } from "@/lib/hooks/use-songs";
 import KeyPicker from "@/components/ui/KeyPicker";
 
 type NewSongFormProps = {
@@ -31,17 +32,12 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
   const [defaultBpm, setDefaultBpm] = useState<number | null>(null);
   const [defaultTimeSignature, setDefaultTimeSignature] = useState("");
   const [loading, setLoading] = useState(false);
-  const [authors, setAuthors] = useState<string[]>([]);
   const [showAuthorSuggestions, setShowAuthorSuggestions] = useState(false);
   const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
   const authorRef = useRef<HTMLInputElement>(null);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetch("/api/songs/authors")
-      .then((res) => res.json())
-      .then(setAuthors);
-  }, []);
+  const { data: authors = [] } = useAuthors();
 
   const authorSuggestions = newAuthor.trim()
     ? authors.filter((a) =>

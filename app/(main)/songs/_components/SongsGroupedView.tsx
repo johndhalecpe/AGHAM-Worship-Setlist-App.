@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback, useDeferredValue, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useCallback, useDeferredValue } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { SongListItem } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { useUpdateSong } from "@/lib/hooks/use-songs";
+import { useRealtimeSongs } from "@/lib/hooks/use-realtime-setlist";
 import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
 import EditSongModal from "./EditSongModal";
@@ -69,18 +70,19 @@ const LANGUAGE_FILTERS = ["english", "filipino"] as const;
 const TIME_SIG_FILTERS = ["4/4", "3/4", "6/8"] as const;
 
 export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
-  const router = useRouter();
   const [isLocked, setIsLocked] = useState(true);
   const isGuest = useIsGuest();
   const effectivelyLocked = isLocked || isGuest;
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<Set<string>>(new Set());
   const [selectedTimeSigs, setSelectedTimeSigs] = useState<Set<string>>(new Set());
   const [composedOnly, setComposedOnly] = useState(false);
+
+  useRealtimeSongs();
 
   const deferredSearch = useDeferredValue(searchQuery);
 
@@ -163,7 +165,9 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
     setShowFilters(false);
   }, []);
 
-  async function handleSave(songId: string, data: {
+  const updateSong = useUpdateSong();
+
+  function handleSave(songId: string, data: {
     title: string;
     author: string;
     category: string;
@@ -174,21 +178,14 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
     lyrics: string;
     chords: string;
   }) {
-    setIsSaving(true);
-    const res = await fetch(`/api/songs/${songId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      toast.error("Failed to save song");
-      setIsSaving(false);
-      return;
-    }
-    toast.success("Song saved");
-    setIsSaving(false);
-    setEditingId(null);
-    router.refresh();
+    updateSong.mutate(
+      { id: songId, data: data as Record<string, unknown> },
+      {
+        onSuccess: () => {
+          setEditingId(null);
+        },
+      }
+    );
   }
 
   const hasActiveFilters = selectedCategory !== null || composedOnly || selectedLanguages.size > 0 || selectedTimeSigs.size > 0;
@@ -512,7 +509,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
           songId={editingId}
           onSave={(data) => handleSave(editingId, data)}
           onCancel={() => setEditingId(null)}
-          isSaving={isSaving}
+          isSaving={updateSong.isPending}
         />
       )}
     </div>

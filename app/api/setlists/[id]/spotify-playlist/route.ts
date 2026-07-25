@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { unauthorized } from "@/lib/auth-server";
 import { getSupabaseWithToken } from "@/lib/supabase";
-import { getValidAccessToken, searchTrack, createPlaylist, addTracks } from "@/lib/services/spotifyService";
+import { ADMIN_EMAIL } from "@/lib/type";
+import { getValidAccessToken, searchTrack, createPlaylist, addTracks, unfollowPlaylist } from "@/lib/services/spotifyService";
 import type { Setlist, SetlistSectionWithSong } from "@/lib/type";
 
 export async function POST(
@@ -17,6 +18,7 @@ export async function POST(
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
   if (userError || !userData?.user) return unauthorized();
+  const isAdmin = userData.user.email === ADMIN_EMAIL;
 
   const { id } = await params;
 
@@ -33,6 +35,16 @@ export async function POST(
     return NextResponse.json({ error: "Setlist not found" }, { status: 404 });
   }
   const setlist = setlistData as Setlist;
+
+  // Return existing playlist without creating a new one (unless admin is regenerating)
+  if (setlist.spotify_playlist_url && !isAdmin) {
+    return NextResponse.json({
+      success: true,
+      playlistUrl: setlist.spotify_playlist_url,
+      tracksAdded: 0,
+      totalSongs: 0,
+    });
+  }
 
   const { data: sectionsData } = await supabase
     .from("setlist_sections")
@@ -69,6 +81,11 @@ export async function POST(
     date,
   ].filter(Boolean).join(" · ");
 
+  // Delete old playlist on Spotify before creating a new one (prevents duplicates)
+  if (setlist.spotify_playlist_id) {
+    await unfollowPlaylist(accessToken, setlist.spotify_playlist_id);
+  }
+
   const playlist = await createPlaylist(accessToken, playlistName, playlistDesc);
 
   const trackUris: string[] = [];
@@ -91,7 +108,6 @@ export async function POST(
   revalidatePath("/setlists");
   revalidatePath(`/setlists/${id}`);
   revalidateTag("setlists", "max");
-  revalidateTag(`setlist-${id}`, "max");
 
   return NextResponse.json({
     success: true,

@@ -55,6 +55,18 @@ export default function AdminApprovalsPage() {
     setUpdatingId(null);
   }
 
+  async function handleDeleteProfile(id: string) {
+    setUpdatingId(id);
+    const { error } = await supabase.from("profiles").delete().eq("id", id);
+    if (!error) {
+      setProfiles((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Profile deleted");
+    } else {
+      toast.error("Failed to delete profile");
+    }
+    setUpdatingId(null);
+  }
+
   async function handleSetPassword(resetId: string, email: string) {
     const newPassword = resetPasswords[resetId];
     if (!newPassword || newPassword.length < 4) {
@@ -110,7 +122,7 @@ export default function AdminApprovalsPage() {
   }
 
   return (
-    <div>
+    <div className="max-w-lg">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
           Pending Approvals
@@ -131,6 +143,7 @@ export default function AdminApprovalsPage() {
               key={profile.id}
               profile={profile}
               onAction={handleAction}
+              onDelete={handleDeleteProfile}
               isUpdating={updatingId === profile.id}
             />
           ))}
@@ -210,15 +223,17 @@ export default function AdminApprovalsPage() {
 function ApprovalCard({
   profile,
   onAction,
+  onDelete,
   isUpdating,
 }: {
   profile: Profile;
   onAction: (id: string, status: "approved" | "rejected") => void;
+  onDelete: (id: string) => void;
   isUpdating: boolean;
 }) {
   return (
     <div
-      className="rounded-xl p-4 flex items-center justify-between gap-4"
+      className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       style={{
         backgroundColor: "var(--color-surface-card)",
         border: "1px solid var(--color-border)",
@@ -250,11 +265,11 @@ function ApprovalCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
         <button
           onClick={() => onAction(profile.id, "approved")}
           disabled={isUpdating}
-          className="rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
+          className="flex-1 sm:flex-none rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
           style={{
             backgroundColor: "var(--color-success)",
             color: "white",
@@ -265,13 +280,24 @@ function ApprovalCard({
         <button
           onClick={() => onAction(profile.id, "rejected")}
           disabled={isUpdating}
-          className="rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
+          className="flex-1 sm:flex-none rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
           style={{
             backgroundColor: "var(--color-danger)",
             color: "white",
           }}
         >
           {isUpdating ? "..." : "Reject"}
+        </button>
+        <button
+          onClick={() => onDelete(profile.id)}
+          disabled={isUpdating}
+          className="p-2 rounded-lg transition-all disabled:opacity-50 hover:opacity-70 shrink-0"
+          style={{ color: "var(--color-text-tertiary)" }}
+          title="Delete profile"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+          </svg>
         </button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { useAuthors } from "@/lib/hooks/use-songs";
 import MusicalDataSection from "@/components/songs/MusicalDataSection";
 
 export default function NewSongForm() {
@@ -24,17 +25,12 @@ export default function NewSongForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
-  const [authors, setAuthors] = useState<string[]>([]);
   const [showAuthorSuggestions, setShowAuthorSuggestions] = useState(false);
   const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
   const authorRef = useRef<HTMLInputElement>(null);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetch("/api/songs/authors")
-      .then((res) => res.json())
-      .then(setAuthors);
-  }, []);
+  const { data: authors = [] } = useAuthors();
 
   const authorSuggestions = author.trim()
     ? authors.filter((a) =>
