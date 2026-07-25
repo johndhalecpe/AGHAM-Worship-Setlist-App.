@@ -136,6 +136,7 @@ export default function CreateAccountForm({ onBack, onPending }: CreateAccountFo
       router.push("/admin/approvals");
     } else {
       localStorage.setItem("pendingApprovalEmail", email);
+      await supabase.auth.signOut();
       setShowSuccess(true);
     }
   }
