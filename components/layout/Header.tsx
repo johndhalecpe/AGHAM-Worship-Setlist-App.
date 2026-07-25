@@ -679,7 +679,7 @@ export default function Header() {
           )}
           {isGuest ? (
             <Link
-              href="/"
+              href="/?login=1"
               className="text-sm font-medium transition-colors min-h-[44px] flex items-center"
               style={{ color: "var(--color-text-secondary)" }}
             >
@@ -926,7 +926,7 @@ export default function Header() {
                 {isGuest ? (
                   <div className="mt-3">
                     <Link
-                      href="/"
+                      href="/?login=1"
                       onClick={() => setShowMobileMenu(false)}
                       className="rounded-xl px-4 py-3 text-sm font-medium transition-all min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
                       style={{ color: "var(--color-text-secondary)" }}

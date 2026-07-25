@@ -59,6 +59,13 @@ export default function Home() {
   }, [router]);
 
   useEffect(() => {
+    if (window.location.search.includes("login")) {
+      setDirection("forward");
+      setView("login");
+    }
+  }, []);
+
+  useEffect(() => {
     if (statusInfo?.type === "rejected") {
       const timer = setTimeout(() => {
         toast.error("Your account has been rejected. Please contact the admin.", {
