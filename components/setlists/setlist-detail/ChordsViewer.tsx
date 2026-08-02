@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { usePersistentState } from "@/lib/hooks/usePersistentState";
+import {
+  useSongCollaboration,
+} from "@/lib/hooks/use-song-collaboration";
 import KeyPicker from "@/components/ui/KeyPicker";
-
-const AUTO_SAVE_DELAY = 2000;
+import PresenceAvatars from "@/components/ui/PresenceAvatars";
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
 
@@ -36,17 +39,56 @@ export default function ChordsViewer({
 }: Props) {
   const isGuest = useIsGuest();
   const containerRef = useRef<HTMLDivElement>(null);
-  const filtered = sections.filter((s) => s.section_type === sectionType);
-  const [zoomIndex, setZoomIndex] = useState(3);
+  const filtered = useMemo(
+    () => sections.filter((s) => s.section_type === sectionType),
+    [sections, sectionType]
+  );
+  const filteredSongIds = useMemo(() => {
+    const seen = new Set<string>();
+    for (const s of filtered) seen.add(s.songs.id);
+    return Array.from(seen);
+  }, [filtered]);
+  const [zoomIndex, setZoomIndex] = usePersistentState("chords-viewer:zoom-index", 3);
   const [chordEdits, setChordEdits] = useState<Record<string, string>>({});
   const chordEditsRef = useRef(chordEdits);
   chordEditsRef.current = chordEdits;
-  const chordsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chordsQueueRef = useRef<Promise<void>>(Promise.resolve());
   const isDirtyRef = useRef(false);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
+  const focusedFieldRef = useRef<string | null>(null);
   const editingSong = editingKeyId ? filtered.find((s) => s.id === editingKeyId) ?? null : null;
   const [focusedInput, setFocusedInput] = useState(false);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  const { liveFields, presentBySong, selfId, broadcastField, clearPreview } =
+    useSongCollaboration(filteredSongIds, {
+      enabled: !isPast,
+      getConfirmedValue: (fieldKey) => {
+        if (fieldKey.endsWith("-chords")) {
+          const sectionId = fieldKey.slice(0, -"-chords".length);
+          return sections.find((sec) => sec.id === sectionId)?.songs.chords ?? undefined;
+        }
+        if (fieldKey.endsWith("-song_key")) {
+          const sectionId = fieldKey.slice(0, -"-song_key".length);
+          return sections.find((sec) => sec.id === sectionId)?.song_key ?? undefined;
+        }
+        return undefined;
+      },
+      onConflict: (fieldKey, authorName) => {
+        if (
+          fieldKey.endsWith("-chords") &&
+          (fieldKey in chordEdits || focusedFieldRef.current === fieldKey)
+        ) {
+          toast(`Chords were just updated by ${authorName}`);
+        } else if (
+          fieldKey.endsWith("-song_key") &&
+          (editingKeyId === fieldKey.slice(0, -"-song_key".length) ||
+            focusedFieldRef.current === fieldKey)
+        ) {
+          toast(`Key was just updated by ${authorName}`);
+        }
+      },
+    });
 
   async function handleKeyChange(s: SetlistSectionWithSong, key: string) {
     const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
@@ -58,62 +100,69 @@ export default function ChordsViewer({
       toast.error("Failed to update key");
       return;
     }
+    broadcastField(s.songs.id, `${s.id}-song_key`, key);
+    clearPreview(`${s.id}-song_key`);
     onSectionsChange((prev) =>
       prev.map((sec) => (sec.id === s.id ? { ...sec, song_key: key } : sec))
     );
     setEditingKeyId(null);
   }
 
-  async function saveChordEdits() {
-    if (isPast || isGuest) return;
-    const currentEdits = chordEditsRef.current;
-    let savedAny = false;
+  async function saveChordField(s: SetlistSectionWithSong, value: string) {
+    const fieldKey = `${s.id}-chords`;
+    const clearDraft = () =>
+      setChordEdits((prev) => {
+        if (prev[fieldKey] !== value) return prev;
+        const next = { ...prev };
+        delete next[fieldKey];
+        return next;
+      });
+    if (value === (s.songs.chords ?? "")) {
+      clearDraft();
+      clearPreview(fieldKey);
+      return;
+    }
+    broadcastField(s.songs.id, fieldKey, value);
+    const res = await fetch(`/api/songs/${s.song_id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chords: value }),
+    });
+    if (!res.ok) {
+      toast.error(`Failed to save chords for "${s.songs.title}"`);
+      return;
+    }
+    clearDraft();
+    clearPreview(fieldKey);
+    onSectionsChange((prev) =>
+      prev.map((sec) =>
+        sec.id === s.id ? { ...sec, songs: { ...sec.songs, chords: value } } : sec
+      )
+    );
+  }
+
+  async function flushDirtyChordFields() {
     for (const s of filtered) {
-      const edited = currentEdits[`${s.id}-chords`];
-      if (edited !== undefined && edited !== (s.songs.chords ?? "")) {
-        const res = await fetch(`/api/songs/${s.song_id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chords: edited }),
-        });
-        if (!res.ok) {
-          toast.error(`Failed to save chords for "${s.songs.title}"`);
-          return;
-        }
-        savedAny = true;
+      const edited = chordEditsRef.current[`${s.id}-chords`];
+      if (edited !== undefined) {
+        chordsQueueRef.current = chordsQueueRef.current
+          .catch(() => {})
+          .then(() => saveChordField(s, edited));
       }
     }
-    if (savedAny) {
-      onSectionsChange((prev) =>
-        prev.map((sec) => {
-          const chordsEdit = currentEdits[`${sec.id}-chords`];
-          return {
-            ...sec,
-            ...(chordsEdit !== undefined
-              ? { songs: { ...sec.songs, chords: chordsEdit } }
-              : {}),
-          };
-        })
-      );
-    }
+    await chordsQueueRef.current;
+    isDirtyRef.current = false;
   }
 
-  function handleChordsChange(id: string, value: string) {
+  function handleChordsChange(s: SetlistSectionWithSong, value: string) {
     if (isGuest) return;
+    const fieldKey = `${s.id}-chords`;
     isDirtyRef.current = true;
-    setChordEdits((prev) => {
-      const next = { ...prev, [id]: value };
-      if (chordsTimer.current) clearTimeout(chordsTimer.current);
-      chordsTimer.current = setTimeout(saveChordEdits, AUTO_SAVE_DELAY);
-      return next;
-    });
+    setChordEdits((prev) => ({ ...prev, [fieldKey]: value }));
+    chordsQueueRef.current = chordsQueueRef.current
+      .catch(() => {})
+      .then(() => saveChordField(s, value));
   }
-
-  useEffect(() => {
-    return () => {
-      if (chordsTimer.current) clearTimeout(chordsTimer.current);
-    };
-  }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -133,10 +182,8 @@ export default function ChordsViewer({
       return;
     }
 
-    if (chordsTimer.current) clearTimeout(chordsTimer.current);
-
     if (isDirtyRef.current) {
-      await saveChordEdits();
+      await flushDirtyChordFields();
     }
 
     onClose();
@@ -155,46 +202,64 @@ export default function ChordsViewer({
   const fontSize = ZOOM_STEPS[zoomIndex];
 
   function renderChordsTextarea(s: SetlistSectionWithSong) {
+    const fieldKey = `${s.id}-chords`;
+    const draft = chordEdits[fieldKey];
+    const preview = liveFields[fieldKey];
+    const showPreview = preview !== undefined && draft === undefined;
     return (
-      <textarea
-        name={`${s.id}-chords`}
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-        autoCapitalize="off"
-        ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-        value={chordEdits[`${s.id}-chords`] ?? s.songs.chords ?? ""}
-        onChange={(e) => {
-          handleChordsChange(`${s.id}-chords`, e.target.value);
-          e.target.style.height = "auto";
-          e.target.style.height = e.target.scrollHeight + "px";
-        }}
-        readOnly={isPast || isGuest}
-        onFocus={(e) => {
-          if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); return; }
-          if (isGuest) { e.target.blur(); toast.error("Guests can't edit lineups"); return; }
-          setFocusedInput(true);
-          const el = e.target;
-          setTimeout(() => {
-            el.scrollIntoView({ block: "center", behavior: "smooth" });
-          }, 300);
-        }}
-        onBlur={() => setFocusedInput(false)}
-        placeholder="No chords available."
-        className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
-        style={{
-          fontFamily: "'Courier New', Courier, monospace",
-          fontSize,
-          fontWeight: "bold",
-          border: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-surface-card)",
-          color: "var(--color-chord-text)",
-        }}
-      />
+      <>
+        <textarea
+          name={fieldKey}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
+          ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+          value={draft ?? preview?.value ?? s.songs.chords ?? ""}
+          onChange={(e) => {
+            handleChordsChange(s, e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = e.target.scrollHeight + "px";
+          }}
+          readOnly={isPast || isGuest}
+          onFocus={(e) => {
+            if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); return; }
+            if (isGuest) { e.target.blur(); toast.error("Guests can't edit lineups"); return; }
+            focusedFieldRef.current = fieldKey;
+            setFocusedInput(true);
+            const el = e.target;
+            setTimeout(() => {
+              el.scrollIntoView({ block: "center", behavior: "smooth" });
+            }, 300);
+          }}
+          onBlur={() => {
+            focusedFieldRef.current = null;
+            setFocusedInput(false);
+          }}
+          placeholder="No chords available."
+          className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
+          style={{
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize,
+            fontWeight: "bold",
+            border: `1px solid ${showPreview ? "var(--color-preview-text)" : "var(--color-border)"}`,
+            backgroundColor: showPreview ? "var(--color-preview)" : "var(--color-surface-card)",
+            color: "var(--color-chord-text)",
+          }}
+        />
+        {showPreview && (
+          <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
+            {preview.authorName} is editing&hellip;
+          </p>
+        )}
+      </>
     );
   }
 
   function renderSongHeader(s: SetlistSectionWithSong) {
+    const keyFieldKey = `${s.id}-song_key`;
+    const keyPreview = liveFields[keyFieldKey];
+    const displayedKey = keyPreview?.value ?? s.song_key ?? s.songs.default_key ?? "G";
     return (
       <div className="mb-2">
         <h3 className="text-base font-semibold break-words" style={{ color: "var(--color-text)" }}>
@@ -208,7 +273,8 @@ export default function ChordsViewer({
               </p>
             )}
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <PresenceAvatars members={presentBySong[s.songs.id] ?? []} selfId={selfId} />
             <button
               onClick={() => { if (!isPast && !isGuest) setEditingKeyId(s.id); }}
               disabled={isPast || isGuest}
@@ -218,10 +284,15 @@ export default function ChordsViewer({
                 color: "var(--color-badge-key-text)",
               }}
             >
-              Key: {s.song_key ?? s.songs.default_key ?? "G"}
+              Key: {displayedKey}
             </button>
           </div>
         </div>
+        {keyPreview && (
+          <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
+            {keyPreview.authorName} is updating the key&hellip;
+          </p>
+        )}
       </div>
     );
   }

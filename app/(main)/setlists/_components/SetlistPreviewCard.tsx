@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { SetlistWithSections, ADMIN_EMAIL } from "@/lib/type";
+import { SetlistWithSections, ADMIN_EMAIL, SetlistViewerState } from "@/lib/type";
 import { getBranchLabel } from "@/lib/branches";
+import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import ChordsViewer from "@/components/setlists/setlist-detail/ChordsViewer";
 import LyricsViewer from "@/components/setlists/setlist-detail/LyricsViewer";
 
@@ -41,13 +42,15 @@ export default function SetlistPreviewCard({
   isPast,
 }: SetlistPreviewCardProps) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [isOpen, setIsOpen] = usePersistentState(`setlist:${setlist.id}:card-open`, defaultOpen);
   const [sections, setSections] = useState(setlist.sections);
   const [copiedText, setCopiedText] = useState(false);
   const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
   const [spotifyUrl, setSpotifyUrl] = useState(setlist.spotify_playlist_url);
-  const [chordsView, setChordsView] = useState<{ sectionType: string; songId: string } | null>(null);
-  const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
+  const [viewer, setViewer] = usePersistentState<SetlistViewerState | null>(
+    `setlist:${setlist.id}:viewer`,
+    null
+  );
   const sectionOrder = setlist.section_order ?? DEFAULT_SECTION_ORDER;
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -590,7 +593,7 @@ export default function SetlistPreviewCard({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setChordsView({ sectionType: type, songId: sectionSongs[0].id });
+                            setViewer({ kind: "chords", sectionType: type });
                           }}
                           className="text-xs font-semibold rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
                           style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
@@ -603,7 +606,7 @@ export default function SetlistPreviewCard({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setLyricsView({ sectionType: type, songId: sectionSongs[0].id });
+                            setViewer({ kind: "lyrics", sectionType: type });
                           }}
                           className="text-xs font-semibold rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
                           style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
@@ -655,21 +658,21 @@ export default function SetlistPreviewCard({
         </Link>
       </div>
 
-      {chordsView && (
+      {viewer?.kind === "chords" && (
         <ChordsViewer
           setlist={setlist}
           sections={sections}
-          sectionType={chordsView.sectionType}
-          onClose={() => setChordsView(null)}
+          sectionType={viewer.sectionType}
+          onClose={() => setViewer(null)}
           onSectionsChange={(updater) => setSections(updater)}
         />
       )}
 
-      {lyricsView && (
+      {viewer?.kind === "lyrics" && (
         <LyricsViewer
           sections={sections}
-          sectionType={lyricsView.sectionType}
-          onClose={() => setLyricsView(null)}
+          sectionType={viewer.sectionType}
+          onClose={() => setViewer(null)}
         />
       )}
     </>

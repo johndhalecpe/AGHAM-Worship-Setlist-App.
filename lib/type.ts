@@ -57,6 +57,11 @@ export type SetlistWithSections = Setlist & {
   sections: SetlistSectionWithSong[];
 };
 
+export type SetlistViewerState = {
+  kind: "chords" | "lyrics";
+  sectionType: string;
+};
+
 export type Profile = {
   id: string;
   name: string;

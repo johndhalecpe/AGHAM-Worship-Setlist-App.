@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { SetlistWithSections } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import SetlistPreviewCard from "./SetlistPreviewCard";
 
 function Greeting() {
@@ -115,7 +116,7 @@ type SetlistListProps = {
 export default function SetlistList({ setlists }: SetlistListProps) {
   const isGuest = useIsGuest();
   const [todayLocal, setTodayLocal] = useState("");
-  const [showPast, setShowPast] = useState(false);
+  const [showPast, setShowPast] = usePersistentState("setlists:show-past", false);
 
   useEffect(() => {
     const now = new Date();

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Setlist, SetlistSectionWithSong, Song } from "@/lib/type";
+import { Setlist, SetlistSectionWithSong, Song, SetlistViewerState } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { useUpdateSong } from "@/lib/hooks/use-songs";
 import { useRemoveSection, useUpdateSections } from "@/lib/hooks/use-sections";
 import SongPicker from "@/components/setlists/song-picker/SongPicker";
@@ -47,8 +48,10 @@ export default function SetlistSections({
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [lyricsView, setLyricsView] = useState<{ sectionType: string; songId: string } | null>(null);
-  const [chordsView, setChordsView] = useState<{ sectionType: string; songId: string } | null>(null);
+  const [viewer, setViewer] = usePersistentState<SetlistViewerState | null>(
+    `setlist:${setlist.id}:viewer`,
+    null
+  );
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [draggedSectionKey, setDraggedSectionKey] = useState<string | null>(null);
@@ -336,7 +339,7 @@ export default function SetlistSections({
             {sectionSongs.length > 0 && (
               <div className="flex items-center gap-2 mb-2">
                 <button
-                  onClick={() => setChordsView({ sectionType: sectionKey, songId: sectionSongs[0].id })}
+                  onClick={() => setViewer({ kind: "chords", sectionType: sectionKey })}
                   className="flex-1 text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
                   style={{ backgroundColor: "transparent", border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}
                 >
@@ -346,7 +349,7 @@ export default function SetlistSections({
                   Chords
                 </button>
                 <button
-                  onClick={() => setLyricsView({ sectionType: sectionKey, songId: sectionSongs[0].id })}
+                  onClick={() => setViewer({ kind: "lyrics", sectionType: sectionKey })}
                   className="flex-1 text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 active:scale-95"
                   style={{ backgroundColor: "var(--color-accent-secondary)", color: "var(--color-text-on-accent-secondary)" }}
                 >
@@ -495,21 +498,21 @@ export default function SetlistSections({
           </div>
         </div>
       )}
-      {chordsView && (
+      {viewer?.kind === "chords" && (
         <ChordsViewer
           setlist={setlist}
           sections={sections}
-          sectionType={chordsView.sectionType}
+          sectionType={viewer.sectionType}
           isPast={isPast}
-          onClose={() => setChordsView(null)}
+          onClose={() => setViewer(null)}
           onSectionsChange={onSectionsChange}
         />
       )}
-      {lyricsView && (
+      {viewer?.kind === "lyrics" && (
         <LyricsViewer
           sections={sections}
-          sectionType={lyricsView.sectionType}
-          onClose={() => setLyricsView(null)}
+          sectionType={viewer.sectionType}
+          onClose={() => setViewer(null)}
         />
       )}
       {editingSong && (

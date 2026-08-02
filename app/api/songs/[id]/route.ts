@@ -69,8 +69,10 @@ export async function PATCH(
     }
 
     revalidatePath("/setlists");
+    revalidatePath("/setlists/[id]");
     revalidatePath("/songs");
     revalidateTag("songs", "max");
+    revalidateTag("setlists", "max");
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";
@@ -94,8 +96,10 @@ export async function DELETE(
     }
 
     revalidatePath("/setlists");
+    revalidatePath("/setlists/[id]");
     revalidatePath("/songs");
     revalidateTag("songs", "max");
+    revalidateTag("setlists", "max");
     return NextResponse.json({ message: "Song deleted" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";

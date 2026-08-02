@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SongListItem } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import {
+  COLLAB_SAVE_DELAY_MS,
+  useSongCollaboration,
+} from "@/lib/hooks/use-song-collaboration";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import PresenceAvatars from "@/components/ui/PresenceAvatars";
 import ChordsViewer from "@/components/chords/ChordsViewer";
 
 type SongCardProps = {
@@ -39,6 +44,27 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const [loadingLyrics, setLoadingLyrics] = useState(false);
   const [loadingChords, setLoadingChords] = useState(false);
   const chordsRef = useRef<HTMLTextAreaElement>(null);
+  const chordsDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { liveFields, presentBySong, selfId, broadcastField, clearPreview } =
+    useSongCollaboration(showChords ? [song.id] : [], {
+      enabled: showChords,
+      getConfirmedValue: (fieldKey) =>
+        fieldKey === "chords" ? (fullData?.chords ?? undefined) : undefined,
+      onConflict: (fieldKey, authorName) => {
+        if (fieldKey === "chords" && editingChords) {
+          toast(`Chords were just updated by ${authorName}`);
+        }
+      },
+    });
+
+  useEffect(() => {
+    return () => {
+      if (chordsDraftTimer.current) clearTimeout(chordsDraftTimer.current);
+    };
+  }, []);
+
+  const chordsPreview = liveFields["chords"];
 
   useEffect(() => {
     setChordsDraft(fullData?.chords ?? "");
@@ -102,8 +128,17 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     setShowChords(!showChords);
   }
 
+  function handleChordsDraftChange(value: string) {
+    setChordsDraft(value);
+    if (chordsDraftTimer.current) clearTimeout(chordsDraftTimer.current);
+    chordsDraftTimer.current = setTimeout(() => {
+      broadcastField(song.id, "chords", value);
+    }, COLLAB_SAVE_DELAY_MS);
+  }
+
   async function saveChords() {
     setSaving(true);
+    broadcastField(song.id, "chords", chordsDraft);
     const res = await fetch(`/api/songs/${song.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -114,6 +149,8 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
       setSaving(false);
       return;
     }
+    clearPreview("chords");
+    setFullData((prev) => (prev ? { ...prev, chords: chordsDraft } : prev));
     toast.success("Chords saved");
     setSaving(false);
     setEditingChords(false);
@@ -261,6 +298,11 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
       {showChords && (
         <div className="mt-1.5">
+          {(presentBySong[song.id]?.length ?? 0) > 0 && (
+            <div className="flex justify-end mb-1">
+              <PresenceAvatars members={presentBySong[song.id] ?? []} selfId={selfId} />
+            </div>
+          )}
           {!guestLocked && editingChords ? (
             <div className="flex flex-col gap-1.5">
               {loadingChords ? (
@@ -269,7 +311,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
                 </p>
               ) : (
                 <>
-                  <ChordsViewer chords={chordsDraft} editable onChange={setChordsDraft} />
+                  <ChordsViewer chords={chordsDraft} editable onChange={handleChordsDraftChange} />
                   <div className="flex gap-1.5 justify-end">
                     <button
                       onClick={() => {
@@ -301,8 +343,15 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
               )}
             </div>
           ) : (
-            fullData?.chords ? (
-              <ChordsViewer chords={fullData.chords} />
+            fullData?.chords || chordsPreview ? (
+              <>
+                <ChordsViewer chords={chordsPreview?.value ?? fullData?.chords ?? ""} />
+                {chordsPreview && (
+                  <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
+                    {chordsPreview.authorName} is editing&hellip;
+                  </p>
+                )}
+              </>
             ) : (
               <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
                 {fullData === null ? "Loading..." : "No chords yet."}

@@ -13,6 +13,7 @@ import ChangePasswordForm from "../auth/ChangePasswordForm";
 import ChangeNameForm from "../auth/ChangeNameForm";
 import Portal from "@/components/shared/Portal";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { useNewUserNotification } from "@/lib/hooks/useNewUserNotification";
 import type { PasswordReset } from "@/lib/type";
 import { PALETTES } from "@/lib/palettes";
@@ -30,7 +31,7 @@ export default function Header() {
   const [currentPalette, setCurrentPalette] = useState("default");
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = usePersistentState("header:mobile-menu-open", false);
   const [showMobileUserActions, setShowMobileUserActions] = useState(false);
   const [showMobileChangeName, setShowMobileChangeName] = useState(false);
   const [showMobileChangePassword, setShowMobileChangePassword] = useState(false);
@@ -53,7 +54,6 @@ export default function Header() {
   const [deleteProfileId, setDeleteProfileId] = useState<string | null>(null);
   const [resetPasswords, setResetPasswords] = useState<Record<string, string>>({});
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
-  const [showReadMe, setShowReadMe] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const usersDropdownRef = useRef<HTMLDivElement>(null);
   const paletteDropdownRef = useRef<HTMLDivElement>(null);
@@ -111,10 +111,6 @@ export default function Header() {
     if (hasUnseenUpdates()) {
       setIsWhatsNewOpen(true);
     }
-    try {
-      const dismissed = localStorage.getItem("whatsnew-readme-dismissed");
-      if (dismissed === "true") setShowReadMe(false);
-    } catch {}
   }, []);
 
   async function checkSession() {
@@ -340,35 +336,6 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => {
-              setIsWhatsNewOpen((prev) => !prev);
-              if (showReadMe) {
-                setShowReadMe(false);
-                try { localStorage.setItem("whatsnew-readme-dismissed", "true"); } catch {}
-              }
-            }}
-            className="rounded-lg p-2 transition-colors hover:bg-(--color-surface-muted) min-h-[44px] min-w-[44px] flex items-center justify-center"
-            style={{ color: "var(--color-text-secondary)" }}
-            aria-label="What's New"
-            aria-expanded={isWhatsNewOpen}
-          >
-            {showReadMe && (
-              <span
-                className="mr-1.5 text-[11px] font-semibold whitespace-nowrap"
-                style={{ color: "var(--color-accent)" }}
-              >
-                Read me &rarr;
-              </span>
-            )}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-              <path
-                fillRule="evenodd"
-                d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 0 1-1.162-.682 22.045 22.045 0 0 1-2.582-1.9C4.045 12.733 2 10.352 2 7.5a4.5 4.5 0 0 1 8-2.828A4.5 4.5 0 0 1 18 7.5c0 2.852-2.044 5.233-3.885 6.82a22.049 22.049 0 0 1-3.744 2.582l-.019.01-.005.003a.74.74 0 0 1-.69.001l-.005-.003zm0 0l.005-.003-.005.003zm0 0l-.005-.003.005.003z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
           <div className="relative hidden lg:block">
             <button
               onClick={() => setShowPaletteDropdown((prev) => !prev)}
@@ -1374,7 +1341,7 @@ export default function Header() {
               )}
             </div>
             <div className="border-t px-4 py-3 text-center text-[11px] lg:hidden" style={{ borderColor: "var(--color-border)", color: "var(--color-text-tertiary)" }}>
-              Agham Setlist 0.1.4<br />
+              Agham Setlist 0.1.5<br />
               Property of AGHAM &copy; 2026<br />
               dev - johndhalecpe
             </div>

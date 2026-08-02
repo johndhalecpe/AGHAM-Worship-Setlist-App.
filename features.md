@@ -105,5 +105,15 @@ Status: working
 
 ## Cache revalidation on data changes
 Where: `app/api/setlists/`, `app/api/songs/`
-What it does: All mutation API routes (create, update, delete) call `revalidatePath` to immediately invalidate the ISR cache for `/setlists` and `/songs`, so edits appear instantly on list pages instead of waiting up to 30 seconds.
+What it does: All mutation API routes (create, update, delete) call `revalidatePath` and `revalidateTag` to immediately invalidate the ISR cache for `/setlists`, `/setlists/[id]` and `/songs`, so edits appear instantly on list and detail pages instead of waiting up to 30 seconds. Chord and song edits also invalidate the `setlists` tag (both setlist list and detail pages render songs + their chords), so a refresh after another user edits a chord chart shows the updated chords instead of the cached copy.
+Status: working
+
+## Real-time collaborative chord editing
+Where: `lib/hooks/use-song-collaboration.ts`, `components/ui/PresenceAvatars.tsx`, `components/setlists/setlist-detail/ChordsViewer.tsx`, `components/songs/SongCard.tsx`
+What it does: While a song's chords (or a setlist section's Key) are open, edits broadcast live to everyone viewing the same song about 2s after typing pauses, shown as a distinct "editing" preview highlight until the change is saved and confirmed. Presence avatars show who else is viewing the song. A toast fires when another user updates a field you are actively editing. Guests can watch live updates but cannot send them.
+Status: working
+
+## Collapsible lyrics viewer
+Where: `components/setlists/setlist-detail/LyricsViewer.tsx`
+What it does: Each song's lyrics in the lineup lyrics viewer collapse by default; tapping a song title toggles its lyrics open (with a rotating chevron), so long songs no longer flood the view. Only one song shows at a time — expanding another automatically collapses the previous one, and the viewer scrolls the expanded song into the center of the screen. Copy and Key controls stay visible whether collapsed or not. A hint at the top explains how to expand songs, and a small zoom control (14–18px, persisted) lets users bump the lyrics size up a bit without the full chord-zoom range.
 Status: working

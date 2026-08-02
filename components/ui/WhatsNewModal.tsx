@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Portal from "@/components/shared/Portal";
-import { CURRENT_VERSION, RELEASES } from "@/lib/whatsNew";
+import { RELEASES } from "@/lib/whatsNew";
 import type { WhatsNewRelease, WhatsNewUpdate } from "@/lib/whatsNew";
 
 type Props = {
@@ -10,20 +10,19 @@ type Props = {
   onClose: () => void;
 };
 
-const STORAGE_KEY = "whatsnew-last-viewed";
+const STORAGE_KEY = "whatsnew-seen";
 
 export function markWhatsNewViewed() {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, CURRENT_VERSION);
+    localStorage.setItem(STORAGE_KEY, "1");
   } catch {}
 }
 
 export function hasUnseenUpdates(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    const lastViewed = localStorage.getItem(STORAGE_KEY);
-    return lastViewed !== CURRENT_VERSION;
+    return localStorage.getItem(STORAGE_KEY) !== "1";
   } catch {
     return false;
   }
@@ -150,16 +149,9 @@ function CategoryBadge({ label }: { label: string }) {
   );
 }
 
-function FeatureCard({ update, index }: { update: WhatsNewUpdate; index: number }) {
+function FeatureCard({ update }: { update: WhatsNewUpdate }) {
   return (
-    <div
-      className="flex gap-3 animate-fade-in"
-      style={{
-        animationDelay: `${index * 60}ms`,
-        animationFillMode: "backwards",
-        animationDuration: "0.35s",
-      }}
-    >
+    <div className="flex gap-3">
       <FeatureIcon icon={update.icon} />
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap gap-1 mb-1">
@@ -268,7 +260,7 @@ function VersionSection({
                 }}
               />
             )}
-            <FeatureCard update={update} index={i} />
+            <FeatureCard update={update} />
           </div>
         ))}
       </div>
