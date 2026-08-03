@@ -50,11 +50,24 @@ export async function PATCH(
     if (body.lyrics !== undefined) updateFields.lyrics = body.lyrics;
     if (body.chords !== undefined) updateFields.chords = body.chords;
 
-    const hasAllDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);
     if (body.status !== undefined) {
       updateFields.status = body.status;
-    } else if (hasAllDetails) {
-      updateFields.status = "published";
+    } else {
+      const { data: existing } = await supabase
+        .from("songs")
+        .select("title, author, default_key, lyrics, chords")
+        .eq("id", id)
+        .single();
+
+      const merged = {
+        title: body.title !== undefined ? body.title : existing?.title,
+        author: body.author !== undefined ? body.author : existing?.author,
+        default_key: body.default_key !== undefined ? body.default_key : existing?.default_key,
+        lyrics: body.lyrics !== undefined ? body.lyrics : existing?.lyrics,
+        chords: body.chords !== undefined ? body.chords : existing?.chords,
+      };
+      const hasAllDetails = !!(merged.title && merged.author && merged.default_key && merged.lyrics && merged.chords);
+      updateFields.status = hasAllDetails ? "published" : "draft";
     }
 
     const { data, error } = await supabase

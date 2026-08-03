@@ -56,12 +56,13 @@ Always use monospace font family `'Courier New', Courier, monospace` for chords 
 ## Auto-publish logic
 
 A song auto-publishes (status `"published"`) when ALL of these are non-null:
+- `title`
+- `author`
 - `default_key`
-- `default_bpm`
-- `default_time_signature`
 - `lyrics`
+- `chords`
 
-Otherwise status stays `"draft"`.
+Otherwise status stays `"draft"`. `default_bpm` and `default_time_signature` do not affect draft status — a song missing only BPM and/or time signature stays published.
 
 ## BPM
 

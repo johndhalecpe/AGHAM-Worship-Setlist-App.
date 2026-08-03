@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
 
-  const hasDetails = !!(body.default_key && body.default_bpm && body.default_time_signature && body.lyrics);
+  const hasDetails = !!(body.title && body.author && body.default_key && body.lyrics && body.chords);
   const status = hasDetails ? "published" : "draft";
 
   const { data, error } = await supabase

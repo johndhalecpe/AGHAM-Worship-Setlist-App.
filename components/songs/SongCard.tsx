@@ -162,9 +162,9 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
   const missingDetails: string[] = [];
   if (isDraft) {
+    if (!song.title) missingDetails.push("Title");
+    if (!song.author) missingDetails.push("Author");
     if (!song.default_key) missingDetails.push("Key");
-    if (!song.default_bpm) missingDetails.push("BPM");
-    if (!song.default_time_signature) missingDetails.push("Time");
   }
 
   return (
