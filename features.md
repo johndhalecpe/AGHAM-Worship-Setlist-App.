@@ -5,7 +5,7 @@ Status: working
 
 ## Song library
 Where: `app/(main)/songs/`, `components/songs/`
-What it does: Add, edit, and search songs with metadata (key, bpm, time signature, category, language, lyrics, chords).
+What it does: Add, edit, and search songs with metadata (key, bpm, time signature, category, language, lyrics, chords). Category tab bar (All / Worship / Praise / Other / Draft) filters the list with the active tab persisted in the URL as `?category=`; Worship and Praise sub-group into English/Filipino sections that preview the first 5 songs with a Show all / Show less toggle (expanded state persisted per user in localStorage, Other renders flat). Locked-library banner is a slim expandable bar.
 Status: working
 
 ## Section-based lineup builder

@@ -189,36 +189,40 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleShowLyrics}
-              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-1"
+              disabled={loadingLyrics}
+              aria-label={showLyrics ? "Hide lyrics" : "Show lyrics"}
+              title={showLyrics ? "Hide lyrics" : "Show lyrics"}
+              className="rounded-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
               style={{
                 backgroundColor: showLyrics ? "var(--color-accent)" : "transparent",
                 color: showLyrics ? "var(--color-text-on-accent)" : "var(--color-accent)",
                 border: showLyrics ? "none" : "1.5px solid var(--color-accent)",
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                 <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
               </svg>
-              {loadingLyrics ? "..." : showLyrics ? "Hide" : "Lyrics"}
             </button>
             <button
               onClick={handleShowChords}
-              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-1"
+              disabled={loadingChords}
+              aria-label={showChords ? "Hide chords" : "Show chords"}
+              title={showChords ? "Hide chords" : "Show chords"}
+              className="rounded-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
               style={{
                 backgroundColor: showChords ? "var(--color-accent-secondary)" : "transparent",
                 color: showChords ? "var(--color-text-on-accent-secondary)" : "var(--color-accent-secondary)",
                 border: showChords ? "none" : "1.5px solid var(--color-accent-secondary)",
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                 <path d="M9 4.318A1 1 0 0 1 10.366 3.5l5.19 1.298A1 1 0 0 1 16 5.75v8.534a2.5 2.5 0 0 1-1.744 2.394l-1.838.613a2.5 2.5 0 0 1-3.156-1.662l-.747-2.611A2.5 2.5 0 0 1 9 10.358V4.318Z" />
               </svg>
-              {loadingChords ? "..." : showChords ? "Hide" : "Chords"}
             </button>
             <div className={`flex items-center gap-1 ${guestLocked ? "invisible" : ""}`}>
               <button
                 onClick={() => onEditRequest?.(song.id)}
-                className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
                 style={{ color: "var(--color-accent)" }}
                 aria-label="Edit song"
               >
@@ -230,7 +234,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5 disabled:opacity-50 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5 disabled:opacity-50 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
                 style={{ color: "#DC2626" }}
                 aria-label="Delete song"
               >

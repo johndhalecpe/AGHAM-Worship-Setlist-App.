@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { SongListItem } from "@/lib/type";
@@ -33,7 +34,9 @@ export default async function SongsPage() {
       >
         Song Library
       </h2>
-      <SongsGroupedView songs={songs} />
+      <Suspense fallback={null}>
+        <SongsGroupedView songs={songs} />
+      </Suspense>
     </div>
   );
 }
