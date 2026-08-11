@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SongListItem } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
 import {
   COLLAB_SAVE_DELAY_MS,
   useSongCollaboration,
@@ -63,6 +64,11 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
       if (chordsDraftTimer.current) clearTimeout(chordsDraftTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    setRealtimeEditing("songs", editingChords);
+    return () => setRealtimeEditing("songs", false);
+  }, [editingChords]);
 
   const chordsPreview = liveFields["chords"];
 
@@ -154,7 +160,8 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     toast.success("Chords saved");
     setSaving(false);
     setEditingChords(false);
-    router.refresh();
+    markLocalWrite("songs");
+    setRealtimeEditing("songs", false);
   }
 
   const showCategoryBadge = !isPredefinedCategory(song.category) && song.category;
