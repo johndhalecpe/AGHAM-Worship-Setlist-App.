@@ -8,6 +8,7 @@ import { SetlistWithSections } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import SetlistPreviewCard from "./SetlistPreviewCard";
+import QuickSongLookup from "./QuickSongLookup";
 
 function Greeting() {
   const [name, setName] = useState("");
@@ -136,6 +137,9 @@ export default function SetlistList({ setlists }: SetlistListProps) {
   return (
     <div>
       <Greeting />
+      <div className="mb-6">
+        <QuickSongLookup />
+      </div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <h2
           className="text-lg sm:text-xl font-bold"
