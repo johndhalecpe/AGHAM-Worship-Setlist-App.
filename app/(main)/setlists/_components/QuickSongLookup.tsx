@@ -111,6 +111,12 @@ export default function QuickSongLookup() {
 
   return (
     <div ref={wrapperRef} className="relative">
+      <p
+        className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
+        Quick Search
+      </p>
       <div
         className="rounded-xl flex items-center gap-2 px-3 sm:px-4 transition-all"
         style={{
@@ -170,8 +176,10 @@ export default function QuickSongLookup() {
           autoCapitalize="off"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="Search chords or lyrics..."
-          className="w-full py-2.5 sm:py-3 text-sm bg-transparent outline-none min-h-[44px]"
+          placeholder={
+            mode === "chords" ? "Quick Search Chords" : "Quick Search Lyrics"
+          }
+          className="w-full py-2.5 sm:py-3 text-[13px] bg-transparent outline-none min-h-[44px]"
           style={{ color: "var(--color-text)" }}
           onFocus={(e) => {
             const border = e.currentTarget.closest("div");
