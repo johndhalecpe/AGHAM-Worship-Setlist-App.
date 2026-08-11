@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
+import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import {
   useSongCollaboration,
@@ -39,9 +40,10 @@ export default function ChordsViewer({
 }: Props) {
   const isGuest = useIsGuest();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [internalSections, setInternalSections] = useState(sections);
   const filtered = useMemo(
-    () => sections.filter((s) => s.section_type === sectionType),
-    [sections, sectionType]
+    () => internalSections.filter((s) => s.section_type === sectionType),
+    [internalSections, sectionType]
   );
   const filteredSongIds = useMemo(() => {
     const seen = new Set<string>();
@@ -58,7 +60,41 @@ export default function ChordsViewer({
   const focusedFieldRef = useRef<string | null>(null);
   const editingSong = editingKeyId ? filtered.find((s) => s.id === editingKeyId) ?? null : null;
   const [focusedInput, setFocusedInput] = useState(false);
+  const [editingChordId, setEditingChordId] = useState<string | null>(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  useEffect(() => {
+    setRealtimeEditing("setlist_sections", editingKeyId !== null);
+  }, [editingKeyId]);
+
+  useEffect(() => {
+    setInternalSections((prev) => {
+      if (prev === sections) return prev;
+      let changed = false;
+      const next = sections.map((incoming) => {
+        const existing = prev.find((p) => p.id === incoming.id);
+        if (!existing) return incoming;
+        const draft = chordEditsRef.current[`${incoming.id}-chords`];
+        const chordEditing = editingChordId === incoming.id;
+        const keyEditing = editingKeyId === incoming.id;
+        if (existing === incoming && draft === undefined && !chordEditing && !keyEditing) {
+          return existing;
+        }
+        changed = true;
+        if (draft !== undefined || chordEditing) {
+          return {
+            ...incoming,
+            songs: { ...incoming.songs, chords: draft ?? existing.songs.chords },
+          };
+        }
+        if (keyEditing) {
+          return { ...incoming, song_key: existing.song_key };
+        }
+        return incoming;
+      });
+      return changed ? next : prev;
+    });
+  }, [sections, editingKeyId, editingChordId]);
 
   const { liveFields, presentBySong, selfId, broadcastField, clearPreview } =
     useSongCollaboration(filteredSongIds, {
@@ -100,6 +136,7 @@ export default function ChordsViewer({
       toast.error("Failed to update key");
       return;
     }
+    markLocalWrite("setlist_sections");
     broadcastField(s.songs.id, `${s.id}-song_key`, key);
     clearPreview(`${s.id}-song_key`);
     onSectionsChange((prev) =>
@@ -132,6 +169,7 @@ export default function ChordsViewer({
       toast.error(`Failed to save chords for "${s.songs.title}"`);
       return;
     }
+    markLocalWrite("songs");
     clearDraft();
     clearPreview(fieldKey);
     onSectionsChange((prev) =>
@@ -227,6 +265,8 @@ export default function ChordsViewer({
             if (isGuest) { e.target.blur(); toast.error("Guests can't edit lineups"); return; }
             focusedFieldRef.current = fieldKey;
             setFocusedInput(true);
+            setEditingChordId(s.id);
+            setRealtimeEditing("songs", true);
             const el = e.target;
             setTimeout(() => {
               el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -235,6 +275,8 @@ export default function ChordsViewer({
           onBlur={() => {
             focusedFieldRef.current = null;
             setFocusedInput(false);
+            setEditingChordId(null);
+            setRealtimeEditing("songs", false);
           }}
           placeholder="No chords available."
           className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
