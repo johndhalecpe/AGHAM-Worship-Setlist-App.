@@ -1,11 +1,11 @@
 "use client";
 
-import type { SongListItem } from "@/lib/type";
+import type { NavSong } from "@/lib/hooks/use-song-navigation";
 
 type Props = {
-  currentSong: SongListItem | null;
-  prevSong: SongListItem | null;
-  nextSong: SongListItem | null;
+  currentSong: NavSong | null;
+  prevSong: NavSong | null;
+  nextSong: NavSong | null;
   hasPrevious: boolean;
   hasNext: boolean;
   currentIndex: number;

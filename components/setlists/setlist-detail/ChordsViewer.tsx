@@ -6,11 +6,13 @@ import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
+import { SONG_NAV_PREFETCH_CACHE, useSongNavigation } from "@/lib/hooks/use-song-navigation";
 import {
   useSongCollaboration,
 } from "@/lib/hooks/use-song-collaboration";
 import KeyPicker from "@/components/ui/KeyPicker";
 import PresenceAvatars from "@/components/ui/PresenceAvatars";
+import SongNavBar from "./SongNavBar";
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
 
@@ -50,6 +52,51 @@ export default function ChordsViewer({
     for (const s of filtered) seen.add(s.songs.id);
     return Array.from(seen);
   }, [filtered]);
+  const orderedSongs = useMemo(() => filtered.map((s) => s.songs), [filtered]);
+  const {
+    currentSong,
+    currentIndex,
+    prevSong,
+    nextSong,
+    hasPrevious,
+    hasNext,
+    goPrevious,
+    goNext,
+  } = useSongNavigation(orderedSongs, null);
+  const currentSection = filtered[currentIndex] ?? null;
+
+  useEffect(() => {
+    for (const neighbor of [prevSong, nextSong]) {
+      if (neighbor && !SONG_NAV_PREFETCH_CACHE.has(neighbor.id)) {
+        fetch(`/api/songs/${neighbor.id}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data?.id) SONG_NAV_PREFETCH_CACHE.set(data.id, data);
+          })
+          .catch(() => undefined);
+      }
+    }
+  }, [prevSong, nextSong]);
+
+  function flushCurrentSectionDraft() {
+    if (!currentSection) return;
+    const edited = chordEditsRef.current[`${currentSection.id}-chords`];
+    if (edited !== undefined) {
+      chordsQueueRef.current = chordsQueueRef.current
+        .catch(() => {})
+        .then(() => saveChordField(currentSection, edited));
+    }
+  }
+
+  const handleGoPrevious = () => {
+    flushCurrentSectionDraft();
+    goPrevious();
+  };
+
+  const handleGoNext = () => {
+    flushCurrentSectionDraft();
+    goNext();
+  };
   const [zoomIndex, setZoomIndex] = usePersistentState("chords-viewer:zoom-index", 3);
   const [chordEdits, setChordEdits] = useState<Record<string, string>>({});
   const chordEditsRef = useRef(chordEdits);
@@ -403,24 +450,33 @@ export default function ChordsViewer({
         </div>
 
         <div className="flex flex-col">
-          {filtered.map((s, i) => (
-            <div key={s.id}>
-              {i > 0 && <hr className="mb-4" style={{ borderColor: "var(--color-border)" }} />}
-              <div className="rounded-lg p-4">
-                {renderSongHeader(s)}
-                {s.notes && (
-                  <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                    &ldquo;{s.notes}&rdquo;
-                  </p>
-                )}
-                {renderChordsTextarea(s)}
-              </div>
+          {currentSection ? (
+            <div key={currentSection.id} className="rounded-lg p-4">
+              {renderSongHeader(currentSection)}
+              {currentSection.notes && (
+                <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
+                  &ldquo;{currentSection.notes}&rdquo;
+                </p>
+              )}
+              {renderChordsTextarea(currentSection)}
             </div>
-          ))}
-          {filtered.length === 0 && (
+          ) : (
             <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
               No songs in this section.
             </p>
+          )}
+          {filtered.length > 1 && currentSection && (
+            <SongNavBar
+              currentSong={currentSong}
+              prevSong={prevSong}
+              nextSong={nextSong}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
+              currentIndex={currentIndex}
+              totalCount={filtered.length}
+              onPrevious={handleGoPrevious}
+              onNext={handleGoNext}
+            />
           )}
         </div>
       </div>

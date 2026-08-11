@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Setlist, SetlistSectionWithSong, Song, SetlistViewerState } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
@@ -499,21 +499,25 @@ export default function SetlistSections({
         </div>
       )}
       {viewer?.kind === "chords" && (
-        <ChordsViewer
-          setlist={setlist}
-          sections={sections}
-          sectionType={viewer.sectionType}
-          isPast={isPast}
-          onClose={() => setViewer(null)}
-          onSectionsChange={onSectionsChange}
-        />
+        <Suspense fallback={null}>
+          <ChordsViewer
+            setlist={setlist}
+            sections={sections}
+            sectionType={viewer.sectionType}
+            isPast={isPast}
+            onClose={() => setViewer(null)}
+            onSectionsChange={onSectionsChange}
+          />
+        </Suspense>
       )}
       {viewer?.kind === "lyrics" && (
-        <LyricsViewer
-          sections={sections}
-          sectionType={viewer.sectionType}
-          onClose={() => setViewer(null)}
-        />
+        <Suspense fallback={null}>
+          <LyricsViewer
+            sections={sections}
+            sectionType={viewer.sectionType}
+            onClose={() => setViewer(null)}
+          />
+        </Suspense>
       )}
       {editingSong && (
         <div

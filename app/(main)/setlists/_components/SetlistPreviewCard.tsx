@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -659,21 +659,25 @@ export default function SetlistPreviewCard({
       </div>
 
       {viewer?.kind === "chords" && (
-        <ChordsViewer
-          setlist={setlist}
-          sections={sections}
-          sectionType={viewer.sectionType}
-          onClose={() => setViewer(null)}
-          onSectionsChange={(updater) => setSections(updater)}
-        />
+        <Suspense fallback={null}>
+          <ChordsViewer
+            setlist={setlist}
+            sections={sections}
+            sectionType={viewer.sectionType}
+            onClose={() => setViewer(null)}
+            onSectionsChange={(updater) => setSections(updater)}
+          />
+        </Suspense>
       )}
 
       {viewer?.kind === "lyrics" && (
-        <LyricsViewer
-          sections={sections}
-          sectionType={viewer.sectionType}
-          onClose={() => setViewer(null)}
-        />
+        <Suspense fallback={null}>
+          <LyricsViewer
+            sections={sections}
+            sectionType={viewer.sectionType}
+            onClose={() => setViewer(null)}
+          />
+        </Suspense>
       )}
     </>
   );

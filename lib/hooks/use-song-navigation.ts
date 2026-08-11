@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Song, SongListItem } from "@/lib/type";
+import type { Song } from "@/lib/type";
 
 /** Module-level in-memory session cache of prefetched songs (id -> full song incl. chords). */
 export const SONG_NAV_PREFETCH_CACHE = new Map<string, Song>();
 
+/** Minimal song shape the nav needs (id for URL matching, title for the bar labels). */
+export type NavSong = Pick<Song, "id" | "title">;
+
 export interface UseSongNavigationReturn {
-  currentSong: SongListItem | null;
+  currentSong: NavSong | null;
   currentIndex: number;
-  prevSong: SongListItem | null;
-  nextSong: SongListItem | null;
+  prevSong: NavSong | null;
+  nextSong: NavSong | null;
   hasPrevious: boolean;
   hasNext: boolean;
   goPrevious(): void;
@@ -28,7 +31,7 @@ export interface UseSongNavigationReturn {
  * this hook inside one (see SongsGroupedView for the established pattern).
  */
 export function useSongNavigation(
-  orderedSongs: SongListItem[],
+  orderedSongs: NavSong[],
   initialSongId?: string | null
 ): UseSongNavigationReturn {
   const router = useRouter();
