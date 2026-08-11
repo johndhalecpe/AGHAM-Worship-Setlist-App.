@@ -114,6 +114,17 @@ export default function ChordsViewer({
     setRealtimeEditing("setlist_sections", editingKeyId !== null);
   }, [editingKeyId]);
 
+  const songRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const currentSectionId = currentSection?.id ?? null;
+
+  useEffect(() => {
+    if (editingChordId !== null) return;
+    const el = currentSectionId ? songRefs.current[currentSectionId] : null;
+    if (el) {
+      el.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+  }, [currentIndex, currentSectionId, editingChordId]);
+
   useEffect(() => {
     setInternalSections((prev) => {
       if (prev === sections) return prev;
@@ -450,22 +461,28 @@ export default function ChordsViewer({
         </div>
 
         <div className="flex flex-col">
-          {currentSection ? (
-            <div key={currentSection.id} className="rounded-lg p-4">
-              {renderSongHeader(currentSection)}
-              {currentSection.notes && (
-                <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                  &ldquo;{currentSection.notes}&rdquo;
-                </p>
+          {filtered.map((s, i) => (
+            <div key={s.id} ref={(el) => { songRefs.current[s.id] = el; }}>
+              {i > 0 && (
+                <hr className="mb-4" style={{ borderColor: "var(--color-border)" }} />
               )}
-              {renderChordsTextarea(currentSection)}
+              <div className="rounded-lg p-4">
+                {renderSongHeader(s)}
+                {s.notes && (
+                  <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
+                    &ldquo;{s.notes}&rdquo;
+                  </p>
+                )}
+                {renderChordsTextarea(s)}
+              </div>
             </div>
-          ) : (
+          ))}
+          {filtered.length === 0 && (
             <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
               No songs in this section.
             </p>
           )}
-          {filtered.length > 1 && currentSection && (
+          {filtered.length > 1 && (
             <SongNavBar
               currentSong={currentSong}
               prevSong={prevSong}
