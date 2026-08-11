@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const searchTitle = searchParams.get("search");
+    const mode = searchParams.get("mode");
 
     let supabaseQuery = supabase
       .from("songs")
@@ -14,9 +15,15 @@ export async function GET(request: Request) {
       .order("title", { ascending: true });
 
     if (searchTitle) {
-      supabaseQuery = supabaseQuery.or(
-        `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,lyrics.ilike.%${searchTitle}%`
-      );
+      if (mode === "chords") {
+        supabaseQuery = supabaseQuery.or(
+          `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,chords.ilike.%${searchTitle}%`
+        );
+      } else {
+        supabaseQuery = supabaseQuery.or(
+          `title.ilike.%${searchTitle}%,author.ilike.%${searchTitle}%,lyrics.ilike.%${searchTitle}%`
+        );
+      }
     }
 
     const { data, error } = await supabaseQuery;
