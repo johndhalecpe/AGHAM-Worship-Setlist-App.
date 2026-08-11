@@ -19,6 +19,7 @@ export interface UseSongNavigationReturn {
   hasNext: boolean;
   goPrevious(): void;
   goNext(): void;
+  goTo(songId: string): void;
 }
 
 /**
@@ -75,6 +76,15 @@ export function useSongNavigation(
     }
   }, [nextSong, router]);
 
+  const goTo = useCallback(
+    (songId: string) => {
+      if (orderedSongs.some((s) => s.id === songId)) {
+        router.replace(`?song=${songId}`, { scroll: false });
+      }
+    },
+    [orderedSongs, router]
+  );
+
   return {
     currentSong,
     currentIndex,
@@ -84,5 +94,6 @@ export function useSongNavigation(
     hasNext,
     goPrevious,
     goNext,
+    goTo,
   };
 }

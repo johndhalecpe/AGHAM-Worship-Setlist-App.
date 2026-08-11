@@ -1,11 +1,6 @@
 "use client";
 
-import type { NavSong } from "@/lib/hooks/use-song-navigation";
-
 type Props = {
-  currentSong: NavSong | null;
-  prevSong: NavSong | null;
-  nextSong: NavSong | null;
   hasPrevious: boolean;
   hasNext: boolean;
   currentIndex: number;
@@ -15,7 +10,6 @@ type Props = {
 };
 
 export default function SongNavBar({
-  prevSong,
   hasPrevious,
   hasNext,
   currentIndex,
@@ -44,12 +38,6 @@ export default function SongNavBar({
         Previous
       </button>
       <div className="flex flex-col items-center min-w-0 text-center">
-        <span
-          className="text-xs truncate max-w-[40vw]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {prevSong?.title ?? ""}
-        </span>
         <span
           className="text-xs font-medium tabular-nums"
           style={{ color: "var(--color-text-secondary)" }}

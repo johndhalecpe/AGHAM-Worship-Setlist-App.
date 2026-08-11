@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FocusEvent,
+} from "react";
 import { toast } from "sonner";
 import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
@@ -9,6 +18,8 @@ import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { SONG_NAV_PREFETCH_CACHE, useSongNavigation } from "@/lib/hooks/use-song-navigation";
 import {
   useSongCollaboration,
+  type LiveField,
+  type PresenceMember,
 } from "@/lib/hooks/use-song-collaboration";
 import KeyPicker from "@/components/ui/KeyPicker";
 import PresenceAvatars from "@/components/ui/PresenceAvatars";
@@ -22,6 +33,141 @@ const SECTION_LABELS: Record<string, string> = {
   tithes_offering: "Tithes and offering",
   special: "Special numbers",
 };
+
+const EMPTY_PRESENCE_MEMBERS: PresenceMember[] = [];
+
+type SongBlockProps = {
+  section: SetlistSectionWithSong;
+  showDivider: boolean;
+  fontSize: number;
+  isPast: boolean;
+  isGuest: boolean;
+  chordDraft: string | undefined;
+  chordPreview: LiveField | undefined;
+  keyPreview: LiveField | undefined;
+  members: PresenceMember[];
+  selfId: string;
+  registerRef: (sectionId: string, el: HTMLDivElement | null) => void;
+  onChordsChange: (sectionId: string, value: string) => void;
+  onChordsFocus: (sectionId: string, e: FocusEvent<HTMLTextAreaElement>) => void;
+  onChordsBlur: () => void;
+  onStartKeyEdit: (sectionId: string) => void;
+};
+
+const SongBlock = memo(function SongBlock({
+  section,
+  showDivider,
+  fontSize,
+  isPast,
+  isGuest,
+  chordDraft,
+  chordPreview,
+  keyPreview,
+  members,
+  selfId,
+  registerRef,
+  onChordsChange,
+  onChordsFocus,
+  onChordsBlur,
+  onStartKeyEdit,
+}: SongBlockProps) {
+  const fieldKey = `${section.id}-chords`;
+  const showPreview = chordPreview !== undefined && chordDraft === undefined;
+  const value = chordDraft ?? chordPreview?.value ?? section.songs.chords ?? "";
+  const displayedKey = keyPreview?.value ?? section.song_key ?? section.songs.default_key ?? "G";
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [value, fontSize]);
+
+  const rootRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      registerRef(section.id, el);
+    },
+    [registerRef, section.id]
+  );
+
+  return (
+    <div ref={rootRef}>
+      {showDivider && (
+        <hr className="mb-4" style={{ borderColor: "var(--color-border)" }} />
+      )}
+      <div className="rounded-lg p-4">
+        <div className="mb-2">
+          <h3 className="text-base font-semibold break-words" style={{ color: "var(--color-text)" }}>
+            {section.songs.title}
+          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {section.songs.author && (
+                <p className="text-xs truncate" style={{ color: "var(--color-text-tertiary)" }}>
+                  {section.songs.author}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <PresenceAvatars members={members} selfId={selfId} />
+              <button
+                onClick={() => { if (!isPast && !isGuest) onStartKeyEdit(section.id); }}
+                disabled={isPast || isGuest}
+                className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+                style={{
+                  backgroundColor: "var(--color-badge-key)",
+                  color: "var(--color-badge-key-text)",
+                }}
+              >
+                Key: {displayedKey}
+              </button>
+            </div>
+          </div>
+          {keyPreview && (
+            <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
+              {keyPreview.authorName} is updating the key&hellip;
+            </p>
+          )}
+        </div>
+        {section.notes && (
+          <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
+            &ldquo;{section.notes}&rdquo;
+          </p>
+        )}
+        <textarea
+          ref={textareaRef}
+          name={fieldKey}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          autoCapitalize="off"
+          value={value}
+          onChange={(e) => onChordsChange(section.id, e.target.value)}
+          readOnly={isPast || isGuest}
+          onFocus={(e) => onChordsFocus(section.id, e)}
+          onBlur={onChordsBlur}
+          placeholder="No chords available."
+          className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
+          style={{
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize,
+            fontWeight: "bold",
+            border: `1px solid ${showPreview ? "var(--color-preview-text)" : "var(--color-border)"}`,
+            backgroundColor: showPreview ? "var(--color-preview)" : "var(--color-surface-card)",
+            color: "var(--color-chord-text)",
+          }}
+        />
+        {showPreview && (
+          <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
+            {chordPreview.authorName} is editing&hellip;
+          </p>
+        )}
+      </div>
+    </div>
+  );
+});
 
 type Props = {
   setlist: Setlist;
@@ -60,10 +206,11 @@ export default function ChordsViewer({
     nextSong,
     hasPrevious,
     hasNext,
-    goPrevious,
-    goNext,
+    goTo,
   } = useSongNavigation(orderedSongs, null);
   const currentSection = filtered[currentIndex] ?? null;
+  const prevSection = currentIndex > 0 ? filtered[currentIndex - 1] : null;
+  const nextSection = currentIndex < filtered.length - 1 ? filtered[currentIndex + 1] : null;
 
   useEffect(() => {
     for (const neighbor of [prevSong, nextSong]) {
@@ -88,14 +235,30 @@ export default function ChordsViewer({
     }
   }
 
+  const scrollToSong = (sectionId: string) => {
+    songRefs.current[sectionId]?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
+
+  const suppressScrollSyncRef = useRef(false);
+
   const handleGoPrevious = () => {
     flushCurrentSectionDraft();
-    goPrevious();
+    if (prevSection) {
+      suppressScrollSyncRef.current = true;
+      window.setTimeout(() => { suppressScrollSyncRef.current = false; }, 1000);
+      goTo(prevSection.songs.id);
+      scrollToSong(prevSection.id);
+    }
   };
 
   const handleGoNext = () => {
     flushCurrentSectionDraft();
-    goNext();
+    if (nextSection) {
+      suppressScrollSyncRef.current = true;
+      window.setTimeout(() => { suppressScrollSyncRef.current = false; }, 1000);
+      goTo(nextSection.songs.id);
+      scrollToSong(nextSection.id);
+    }
   };
   const [zoomIndex, setZoomIndex] = usePersistentState("chords-viewer:zoom-index", 3);
   const [chordEdits, setChordEdits] = useState<Record<string, string>>({});
@@ -115,15 +278,52 @@ export default function ChordsViewer({
   }, [editingKeyId]);
 
   const songRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const filteredRef = useRef(filtered);
+  filteredRef.current = filtered;
+  const isGuestRef = useRef(isGuest);
+  isGuestRef.current = isGuest;
   const currentSectionId = currentSection?.id ?? null;
+  const currentSongId = currentSong?.id ?? null;
+  const [initialSectionId] = useState(currentSectionId);
+  const [initialSongId] = useState(() =>
+    initialSectionId
+      ? filtered.find((s) => s.id === initialSectionId)?.songs.id ?? null
+      : null
+  );
 
   useEffect(() => {
-    if (editingChordId !== null) return;
-    const el = currentSectionId ? songRefs.current[currentSectionId] : null;
-    if (el) {
-      el.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (initialSectionId && initialSongId) {
+      songRefs.current[initialSectionId]?.scrollIntoView({ block: "start" });
+      goTo(initialSongId);
     }
-  }, [currentIndex, currentSectionId, editingChordId]);
+  }, [initialSectionId, initialSongId, goTo]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || filtered.length === 0) return;
+    let ticking = false;
+    const sync = () => {
+      ticking = false;
+      if (suppressScrollSyncRef.current) return;
+      const line = container.getBoundingClientRect().top;
+      let detected: SetlistSectionWithSong | null = null;
+      for (const s of filtered) {
+        const el = songRefs.current[s.id];
+        if (!el) continue;
+        if (el.getBoundingClientRect().bottom > line) { detected = s; break; }
+      }
+      if (detected && detected.songs.id !== currentSongId) {
+        goTo(detected.songs.id);
+      }
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(sync);
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [filtered, goTo, currentSongId]);
 
   useEffect(() => {
     setInternalSections((prev) => {
@@ -237,6 +437,9 @@ export default function ChordsViewer({
     );
   }
 
+  const saveChordFieldRef = useRef(saveChordField);
+  saveChordFieldRef.current = saveChordField;
+
   async function flushDirtyChordFields() {
     for (const s of filtered) {
       const edited = chordEditsRef.current[`${s.id}-chords`];
@@ -250,15 +453,18 @@ export default function ChordsViewer({
     isDirtyRef.current = false;
   }
 
-  function handleChordsChange(s: SetlistSectionWithSong, value: string) {
-    if (isGuest) return;
-    const fieldKey = `${s.id}-chords`;
+  const handleChordsChange = useCallback((sectionId: string, value: string) => {
+    if (isGuestRef.current) return;
+    const fieldKey = `${sectionId}-chords`;
     isDirtyRef.current = true;
     setChordEdits((prev) => ({ ...prev, [fieldKey]: value }));
     chordsQueueRef.current = chordsQueueRef.current
       .catch(() => {})
-      .then(() => saveChordField(s, value));
-  }
+      .then(() => {
+        const s = filteredRef.current.find((sec) => sec.id === sectionId);
+        if (s) return saveChordFieldRef.current(s, value);
+      });
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -297,105 +503,34 @@ export default function ChordsViewer({
 
   const fontSize = ZOOM_STEPS[zoomIndex];
 
-  function renderChordsTextarea(s: SetlistSectionWithSong) {
-    const fieldKey = `${s.id}-chords`;
-    const draft = chordEdits[fieldKey];
-    const preview = liveFields[fieldKey];
-    const showPreview = preview !== undefined && draft === undefined;
-    return (
-      <>
-        <textarea
-          name={fieldKey}
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          autoCapitalize="off"
-          ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-          value={draft ?? preview?.value ?? s.songs.chords ?? ""}
-          onChange={(e) => {
-            handleChordsChange(s, e.target.value);
-            e.target.style.height = "auto";
-            e.target.style.height = e.target.scrollHeight + "px";
-          }}
-          readOnly={isPast || isGuest}
-          onFocus={(e) => {
-            if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); return; }
-            if (isGuest) { e.target.blur(); toast.error("Guests can't edit lineups"); return; }
-            focusedFieldRef.current = fieldKey;
-            setFocusedInput(true);
-            setEditingChordId(s.id);
-            setRealtimeEditing("songs", true);
-            const el = e.target;
-            setTimeout(() => {
-              el.scrollIntoView({ block: "center", behavior: "smooth" });
-            }, 300);
-          }}
-          onBlur={() => {
-            focusedFieldRef.current = null;
-            setFocusedInput(false);
-            setEditingChordId(null);
-            setRealtimeEditing("songs", false);
-          }}
-          placeholder="No chords available."
-          className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
-          style={{
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize,
-            fontWeight: "bold",
-            border: `1px solid ${showPreview ? "var(--color-preview-text)" : "var(--color-border)"}`,
-            backgroundColor: showPreview ? "var(--color-preview)" : "var(--color-surface-card)",
-            color: "var(--color-chord-text)",
-          }}
-        />
-        {showPreview && (
-          <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
-            {preview.authorName} is editing&hellip;
-          </p>
-        )}
-      </>
-    );
-  }
+  const registerSongRef = useCallback((sectionId: string, el: HTMLDivElement | null) => {
+    songRefs.current[sectionId] = el;
+  }, []);
 
-  function renderSongHeader(s: SetlistSectionWithSong) {
-    const keyFieldKey = `${s.id}-song_key`;
-    const keyPreview = liveFields[keyFieldKey];
-    const displayedKey = keyPreview?.value ?? s.song_key ?? s.songs.default_key ?? "G";
-    return (
-      <div className="mb-2">
-        <h3 className="text-base font-semibold break-words" style={{ color: "var(--color-text)" }}>
-          {s.songs.title}
-        </h3>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {s.songs.author && (
-              <p className="text-xs truncate" style={{ color: "var(--color-text-tertiary)" }}>
-                {s.songs.author}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <PresenceAvatars members={presentBySong[s.songs.id] ?? []} selfId={selfId} />
-            <button
-              onClick={() => { if (!isPast && !isGuest) setEditingKeyId(s.id); }}
-              disabled={isPast || isGuest}
-              className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
-              style={{
-                backgroundColor: "var(--color-badge-key)",
-                color: "var(--color-badge-key-text)",
-              }}
-            >
-              Key: {displayedKey}
-            </button>
-          </div>
-        </div>
-        {keyPreview && (
-          <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
-            {keyPreview.authorName} is updating the key&hellip;
-          </p>
-        )}
-      </div>
-    );
-  }
+  const handleChordsFocus = useCallback((sectionId: string, e: FocusEvent<HTMLTextAreaElement>) => {
+    if (isPast) { e.target.blur(); toast.error("Can't edit past lineups"); return; }
+    if (isGuestRef.current) { e.target.blur(); toast.error("Guests can't edit lineups"); return; }
+    const fieldKey = `${sectionId}-chords`;
+    focusedFieldRef.current = fieldKey;
+    setFocusedInput(true);
+    setEditingChordId(sectionId);
+    setRealtimeEditing("songs", true);
+    const el = e.target;
+    setTimeout(() => {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 300);
+  }, [isPast]);
+
+  const handleChordsBlur = useCallback(() => {
+    focusedFieldRef.current = null;
+    setFocusedInput(false);
+    setEditingChordId(null);
+    setRealtimeEditing("songs", false);
+  }, []);
+
+  const handleStartKeyEdit = useCallback((sectionId: string) => {
+    setEditingKeyId(sectionId);
+  }, []);
 
   return (
     <div
@@ -462,20 +597,24 @@ export default function ChordsViewer({
 
         <div className="flex flex-col">
           {filtered.map((s, i) => (
-            <div key={s.id} ref={(el) => { songRefs.current[s.id] = el; }}>
-              {i > 0 && (
-                <hr className="mb-4" style={{ borderColor: "var(--color-border)" }} />
-              )}
-              <div className="rounded-lg p-4">
-                {renderSongHeader(s)}
-                {s.notes && (
-                  <p className="text-xs mb-2 italic leading-relaxed" style={{ color: "var(--color-accent)" }}>
-                    &ldquo;{s.notes}&rdquo;
-                  </p>
-                )}
-                {renderChordsTextarea(s)}
-              </div>
-            </div>
+            <SongBlock
+              key={s.id}
+              section={s}
+              showDivider={i > 0}
+              fontSize={fontSize}
+              isPast={isPast}
+              isGuest={isGuest}
+              chordDraft={chordEdits[`${s.id}-chords`]}
+              chordPreview={liveFields[`${s.id}-chords`]}
+              keyPreview={liveFields[`${s.id}-song_key`]}
+              members={presentBySong[s.songs.id] ?? EMPTY_PRESENCE_MEMBERS}
+              selfId={selfId}
+              registerRef={registerSongRef}
+              onChordsChange={handleChordsChange}
+              onChordsFocus={handleChordsFocus}
+              onChordsBlur={handleChordsBlur}
+              onStartKeyEdit={handleStartKeyEdit}
+            />
           ))}
           {filtered.length === 0 && (
             <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
@@ -484,9 +623,6 @@ export default function ChordsViewer({
           )}
           {filtered.length > 1 && (
             <SongNavBar
-              currentSong={currentSong}
-              prevSong={prevSong}
-              nextSong={nextSong}
               hasPrevious={hasPrevious}
               hasNext={hasNext}
               currentIndex={currentIndex}
