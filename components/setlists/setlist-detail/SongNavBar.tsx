@@ -19,7 +19,7 @@ export default function SongNavBar({
 }: Props) {
   return (
     <div
-      className="sticky bottom-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 py-2 flex items-center justify-between gap-3 min-h-[44px] sm:min-h-[32px] border-t backdrop-blur-xl"
+      className="sticky bottom-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 py-2 flex items-center gap-3 min-h-[44px] sm:min-h-[32px] border-t backdrop-blur-xl"
       style={{
         backgroundColor: "var(--color-surface)",
         borderColor: "var(--color-border)",
@@ -29,7 +29,7 @@ export default function SongNavBar({
         onClick={onPrevious}
         disabled={!hasPrevious}
         aria-label="Previous song"
-        className="min-w-[96px] min-h-[44px] sm:min-h-[32px] rounded-lg px-2 py-1 text-xs font-medium flex items-center justify-center transition-all disabled:opacity-40 disabled:pointer-events-none hover:opacity-80"
+        className="flex-1 min-w-0 min-h-[44px] sm:min-h-[32px] rounded-lg px-2 py-1 text-xs font-medium flex items-center justify-center transition-all disabled:opacity-40 disabled:pointer-events-none hover:opacity-80"
         style={{
           border: "1px solid var(--color-border)",
           color: "var(--color-text-secondary)",
@@ -37,9 +37,9 @@ export default function SongNavBar({
       >
         Previous
       </button>
-      <div className="flex flex-col items-center min-w-0 text-center">
+      <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center">
         <span
-          className="text-xs font-medium tabular-nums"
+          className="max-w-full truncate text-xs font-medium tabular-nums"
           style={{ color: "var(--color-text-secondary)" }}
         >
           Song {currentIndex + 1} of {totalCount}
@@ -49,7 +49,7 @@ export default function SongNavBar({
         onClick={onNext}
         disabled={!hasNext}
         aria-label="Next song"
-        className="min-w-[96px] min-h-[44px] sm:min-h-[32px] rounded-lg px-2 py-1 text-xs font-medium flex items-center justify-center transition-all disabled:opacity-40 disabled:pointer-events-none hover:opacity-80"
+        className="flex-1 min-w-0 min-h-[44px] sm:min-h-[32px] rounded-lg px-2 py-1 text-xs font-medium flex items-center justify-center transition-all disabled:opacity-40 disabled:pointer-events-none hover:opacity-80"
         style={{
           border: "1px solid var(--color-border)",
           color: "var(--color-text-secondary)",

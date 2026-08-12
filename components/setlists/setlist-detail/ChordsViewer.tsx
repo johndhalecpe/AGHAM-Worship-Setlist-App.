@@ -15,6 +15,7 @@ import { Setlist, SetlistSectionWithSong } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
+import { useVisualViewport } from "@/lib/hooks/use-visual-viewport";
 import { SONG_NAV_PREFETCH_CACHE, useSongNavigation } from "@/lib/hooks/use-song-navigation";
 import {
   useSongCollaboration,
@@ -272,6 +273,11 @@ export default function ChordsViewer({
   const [focusedInput, setFocusedInput] = useState(false);
   const [editingChordId, setEditingChordId] = useState<string | null>(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const {
+    height: visualViewportHeight,
+    offsetTop: visualViewportOffsetTop,
+    keyboardInset,
+  } = useVisualViewport();
 
   useEffect(() => {
     setRealtimeEditing("setlist_sections", editingKeyId !== null);
@@ -535,7 +541,12 @@ export default function ChordsViewer({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center cursor-pointer"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)", height: "100dvh" }}
+      style={{
+        backgroundColor: "rgba(0,0,0,0.7)",
+        ...(visualViewportHeight !== null
+          ? { top: visualViewportOffsetTop, height: visualViewportHeight }
+          : { height: "100dvh" }),
+      }}
       onClick={() => handleCloseRef.current()}
     >
       <div
@@ -544,7 +555,15 @@ export default function ChordsViewer({
         style={{
           backgroundColor: "var(--color-surface)",
           border: "1px solid var(--color-border)",
-          ...(focusedInput && isMobile ? { paddingBottom: "40dvh" } : {}),
+          ...(visualViewportHeight !== null
+            ? { maxHeight: Math.round(visualViewportHeight * 0.85) }
+            : {}),
+          ...(focusedInput && isMobile
+            ? {
+                paddingBottom:
+                  visualViewportHeight !== null ? keyboardInset : "40dvh",
+              }
+            : {}),
         }}
         onClick={(e) => e.stopPropagation()}
       >
