@@ -65,7 +65,7 @@ Status: working
 
 ## Mobile-responsive UI
 Where: `components/layout/Header.tsx`, `components/songs/SongCard.tsx`, `components/setlists/setlist-detail/`, `components/ui/`
-What it does: Full responsive design with hamburger drawer menu on mobile, WCAG-compliant 44px minimum touch targets on all interactive elements, safe-area-inset padding for notched phones, viewport-fit=cover meta tag, and `@media (pointer: coarse)` scrollbar sizing. Bottom-sheet modals (ChordsViewer, LyricsViewer) include safe-area padding and use dvh units. The chord editor sizes its overlay and sheet against the live `visualViewport` (dvh fallback), so the sheet shrinks and adds exact keyboard-height bottom padding when the on-screen keyboard opens. The sticky Previous/Next song navigation bar uses an equal-width three-column layout (Previous - "Song X of Y" - Next).
+What it does: Full responsive design with hamburger drawer menu on mobile, WCAG-compliant 44px minimum touch targets on all interactive elements, safe-area-inset padding for notched phones, viewport-fit=cover meta tag, and `@media (pointer: coarse)` scrollbar sizing. Bottom-sheet modals (ChordsViewer, LyricsViewer) include safe-area padding and use dvh units. The chord editor sizes its overlay and sheet against the live `visualViewport` (dvh fallback), so the sheet shrinks to sit above the on-screen keyboard. The Previous/Next song navigation bar uses an equal-width three-column layout (Previous - "Song X of Y" - Next) and hides while the chords are being edited to free up space.
 Status: working
 
 ## Performance optimizations

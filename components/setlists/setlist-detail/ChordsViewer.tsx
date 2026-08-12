@@ -272,11 +272,9 @@ export default function ChordsViewer({
   const editingSong = editingKeyId ? filtered.find((s) => s.id === editingKeyId) ?? null : null;
   const [focusedInput, setFocusedInput] = useState(false);
   const [editingChordId, setEditingChordId] = useState<string | null>(null);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const {
     height: visualViewportHeight,
     offsetTop: visualViewportOffsetTop,
-    keyboardInset,
   } = useVisualViewport();
 
   useEffect(() => {
@@ -558,12 +556,6 @@ export default function ChordsViewer({
           ...(visualViewportHeight !== null
             ? { maxHeight: Math.round(visualViewportHeight * 0.85) }
             : {}),
-          ...(focusedInput && isMobile
-            ? {
-                paddingBottom:
-                  visualViewportHeight !== null ? keyboardInset : "40dvh",
-              }
-            : {}),
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -640,7 +632,7 @@ export default function ChordsViewer({
               No songs in this section.
             </p>
           )}
-          {filtered.length > 1 && (
+          {filtered.length > 1 && !focusedInput && (
             <SongNavBar
               hasPrevious={hasPrevious}
               hasNext={hasNext}
