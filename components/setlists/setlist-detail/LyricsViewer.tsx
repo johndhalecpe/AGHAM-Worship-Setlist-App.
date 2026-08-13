@@ -189,7 +189,14 @@ export default function LyricsViewer({
       : null
   );
 
+  // Same mount-only intent as ChordsViewer: `goTo` identity changes whenever
+  // the `sections` prop is replaced (realtime refetch), which would re-run
+  // this effect and snap the modal back to the initial song. Run once.
+  const didInitialScrollRef = useRef(false);
+
   useEffect(() => {
+    if (didInitialScrollRef.current) return;
+    didInitialScrollRef.current = true;
     if (initialSectionId && initialSongId) {
       songRefs.current[initialSectionId]?.scrollIntoView({ block: "start" });
       goTo(initialSongId);
