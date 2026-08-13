@@ -295,7 +295,15 @@ export default function ChordsViewer({
       : null
   );
 
+  // `goTo` gets a new identity whenever `orderedSongs` changes (every chord
+  // save replaces the parent's `sections` and re-merges internalSections), so
+  // this effect would re-run on every keystroke and snap the modal back to the
+  // initial song. It is mount-only by intent: run it exactly once per mount.
+  const didInitialScrollRef = useRef(false);
+
   useEffect(() => {
+    if (didInitialScrollRef.current) return;
+    didInitialScrollRef.current = true;
     if (initialSectionId && initialSongId) {
       songRefs.current[initialSectionId]?.scrollIntoView({ block: "start" });
       goTo(initialSongId);
@@ -309,6 +317,9 @@ export default function ChordsViewer({
     const sync = () => {
       ticking = false;
       if (suppressScrollSyncRef.current) return;
+      // While a chord field is focused, keyboard/caret-induced container
+      // scrolls must not rewrite the URL (and trigger refetches).
+      if (focusedFieldRef.current !== null) return;
       const line = container.getBoundingClientRect().top;
       let detected: SetlistSectionWithSong | null = null;
       for (const s of filtered) {
