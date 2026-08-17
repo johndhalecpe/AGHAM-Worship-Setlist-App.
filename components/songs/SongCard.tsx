@@ -1,12 +1,13 @@
 "use client";
 
-import { memo, useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Song, SongListItem } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
+import { nashvilleToLetter, letterToNashville, isLetterChordFormat } from "@/lib/chord-conversion";
 import {
   COLLAB_SAVE_DELAY_MS,
   useSongCollaboration,
@@ -39,6 +40,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
   const [showChords, setShowChords] = useState(false);
+  const [chordDisplayMode, setChordDisplayMode] = useState<"nashville" | "letter">("nashville");
   const [editingChords, setEditingChords] = useState(false);
   const [chordsDraft, setChordsDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -71,6 +73,27 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   }, [editingChords]);
 
   const chordsPreview = liveFields["chords"];
+  const rawChords = chordsPreview?.value ?? song.chords ?? "";
+
+  const displayChords = useMemo(() => {
+    if (!rawChords) return "";
+    const isLetterStored = isLetterChordFormat(rawChords);
+    const key = song.default_key ?? "G";
+
+    if (chordDisplayMode === "nashville") {
+      if (isLetterStored) {
+        const result = letterToNashville(rawChords, key);
+        return result.success ? result.output : rawChords;
+      }
+      return rawChords;
+    }
+
+    if (isLetterStored) {
+      return rawChords;
+    }
+    const result = nashvilleToLetter(rawChords, key);
+    return result.success ? result.output : rawChords;
+  }, [rawChords, chordDisplayMode, song.default_key]);
 
   useEffect(() => {
     setChordsDraft(song.chords ?? "");
@@ -339,12 +362,34 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           ) : (
             song.chords || chordsPreview ? (
               <>
-                <ChordsViewer chords={chordsPreview?.value ?? song.chords ?? ""} />
+                <ChordsViewer chords={displayChords} />
                 {chordsPreview && (
                   <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
                     {chordsPreview.authorName} is editing&hellip;
                   </p>
                 )}
+                <div className="flex items-center gap-1 mt-1.5">
+                  <button
+                    onClick={() => setChordDisplayMode("nashville")}
+                    className="px-2 py-0.5 rounded text-[10px] font-semibold transition-colors"
+                    style={{
+                      backgroundColor: chordDisplayMode === "nashville" ? "var(--color-accent)" : "var(--color-surface-muted)",
+                      color: chordDisplayMode === "nashville" ? "#fff" : "var(--color-text-secondary)",
+                    }}
+                  >
+                    Nashville
+                  </button>
+                  <button
+                    onClick={() => setChordDisplayMode("letter")}
+                    className="px-2 py-0.5 rounded text-[10px] font-semibold transition-colors"
+                    style={{
+                      backgroundColor: chordDisplayMode === "letter" ? "var(--color-accent)" : "var(--color-surface-muted)",
+                      color: chordDisplayMode === "letter" ? "#fff" : "var(--color-text-secondary)",
+                    }}
+                  >
+                    Letter
+                  </button>
+                </div>
               </>
             ) : (
               <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
