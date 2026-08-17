@@ -177,24 +177,34 @@ function getChordQuality(
 // Utility Functions
 // ============================================================
 
-/**
- * Check if a string is already in letter chord format (not Nashville).
- * Returns true if the string contains note names but no Nashville digits.
- */
 export function isLetterChordFormat(input: string): boolean {
-  // Simple heuristic: if it contains letters that form note names
-  // but doesn't start with a Nashville digit, it's likely letter format
-  const notePattern = /^[A-G][#b]?/;
   const trimmed = input.trim();
+  if (trimmed.length === 0) return false;
 
-  // If it starts with a note name, it's likely letter format
-  if (notePattern.test(trimmed)) {
-    return true;
+  const lines = trimmed.split("\n");
+
+  for (const line of lines) {
+    const lineTrimmed = line.trim();
+    if (lineTrimmed.length === 0) continue;
+    if (/^[\[\(]/.test(lineTrimmed)) continue;
+
+    const tokens = lineTrimmed.split(/[\s\-|]+/).filter(t => t.length > 0);
+    for (const token of tokens) {
+      const cleaned = token.replace(/^[\[\(\{]+|[\]\)\}]+$/g, "");
+      if (cleaned.length === 0) continue;
+
+      if (/^[1-7]/.test(cleaned)) {
+        return false;
+      }
+
+      if (/^[A-G][#b]?/.test(cleaned)) {
+        return true;
+      }
+    }
   }
 
-  // If it contains Nashville digits mixed with note names, it's mixed
-  // For now, assume it's Nashville if it contains digits 1-7
-  return false;
+  const notePattern = /^[A-G][#b]?/;
+  return notePattern.test(trimmed);
 }
 
 // ============================================================

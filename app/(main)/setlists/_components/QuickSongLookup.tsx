@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Song } from "@/lib/type";
+import { nashvilleToLetter, letterToNashville, isLetterChordFormat, transposeLetterChords, transposeKey } from "@/lib/chord-conversion";
 
 type Mode = "chords" | "lyrics";
 
@@ -18,6 +19,8 @@ export default function QuickSongLookup() {
   const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [chordDisplayMode, setChordDisplayMode] = useState<"nashville" | "letter">("nashville");
+  const [transposeOffset, setTransposeOffset] = useState(0);
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -149,6 +152,7 @@ export default function QuickSongLookup() {
               onClick={() => {
                 resetSelection();
                 setMode(m);
+                setTransposeOffset(0);
                 if (query.trim() !== "") {
                   setLoading(true);
                   setError(false);
@@ -240,6 +244,40 @@ export default function QuickSongLookup() {
                 const selected = selectedId === song.id;
                 const fieldText = mode === "chords" ? song.chords : song.lyrics;
                 const isEmpty = !fieldText || fieldText.trim() === "";
+
+                let displayChords = fieldText ?? "";
+                let conversionFailed = false;
+                const baseKey = song.default_key || "G";
+                const displayKey = selected && transposeOffset !== 0 ? transposeKey(baseKey, transposeOffset) : baseKey;
+                if (mode === "chords" && !isEmpty && fieldText) {
+                  const storedIsLetter = isLetterChordFormat(fieldText);
+                  if (chordDisplayMode === "nashville") {
+                    if (storedIsLetter) {
+                      const result = letterToNashville(fieldText, displayKey);
+                      if (result.success) {
+                        displayChords = result.output;
+                      } else {
+                        conversionFailed = true;
+                        console.warn(`[QuickSongLookup] letterToNashville failed for "${song.title}" (key: ${displayKey}):`, result.errors);
+                      }
+                    }
+                  } else {
+                    if (storedIsLetter) {
+                      if (selected && transposeOffset !== 0) {
+                        displayChords = transposeLetterChords(fieldText, transposeOffset);
+                      }
+                    } else {
+                      const result = nashvilleToLetter(fieldText, displayKey);
+                      if (result.success) {
+                        displayChords = result.output;
+                      } else {
+                        conversionFailed = true;
+                        console.warn(`[QuickSongLookup] nashvilleToLetter failed for "${song.title}" (key: ${displayKey}):`, result.errors);
+                      }
+                    }
+                  }
+                }
+
                 return (
                   <div
                     key={song.id}
@@ -250,6 +288,7 @@ export default function QuickSongLookup() {
                       className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors cursor-pointer"
                       onClick={() => {
                         setSelectedId(selected ? null : song.id);
+                        setTransposeOffset(0);
                         setCopied(false);
                         if (copyTimerRef.current) {
                           clearTimeout(copyTimerRef.current);
@@ -273,15 +312,43 @@ export default function QuickSongLookup() {
                           {song.author}
                         </span>
                       </div>
-                      <span
-                        className="text-xs font-mono font-semibold rounded px-1.5 shrink-0"
-                        style={{
-                          backgroundColor: "var(--color-badge-key)",
-                          color: "var(--color-badge-key-text)",
-                        }}
-                      >
-                        {song.default_key ?? "G"}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setTransposeOffset((o) => o - 1); }}
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold transition-colors min-h-[26px] flex items-center justify-center"
+                          style={{
+                            backgroundColor: "var(--color-surface-muted)",
+                            color: "var(--color-text-secondary)",
+                            visibility: selected && mode === "chords" && chordDisplayMode === "letter" ? "visible" : "hidden",
+                            pointerEvents: selected && mode === "chords" && chordDisplayMode === "letter" ? "auto" : "none",
+                          }}
+                        >
+                          &minus;1
+                        </button>
+                        <span
+                          className="text-xs font-mono font-semibold rounded px-1.5 shrink-0 min-w-[3rem] text-center"
+                          style={{
+                            backgroundColor: "var(--color-badge-key)",
+                            color: selected && transposeOffset !== 0 ? "var(--color-accent)" : "var(--color-badge-key-text)",
+                          }}
+                        >
+                          {displayKey}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setTransposeOffset((o) => o + 1); }}
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold transition-colors min-h-[26px] flex items-center justify-center"
+                          style={{
+                            backgroundColor: "var(--color-surface-muted)",
+                            color: "var(--color-text-secondary)",
+                            visibility: selected && mode === "chords" && chordDisplayMode === "letter" ? "visible" : "hidden",
+                            pointerEvents: selected && mode === "chords" && chordDisplayMode === "letter" ? "auto" : "none",
+                          }}
+                        >
+                          +1
+                        </button>
+                      </div>
                       <svg
                         viewBox="0 0 20 20"
                         fill="currentColor"
@@ -305,10 +372,43 @@ export default function QuickSongLookup() {
                           padding: 12,
                         }}
                       >
-                        <div className="flex items-center justify-end mb-2">
+                        <div className="flex items-center justify-between mb-2">
+                          {mode === "chords" && !isEmpty && (
+                            <div className="flex items-center gap-2">
+                              <div className="flex rounded overflow-hidden" style={{ border: "1px solid var(--color-border)" }}>
+                              <button
+                                type="button"
+                                onClick={() => setChordDisplayMode("nashville")}
+                                className="px-2 py-0.5 text-[10px] font-semibold transition-colors min-h-[24px]"
+                                style={{
+                                  backgroundColor: chordDisplayMode === "nashville" ? "var(--color-accent)" : "var(--color-surface-muted)",
+                                  color: chordDisplayMode === "nashville" ? "#fff" : "var(--color-text-secondary)",
+                                }}
+                              >
+                                Nashville
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setChordDisplayMode("letter")}
+                                className="px-2 py-0.5 text-[10px] font-semibold transition-colors min-h-[24px]"
+                                style={{
+                                  backgroundColor: chordDisplayMode === "letter" ? "var(--color-accent)" : "var(--color-surface-muted)",
+                                  color: chordDisplayMode === "letter" ? "#fff" : "var(--color-text-secondary)",
+                                }}
+                              >
+                                Letter
+                              </button>
+                            </div>
+                            {conversionFailed && (
+                              <span className="text-[10px] font-medium" style={{ color: "var(--color-danger)" }}>
+                                Conversion failed
+                              </span>
+                            )}
+                            </div>
+                          )}
                           <button
                             type="button"
-                            onClick={() => handleCopy(fieldText ?? "")}
+                            onClick={() => handleCopy(mode === "chords" ? displayChords : (fieldText ?? ""))}
                             className="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-1.5"
                             style={{
                               backgroundColor: copied
@@ -348,7 +448,9 @@ export default function QuickSongLookup() {
                             ? mode === "chords"
                               ? "No chords available."
                               : "No lyrics available."
-                            : fieldText}
+                            : mode === "chords"
+                              ? displayChords
+                              : fieldText}
                         </div>
                       </div>
                     )}

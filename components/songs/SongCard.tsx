@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Song, SongListItem } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
-import { nashvilleToLetter, letterToNashville, isLetterChordFormat } from "@/lib/chord-conversion";
+import { nashvilleToLetter, letterToNashville, isLetterChordFormat, transposeLetterChords, transposeKey } from "@/lib/chord-conversion";
 import {
   COLLAB_SAVE_DELAY_MS,
   useSongCollaboration,
@@ -41,6 +41,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const [showLyrics, setShowLyrics] = useState(false);
   const [showChords, setShowChords] = useState(false);
   const [chordDisplayMode, setChordDisplayMode] = useState<"nashville" | "letter">("nashville");
+  const [transposeOffset, setTransposeOffset] = useState(0);
   const [editingChords, setEditingChords] = useState(false);
   const [chordsDraft, setChordsDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -74,26 +75,43 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
   const chordsPreview = liveFields["chords"];
   const rawChords = chordsPreview?.value ?? song.chords ?? "";
+  const displayKey = transposeOffset !== 0 ? transposeKey(song.default_key ?? "G", transposeOffset) : (song.default_key ?? "G");
+
+  const [songConversionFailed, setSongConversionFailed] = useState(false);
 
   const displayChords = useMemo(() => {
-    if (!rawChords) return "";
+    if (!rawChords) return { text: "", failed: false };
     const isLetterStored = isLetterChordFormat(rawChords);
     const key = song.default_key ?? "G";
 
     if (chordDisplayMode === "nashville") {
       if (isLetterStored) {
         const result = letterToNashville(rawChords, key);
-        return result.success ? result.output : rawChords;
+        if (!result.success) {
+          console.warn(`[SongCard] letterToNashville failed for "${song.title}" (key: ${key}):`, result.errors);
+        }
+        return { text: result.success ? result.output : rawChords, failed: !result.success };
       }
-      return rawChords;
+      return { text: rawChords, failed: false };
     }
 
     if (isLetterStored) {
-      return rawChords;
+      if (transposeOffset !== 0) {
+        return { text: transposeLetterChords(rawChords, transposeOffset), failed: false };
+      }
+      return { text: rawChords, failed: false };
     }
+
     const result = nashvilleToLetter(rawChords, key);
-    return result.success ? result.output : rawChords;
-  }, [rawChords, chordDisplayMode, song.default_key]);
+    if (!result.success) {
+      console.warn(`[SongCard] nashvilleToLetter failed for "${song.title}" (key: ${key}):`, result.errors);
+    }
+    return { text: result.success ? result.output : rawChords, failed: !result.success };
+  }, [rawChords, chordDisplayMode, song.default_key, transposeOffset, song.title]);
+
+  useEffect(() => {
+    setSongConversionFailed(displayChords.failed);
+  }, [displayChords.failed]);
 
   useEffect(() => {
     setChordsDraft(song.chords ?? "");
@@ -273,8 +291,39 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
         <div className="flex items-baseline gap-1 flex-wrap min-w-0">
           {song.default_key && (
-            <span className="flex items-baseline gap-x-0.5 text-[10px]">
-              <span style={{ color: "var(--color-accent)" }}>key</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_key}</span>
+            <span className="flex items-center gap-0.5 text-[10px]">
+              <button
+                onClick={() => setTransposeOffset((o) => o - 1)}
+                className="px-1.5 py-0.5 rounded text-[11px] font-semibold transition-colors min-h-[26px] flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--color-surface-muted)",
+                  color: "var(--color-text-secondary)",
+                  visibility: chordDisplayMode === "letter" ? "visible" : "hidden",
+                  pointerEvents: chordDisplayMode === "letter" ? "auto" : "none",
+                }}
+              >
+                &minus;1
+              </button>
+              <span className="flex items-baseline gap-x-0.5 min-w-[4.5rem] justify-center">
+                <span style={{ color: "var(--color-accent)" }}>key</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: transposeOffset !== 0 ? "var(--color-accent)" : "var(--color-text)" }}>{displayKey}</span>
+              </span>
+              <button
+                onClick={() => setTransposeOffset((o) => o + 1)}
+                className="px-1.5 py-0.5 rounded text-[11px] font-semibold transition-colors min-h-[26px] flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--color-surface-muted)",
+                  color: "var(--color-text-secondary)",
+                  visibility: chordDisplayMode === "letter" ? "visible" : "hidden",
+                  pointerEvents: chordDisplayMode === "letter" ? "auto" : "none",
+                }}
+              >
+                +1
+              </button>
+            </span>
+          )}
+          {songConversionFailed && (
+            <span className="text-[10px] font-medium" style={{ color: "var(--color-danger)" }}>
+              Conversion failed &mdash; check key
             </span>
           )}
         </div>
@@ -362,7 +411,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           ) : (
             song.chords || chordsPreview ? (
               <>
-                <ChordsViewer chords={displayChords} />
+                <ChordsViewer chords={displayChords.text} />
                 {chordsPreview && (
                   <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
                     {chordsPreview.authorName} is editing&hellip;
@@ -370,7 +419,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
                 )}
                 <div className="flex items-center gap-1 mt-1.5">
                   <button
-                    onClick={() => setChordDisplayMode("nashville")}
+                    onClick={() => { setChordDisplayMode("nashville"); setTransposeOffset(0); }}
                     className="px-2 py-0.5 rounded text-[10px] font-semibold transition-colors"
                     style={{
                       backgroundColor: chordDisplayMode === "nashville" ? "var(--color-accent)" : "var(--color-surface-muted)",

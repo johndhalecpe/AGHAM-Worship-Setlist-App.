@@ -3,7 +3,7 @@
 // ============================================================
 
 import { describe, it, expect } from "vitest";
-import { nashvilleToLetter, letterToNashville, convertChord } from "../converter";
+import { nashvilleToLetter, letterToNashville, convertChord, isLetterChordFormat } from "../converter";
 import { parseNashville, extractChords } from "../parser";
 import { parseKey } from "../scale";
 import type { ParsedNashvilleChord } from "../types";
@@ -330,5 +330,45 @@ describe("Letter to Nashville Converter", () => {
       const result = letterToNashville("F", "G");
       expect(result.output).toBe("7b");
     });
+  });
+});
+
+describe("isLetterChordFormat", () => {
+  it("detects simple letter chords", () => {
+    expect(isLetterChordFormat("E A B")).toBe(true);
+    expect(isLetterChordFormat("Cm G D")).toBe(true);
+    expect(isLetterChordFormat("F#m7 B/F#")).toBe(true);
+  });
+
+  it("detects Nashville format", () => {
+    expect(isLetterChordFormat("1-4-5")).toBe(false);
+    expect(isLetterChordFormat("1---4-5\n4-2")).toBe(false);
+  });
+
+  it("handles empty input", () => {
+    expect(isLetterChordFormat("")).toBe(false);
+    expect(isLetterChordFormat("   ")).toBe(false);
+  });
+
+  it("skips section labels and detects chords on next line", () => {
+    expect(isLetterChordFormat("[Verse]\nE A B")).toBe(true);
+    expect(isLetterChordFormat("[Chorus]\n1-4-5")).toBe(false);
+    expect(isLetterChordFormat("(2x)\nC G Am F")).toBe(true);
+  });
+
+  it("detects letter chords after blank lines", () => {
+    expect(isLetterChordFormat("\n\nE A B")).toBe(true);
+  });
+
+  it("handles Agnus Dei style multi-line Nashville", () => {
+    const input = `1---4-5
+4-2
+6 3
+(6-2-6-3)-4`;
+    expect(isLetterChordFormat(input)).toBe(false);
+  });
+
+  it("handles letter chords with dashes", () => {
+    expect(isLetterChordFormat("E---A---B")).toBe(true);
   });
 });

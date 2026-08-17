@@ -5,6 +5,9 @@
 // Main conversion functions
 export { nashvilleToLetter, letterToNashville, convertChord, isLetterChordFormat } from "./converter";
 
+// Transpose
+export { transposeLetterChords, transposeKey } from "./transpose";
+
 // Parser functions
 export { parseNashville, isChordToken, isSeparatorToken, isStructuralToken, isRepeatToken, extractChords } from "./parser";
 

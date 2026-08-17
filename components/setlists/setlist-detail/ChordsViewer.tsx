@@ -26,7 +26,7 @@ import {
 import KeyPicker from "@/components/ui/KeyPicker";
 import PresenceAvatars from "@/components/ui/PresenceAvatars";
 import SongNavBar from "./SongNavBar";
-import { nashvilleToLetter, letterToNashville, isLetterChordFormat } from "@/lib/chord-conversion";
+import { nashvilleToLetter, letterToNashville, isLetterChordFormat, transposeLetterChords, transposeKey } from "@/lib/chord-conversion";
 
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
@@ -82,7 +82,10 @@ const SongBlock = memo(function SongBlock({
   const fieldKey = `${section.id}-chords`;
   const showPreview = chordPreview !== undefined && chordDraft === undefined;
   const rawValue = chordDraft ?? chordPreview?.value ?? section.songs.chords ?? "";
-  const displayedKey = keyPreview?.value?.trim() || section.song_key?.trim() || section.songs.default_key?.trim() || "G";
+  const baseKey = keyPreview?.value?.trim() || section.song_key?.trim() || section.songs.default_key?.trim() || "G";
+  const [transposeOffset, setTransposeOffset] = useState(0);
+  const displayedKey = transposeOffset !== 0 ? transposeKey(baseKey, transposeOffset) : baseKey;
+  const [conversionFailed, setConversionFailed] = useState(false);
 
   const value = useMemo(() => {
     const isLetterStored = isLetterChordFormat(rawValue);
@@ -90,17 +93,31 @@ const SongBlock = memo(function SongBlock({
     if (effectiveDisplayMode === "nashville") {
       if (isLetterStored) {
         const result = letterToNashville(rawValue, displayedKey);
-        return result.success ? result.output : rawValue;
+        if (!result.success) {
+          console.warn(`[ChordsViewer] letterToNashville failed for "${section.songs.title}" (key: ${displayedKey}):`, result.errors);
+        }
+        return { text: result.success ? result.output : rawValue, failed: !result.success };
       }
-      return rawValue;
+      return { text: rawValue, failed: false };
     }
 
     if (isLetterStored) {
-      return rawValue;
+      if (transposeOffset !== 0) {
+        return { text: transposeLetterChords(rawValue, transposeOffset), failed: false };
+      }
+      return { text: rawValue, failed: false };
     }
+
     const result = nashvilleToLetter(rawValue, displayedKey);
-    return result.success ? result.output : rawValue;
-  }, [effectiveDisplayMode, rawValue, displayedKey]);
+    if (!result.success) {
+      console.warn(`[ChordsViewer] nashvilleToLetter failed for "${section.songs.title}" (key: ${displayedKey}):`, result.errors);
+    }
+    return { text: result.success ? result.output : rawValue, failed: !result.success };
+  }, [effectiveDisplayMode, rawValue, displayedKey, transposeOffset, section.songs.title]);
+
+  useEffect(() => {
+    setConversionFailed(value.failed);
+  }, [value.failed]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
@@ -136,12 +153,25 @@ const SongBlock = memo(function SongBlock({
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <PresenceAvatars members={members} selfId={selfId} />
+              <button
+                onClick={() => setTransposeOffset((o) => o - 1)}
+                className="rounded px-1.5 py-0.5 text-[11px] font-medium transition-all hover:opacity-80 min-h-[26px] flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--color-surface-muted)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text)",
+                  visibility: effectiveDisplayMode === "letter" ? "visible" : "hidden",
+                  pointerEvents: effectiveDisplayMode === "letter" ? "auto" : "none",
+                }}
+              >
+                &minus;1
+              </button>
               <button
                 onClick={() => { if (!isPast && !isGuest) onStartKeyEdit(section.id); }}
                 disabled={isPast || isGuest}
-                className="text-xs font-mono font-semibold rounded px-1.5 min-h-[44px] sm:min-h-[22px] flex items-center transition-colors disabled:opacity-60"
+                className="text-xs font-mono font-semibold rounded px-2 min-h-[44px] sm:min-h-[26px] min-w-[5.5rem] flex items-center justify-center transition-colors disabled:opacity-60"
                 style={{
                   backgroundColor: "var(--color-badge-key)",
                   color: "var(--color-badge-key-text)",
@@ -149,11 +179,29 @@ const SongBlock = memo(function SongBlock({
               >
                 Key: {displayedKey}
               </button>
+              <button
+                onClick={() => setTransposeOffset((o) => o + 1)}
+                className="rounded px-1.5 py-0.5 text-[11px] font-medium transition-all hover:opacity-80 min-h-[26px] flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--color-surface-muted)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text)",
+                  visibility: effectiveDisplayMode === "letter" ? "visible" : "hidden",
+                  pointerEvents: effectiveDisplayMode === "letter" ? "auto" : "none",
+                }}
+              >
+                +1
+              </button>
             </div>
           </div>
           {keyPreview && (
             <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
               {keyPreview.authorName} is updating the key&hellip;
+            </p>
+          )}
+          {conversionFailed && (
+            <p className="text-xs mt-1 font-medium" style={{ color: "var(--color-danger)" }}>
+              Chord conversion failed &mdash; check key is valid. Showing raw data.
             </p>
           )}
         </div>
@@ -169,7 +217,7 @@ const SongBlock = memo(function SongBlock({
           autoCorrect="off"
           spellCheck={false}
           autoCapitalize="off"
-          value={value}
+          value={value.text}
           onChange={(e) => onChordsChange(section.id, e.target.value)}
           readOnly={isPast || isGuest}
           onFocus={(e) => onChordsFocus(section.id, e)}
