@@ -17,7 +17,7 @@ import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { useNewUserNotification } from "@/lib/hooks/useNewUserNotification";
 import type { PasswordReset } from "@/lib/type";
 import { PALETTES } from "@/lib/palettes";
-import WhatsNewModal, { hasUnseenUpdates } from "@/components/ui/WhatsNewModal";
+import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import { updatePalette } from "@/lib/services/profileService";
 
 const navLinks = [
@@ -53,7 +53,6 @@ export default function Header() {
   const [resolveResetId, setResolveResetId] = useState<string | null>(null);
   const [deleteProfileId, setDeleteProfileId] = useState<string | null>(null);
   const [resetPasswords, setResetPasswords] = useState<Record<string, string>>({});
-  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const usersDropdownRef = useRef<HTMLDivElement>(null);
   const paletteDropdownRef = useRef<HTMLDivElement>(null);
@@ -106,12 +105,6 @@ export default function Header() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [showMobileMenu]);
-
-  useEffect(() => {
-    if (hasUnseenUpdates()) {
-      setIsWhatsNewOpen(true);
-    }
-  }, []);
 
   async function checkSession() {
     const {
@@ -336,6 +329,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-1">
+          <OfflineIndicator />
           <div className="relative hidden lg:block">
             <button
               onClick={() => setShowPaletteDropdown((prev) => !prev)}
@@ -1262,25 +1256,6 @@ export default function Header() {
                   {showMobileUserActions && (
                     <div className="flex flex-col gap-0.5 px-2 pt-1 pb-1">
                       <button
-                        onClick={() => {
-                          setShowMobileMenu(false);
-                          setIsWhatsNewOpen(true);
-                        }}
-                        className="rounded-xl px-4 py-3 text-sm font-medium transition-all text-left min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
-                        style={{ color: "var(--color-text-secondary)" }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--color-accent) 5%, transparent)";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                        }}
-                      >
-                        <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
-                          <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 0 1-1.162-.682 22.045 22.045 0 0 1-2.582-1.9C4.045 12.733 2 10.352 2 7.5a4.5 4.5 0 0 1 8-2.828A4.5 4.5 0 0 1 18 7.5c0 2.852-2.044 5.233-3.885 6.82a22.049 22.049 0 0 1-3.744 2.582l-.019.01-.005.003a.74.74 0 0 1-.69.001l-.005-.003z" />
-                        </svg>
-                        What&rsquo;s New
-                      </button>
-                      <button
                         onClick={() => setShowMobileChangeName(true)}
                         className="rounded-xl px-4 py-3 text-sm font-medium transition-all text-left min-h-[44px] flex items-center gap-3 active:scale-[0.98]"
                         style={{ color: "var(--color-text-secondary)" }}
@@ -1341,7 +1316,7 @@ export default function Header() {
               )}
             </div>
             <div className="border-t px-4 py-3 text-center text-[11px] lg:hidden" style={{ borderColor: "var(--color-border)", color: "var(--color-text-tertiary)" }}>
-              Agham Setlist 0.1.5<br />
+              Agham Setlist 1.1.6<br />
               Property of AGHAM &copy; 2026<br />
               dev - johndhalecpe
             </div>
@@ -1362,11 +1337,6 @@ export default function Header() {
       {showMobileChangePassword && (
         <ChangePasswordForm onClose={() => setShowMobileChangePassword(false)} />
       )}
-
-      <WhatsNewModal
-        isOpen={isWhatsNewOpen}
-        onClose={() => setIsWhatsNewOpen(false)}
-      />
     </header>
   );
 }

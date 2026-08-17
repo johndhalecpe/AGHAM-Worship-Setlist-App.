@@ -10,7 +10,7 @@ const fetchAllSongs = unstable_cache(
   async (): Promise<SongListItem[]> => {
     const { data, error } = await supabase
       .from("songs")
-      .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, status, created_at")
+      .select("id, title, author, category, language, default_key, default_bpm, default_time_signature, chords, status, created_at")
       .order("title", { ascending: true });
 
     if (error) {

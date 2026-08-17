@@ -17,8 +17,6 @@ export default function NewSongForm() {
   const [language, setLanguage] = useState("english");
   const [customCategory, setCustomCategory] = useState("");
   const [defaultKey, setDefaultKey] = useState("");
-  const [defaultBpm, setDefaultBpm] = useState<number | null>(null);
-  const [defaultTimeSignature, setDefaultTimeSignature] = useState("");
   const [lyrics, setLyrics] = useState("");
   const [chords, setChords] = useState("");
   const [loading, setLoading] = useState(false);
@@ -142,8 +140,6 @@ export default function NewSongForm() {
         category: resolvedCategory,
         language,
         default_key: defaultKey || null,
-        default_bpm: defaultBpm,
-        default_time_signature: defaultTimeSignature || null,
         lyrics: lyrics || null,
         chords: chords || null,
       }),
@@ -476,11 +472,7 @@ export default function NewSongForm() {
         </div>
         <MusicalDataSection
           defaultKey={defaultKey}
-          defaultBpm={defaultBpm}
-          defaultTimeSignature={defaultTimeSignature}
           onKeyChange={setDefaultKey}
-          onBpmChange={(bpm) => setDefaultBpm(bpm)}
-          onTimeSignatureChange={setDefaultTimeSignature}
         />
         {error && <p className="text-sm" style={{ color: "#DC2626" }}>{error}</p>}
         <div className="flex gap-2 justify-end">

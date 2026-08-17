@@ -227,11 +227,11 @@ export default function SetlistSections({
       category: s.songs.category,
       language: s.songs.language,
       default_key: s.songs.default_key,
-      default_bpm: s.songs.default_bpm,
-      default_time_signature: s.songs.default_time_signature,
       lyrics: s.songs.lyrics ?? "",
       chords: s.songs.chords ?? "",
       status: s.songs.status ?? "draft",
+      default_bpm: null,
+      default_time_signature: null,
       created_at: "",
     };
   }
@@ -242,8 +242,6 @@ export default function SetlistSections({
     category: string;
     language: string;
     default_key: string;
-    default_bpm: number | null;
-    default_time_signature: string;
     lyrics: string;
     chords: string;
   }) {

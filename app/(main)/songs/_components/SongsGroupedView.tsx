@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useDeferredValue } from "react";
+import { useState, useMemo, useCallback, useDeferredValue, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { useUpdateSong } from "@/lib/hooks/use-songs";
 import { useRealtimeSongs } from "@/lib/hooks/use-realtime-setlist";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
+import { putSongs, type CachedSong } from "@/lib/offline-db";
 import SongCard from "@/components/songs/SongCard";
 import SongsSearchBar from "./SongsSearchBar";
 import EditSongModal from "./EditSongModal";
@@ -66,7 +67,6 @@ function groupSongsByCategoryAndLanguage(songs: SongListItem[]): Group[] {
 }
 
 const LANGUAGE_FILTERS = ["english", "filipino"] as const;
-const TIME_SIG_FILTERS = ["4/4", "3/4", "6/8"] as const;
 
 export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
   const [isLocked, setIsLocked] = useState(true);
@@ -78,7 +78,6 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<Set<string>>(new Set());
-  const [selectedTimeSigs, setSelectedTimeSigs] = useState<Set<string>>(new Set());
   const [composedOnly, setComposedOnly] = useState(false);
   const [expandedLanguages, setExpandedLanguages] = usePersistentState<string[]>(
     "song-library:expanded-languages",
@@ -94,6 +93,23 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
       : "all";
 
   useRealtimeSongs();
+
+  useEffect(() => {
+    if (songs.length === 0) return;
+    const songsToCache: CachedSong[] = songs.map((s) => ({
+      id: s.id,
+      title: s.title,
+      author: s.author,
+      category: s.category,
+      language: s.language,
+      default_key: s.default_key,
+      lyrics: null,
+      chords: s.chords,
+      status: s.status,
+      created_at: s.created_at,
+    }));
+    putSongs(songsToCache).catch(() => {});
+  }, [songs]);
 
   const deferredSearch = useDeferredValue(searchQuery);
 
@@ -133,12 +149,8 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
       result = result.filter((s) => s.language && selectedLanguages.has(s.language));
     }
 
-    if (selectedTimeSigs.size > 0) {
-      result = result.filter((s) => s.default_time_signature && selectedTimeSigs.has(s.default_time_signature));
-    }
-
     return result;
-  }, [songs, activeTab, composedOnly, selectedLanguages, selectedTimeSigs]);
+  }, [songs, activeTab, composedOnly, selectedLanguages]);
 
 
   const hasSearch = searchMatches !== null;
@@ -149,15 +161,6 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
       const next = new Set(prev);
       if (next.has(lang)) next.delete(lang);
       else next.add(lang);
-      return next;
-    });
-  }, []);
-
-  const toggleTimeSig = useCallback((ts: string) => {
-    setSelectedTimeSigs((prev) => {
-      const next = new Set(prev);
-      if (next.has(ts)) next.delete(ts);
-      else next.add(ts);
       return next;
     });
   }, []);
@@ -186,7 +189,6 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
 
   const clearFilters = useCallback(() => {
     setSelectedLanguages(new Set());
-    setSelectedTimeSigs(new Set());
     setComposedOnly(false);
     setShowFilters(false);
     router.replace("/songs", { scroll: false });
@@ -200,8 +202,6 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
     category: string;
     language: string;
     default_key: string;
-    default_bpm: number | null;
-    default_time_signature: string;
     lyrics: string;
     chords: string;
   }) {
@@ -215,7 +215,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
     );
   }
 
-  const hasActiveFilters = activeTab !== "all" || composedOnly || selectedLanguages.size > 0 || selectedTimeSigs.size > 0;
+  const hasActiveFilters = activeTab !== "all" || composedOnly || selectedLanguages.size > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -336,7 +336,7 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
           </svg>
           {hasActiveFilters && (
             <span className="text-xs bg-white/20 rounded-full px-1.5 py-0.5">
-              {[activeTab !== "all" ? TAB_LABELS[activeTab] : null, ...(selectedLanguages.size > 0 ? ["Lang"] : []), ...(selectedTimeSigs.size > 0 ? ["Time"] : [])].filter(Boolean).length}
+              {[activeTab !== "all" ? TAB_LABELS[activeTab] : null, ...(selectedLanguages.size > 0 ? ["Lang"] : [])].filter(Boolean).length}
             </span>
           )}
         </button>
@@ -423,28 +423,6 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
             </div>
           </div>
 
-          <div>
-            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-text-tertiary)" }}>
-              Time Signature
-            </span>
-            <div className="flex gap-1.5 mt-1">
-              {TIME_SIG_FILTERS.map((ts) => (
-                <button
-                  key={ts}
-                  onClick={() => toggleTimeSig(ts)}
-                  className="rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
-                  style={{
-                    backgroundColor: selectedTimeSigs.has(ts) ? "var(--color-accent)" : "var(--color-surface-card)",
-                    color: selectedTimeSigs.has(ts) ? "#fff" : "var(--color-text-secondary)",
-                    border: selectedTimeSigs.has(ts) ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
-                  }}
-                >
-                  {ts}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -462,7 +440,6 @@ export default function SongsGroupedView({ songs }: { songs: SongListItem[] }) {
           {filteredSongs.length} song{filteredSongs.length !== 1 ? "s" : ""}
           {activeTab !== "all" ? ` in ${TAB_LABELS[activeTab] ?? activeTab}` : ""}
           {selectedLanguages.size > 0 ? ` (${[...selectedLanguages].map((l) => LANGUAGE_LABELS[l]).join(", ")})` : ""}
-          {selectedTimeSigs.size > 0 ? ` (${[...selectedTimeSigs].join(", ")} time)` : ""}
         </p>
       )}
 

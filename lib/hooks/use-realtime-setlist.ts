@@ -35,6 +35,7 @@ const SONG_PATCH_KEYS = [
   "default_key",
   "default_bpm",
   "default_time_signature",
+  "chords",
   "status",
 ] as const;
 

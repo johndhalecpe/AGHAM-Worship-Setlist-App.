@@ -29,8 +29,6 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
   const [newLanguage, setNewLanguage] = useState("english");
   const [customCategory, setCustomCategory] = useState("");
   const [defaultKey, setDefaultKey] = useState("");
-  const [defaultBpm, setDefaultBpm] = useState<number | null>(null);
-  const [defaultTimeSignature, setDefaultTimeSignature] = useState("");
   const [loading, setLoading] = useState(false);
   const [showAuthorSuggestions, setShowAuthorSuggestions] = useState(false);
   const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
@@ -107,8 +105,6 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
         category: resolvedCategory,
         language: newLanguage,
         default_key: defaultKey || null,
-        default_bpm: defaultBpm,
-        default_time_signature: defaultTimeSignature || null,
       }),
     });
 
@@ -313,63 +309,6 @@ export default function NewSongForm({ initialTitle, sectionType, setlistId, onCr
           Key
         </label>
         <KeyPicker value={defaultKey} onChange={setDefaultKey} />
-      </div>
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
-            BPM
-          </label>
-          <input
-            type="number"
-            name="inline-new-song-bpm"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            autoCapitalize="off"
-            value={defaultBpm ?? ""}
-            onChange={(e) => setDefaultBpm(e.target.value ? Number(e.target.value) : null)}
-            placeholder="120"
-            className="w-full rounded-lg px-3 py-1.5 text-sm mt-1 transition-colors"
-            style={{
-              border: "1px solid var(--color-border)",
-              backgroundColor: "var(--color-surface-card)",
-              color: "var(--color-text)",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-          />
-        </div>
-        <div className="flex-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text)" }}>
-            Time
-          </label>
-          <div className="flex gap-1 mt-1">
-            {["4/4", "3/4", "6/8"].map((ts) => (
-              <button
-                key={ts}
-                type="button"
-                onClick={() => setDefaultTimeSignature(ts === defaultTimeSignature ? "" : ts)}
-                className="rounded-lg px-2 py-1.5 text-xs font-medium transition-all flex-1"
-                style={{
-                  backgroundColor:
-                    defaultTimeSignature === ts
-                      ? "var(--color-accent)"
-                      : "var(--color-surface)",
-                  color:
-                    defaultTimeSignature === ts
-                      ? "#fff"
-                      : "var(--color-text-secondary)",
-                  border:
-                    defaultTimeSignature === ts
-                      ? "1px solid var(--color-accent)"
-                      : "1px solid var(--color-border)",
-                }}
-              >
-                {ts}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
       <button
         onClick={handleCreateAndAddNewSong}

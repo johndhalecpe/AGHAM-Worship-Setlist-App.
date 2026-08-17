@@ -17,6 +17,7 @@ import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { useVisualViewport } from "@/lib/hooks/use-visual-viewport";
 import { SONG_NAV_PREFETCH_CACHE, useSongNavigation } from "@/lib/hooks/use-song-navigation";
+import { putSongs, type CachedSong } from "@/lib/offline-db";
 import {
   useSongCollaboration,
   type LiveField,
@@ -25,6 +26,8 @@ import {
 import KeyPicker from "@/components/ui/KeyPicker";
 import PresenceAvatars from "@/components/ui/PresenceAvatars";
 import SongNavBar from "./SongNavBar";
+import { nashvilleToLetter, letterToNashville, isLetterChordFormat } from "@/lib/chord-conversion";
+
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
 
@@ -53,6 +56,8 @@ type SongBlockProps = {
   onChordsFocus: (sectionId: string, e: FocusEvent<HTMLTextAreaElement>) => void;
   onChordsBlur: () => void;
   onStartKeyEdit: (sectionId: string) => void;
+  effectiveDisplayMode: "nashville" | "letter";
+  onToggleOverride: (sectionId: string) => void;
 };
 
 const SongBlock = memo(function SongBlock({
@@ -71,11 +76,31 @@ const SongBlock = memo(function SongBlock({
   onChordsFocus,
   onChordsBlur,
   onStartKeyEdit,
+  effectiveDisplayMode,
+  onToggleOverride,
 }: SongBlockProps) {
   const fieldKey = `${section.id}-chords`;
   const showPreview = chordPreview !== undefined && chordDraft === undefined;
-  const value = chordDraft ?? chordPreview?.value ?? section.songs.chords ?? "";
+  const rawValue = chordDraft ?? chordPreview?.value ?? section.songs.chords ?? "";
   const displayedKey = keyPreview?.value ?? section.song_key ?? section.songs.default_key ?? "G";
+
+  const value = useMemo(() => {
+    const isLetterStored = isLetterChordFormat(rawValue);
+
+    if (effectiveDisplayMode === "nashville") {
+      if (isLetterStored) {
+        const result = letterToNashville(rawValue, displayedKey);
+        return result.success ? result.output : rawValue;
+      }
+      return rawValue;
+    }
+
+    if (isLetterStored) {
+      return rawValue;
+    }
+    const result = nashvilleToLetter(rawValue, displayedKey);
+    return result.success ? result.output : rawValue;
+  }, [effectiveDisplayMode, rawValue, displayedKey]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
@@ -226,6 +251,25 @@ export default function ChordsViewer({
     }
   }, [prevSong, nextSong]);
 
+  useEffect(() => {
+    if (filtered.length === 0) return;
+    const songsToCache: CachedSong[] = filtered.map((s) => ({
+      id: s.songs.id,
+      title: s.songs.title,
+      author: s.songs.author,
+      category: s.songs.category,
+      language: s.songs.language,
+      default_key: s.songs.default_key,
+      default_bpm: s.songs.default_bpm,
+      default_time_signature: s.songs.default_time_signature,
+      lyrics: s.songs.lyrics,
+      chords: s.songs.chords,
+      status: s.songs.status,
+      created_at: s.created_at,
+    }));
+    putSongs(songsToCache).catch(() => {});
+  }, [filtered]);
+
   function flushCurrentSectionDraft() {
     if (!currentSection) return;
     const edited = chordEditsRef.current[`${currentSection.id}-chords`];
@@ -262,6 +306,8 @@ export default function ChordsViewer({
     }
   };
   const [zoomIndex, setZoomIndex] = usePersistentState("chords-viewer:zoom-index", 3);
+  const [displayMode, setDisplayMode] = usePersistentState<"nashville" | "letter">("chords-viewer:display-mode", "nashville");
+  const [songOverrides, setSongOverrides] = useState<Record<string, "nashville" | "letter">>({});
   const [chordEdits, setChordEdits] = useState<Record<string, string>>({});
   const chordEditsRef = useRef(chordEdits);
   chordEditsRef.current = chordEdits;
@@ -547,6 +593,24 @@ export default function ChordsViewer({
     setEditingKeyId(sectionId);
   }, []);
 
+  const handleUniversalToggle = useCallback((mode: "nashville" | "letter") => {
+    setDisplayMode(mode);
+    setSongOverrides({});
+  }, [setDisplayMode]);
+
+  const handleToggleSongOverride = useCallback((sectionId: string) => {
+    setSongOverrides((prev) => {
+      const current = prev[sectionId];
+      if (current !== undefined) {
+        const next = { ...prev };
+        delete next[sectionId];
+        return next;
+      }
+      const opposite = displayMode === "nashville" ? "letter" : "nashville";
+      return { ...prev, [sectionId]: opposite };
+    });
+  }, [displayMode]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center cursor-pointer"
@@ -578,6 +642,31 @@ export default function ChordsViewer({
             {SECTION_LABELS[sectionType] || sectionType}
           </h2>
           <div className="flex items-center gap-2">
+            <div
+              className="flex rounded-lg overflow-hidden"
+              style={{ border: "1px solid var(--color-border)" }}
+            >
+              <button
+                onClick={() => handleUniversalToggle("nashville")}
+                className="px-2.5 py-1 text-xs font-medium transition-all min-h-[32px]"
+                style={{
+                  backgroundColor: displayMode === "nashville" ? "var(--color-accent)" : "var(--color-surface-muted)",
+                  color: displayMode === "nashville" ? "#fff" : "var(--color-text-secondary)",
+                }}
+              >
+                Nashville
+              </button>
+              <button
+                onClick={() => handleUniversalToggle("letter")}
+                className="px-2.5 py-1 text-xs font-medium transition-all min-h-[32px]"
+                style={{
+                  backgroundColor: displayMode === "letter" ? "var(--color-accent)" : "var(--color-surface-muted)",
+                  color: displayMode === "letter" ? "#fff" : "var(--color-text-secondary)",
+                }}
+              >
+                Letter
+              </button>
+            </div>
             <button
               onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
               disabled={zoomIndex === 0}
@@ -636,6 +725,8 @@ export default function ChordsViewer({
               onChordsFocus={handleChordsFocus}
               onChordsBlur={handleChordsBlur}
               onStartKeyEdit={handleStartKeyEdit}
+              effectiveDisplayMode={songOverrides[s.id] ?? displayMode}
+              onToggleOverride={handleToggleSongOverride}
             />
           ))}
           {filtered.length === 0 && (

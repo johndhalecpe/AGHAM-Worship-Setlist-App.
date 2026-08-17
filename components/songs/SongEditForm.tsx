@@ -13,8 +13,6 @@ type SongEditFormProps = {
     category: string;
     language: string;
     default_key: string;
-    default_bpm: number | null;
-    default_time_signature: string;
     lyrics: string;
     chords: string;
   }) => void;
@@ -48,8 +46,6 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
   );
   const [language, setLanguage] = useState(song.language ?? "english");
   const [defaultKey, setDefaultKey] = useState(song.default_key ?? "");
-  const [defaultBpm, setDefaultBpm] = useState(song.default_bpm);
-  const [defaultTimeSignature, setDefaultTimeSignature] = useState(song.default_time_signature ?? "");
   const [lyrics, setLyrics] = useState(song.lyrics ?? "");
   const [chords, setChords] = useState(song.chords ?? "");
   const [authors, setAuthors] = useState<string[]>([]);
@@ -125,8 +121,6 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
       category: resolvedCategory,
       language,
       default_key: defaultKey,
-      default_bpm: defaultBpm,
-      default_time_signature: defaultTimeSignature,
       lyrics,
       chords,
     });
@@ -336,11 +330,7 @@ export default function SongEditForm({ song, onSave, onCancel, isSaving }: SongE
       </div>
       <MusicalDataSection
         defaultKey={defaultKey}
-        defaultBpm={defaultBpm}
-        defaultTimeSignature={defaultTimeSignature}
         onKeyChange={setDefaultKey}
-        onBpmChange={setDefaultBpm}
-        onTimeSignatureChange={setDefaultTimeSignature}
       />
       <div className="flex gap-2 justify-end">
         <button

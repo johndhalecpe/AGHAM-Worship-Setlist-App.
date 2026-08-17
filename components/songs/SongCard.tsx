@@ -2,8 +2,9 @@
 
 import { memo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { SongListItem } from "@/lib/type";
+import { Song, SongListItem } from "@/lib/type";
 import { useIsGuest } from "@/lib/hooks/useIsGuest";
 import { markLocalWrite, setRealtimeEditing } from "@/lib/realtime-editing";
 import {
@@ -41,9 +42,8 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const [editingChords, setEditingChords] = useState(false);
   const [chordsDraft, setChordsDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [fullData, setFullData] = useState<{ lyrics: string | null; chords: string | null } | null>(null);
+  const [lyricsData, setLyricsData] = useState<string | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
-  const [loadingChords, setLoadingChords] = useState(false);
   const chordsRef = useRef<HTMLTextAreaElement>(null);
   const chordsDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,7 +51,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     useSongCollaboration(showChords ? [song.id] : [], {
       enabled: showChords,
       getConfirmedValue: (fieldKey) =>
-        fieldKey === "chords" ? (fullData?.chords ?? undefined) : undefined,
+        fieldKey === "chords" ? (song.chords ?? undefined) : undefined,
       onConflict: (fieldKey, authorName) => {
         if (fieldKey === "chords" && editingChords) {
           toast(`Chords were just updated by ${authorName}`);
@@ -73,8 +73,8 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const chordsPreview = liveFields["chords"];
 
   useEffect(() => {
-    setChordsDraft(fullData?.chords ?? "");
-  }, [fullData?.chords]);
+    setChordsDraft(song.chords ?? "");
+  }, [song.chords]);
 
   async function handleDeleteConfirm() {
     setIsDeleting(true);
@@ -89,21 +89,20 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     router.refresh();
   }
 
-  async function fetchFullData() {
-    if (fullData) return fullData;
+  async function fetchLyrics() {
+    if (lyricsData !== null) return lyricsData;
     const res = await fetch(`/api/songs/${song.id}`);
     if (!res.ok) throw new Error("Failed to load song data");
     const data = await res.json();
-    const result = { lyrics: data.lyrics, chords: data.chords };
-    setFullData(result);
-    return result;
+    setLyricsData(data.lyrics);
+    return data.lyrics as string | null;
   }
 
   async function handleShowLyrics() {
     if (!showLyrics) {
       setLoadingLyrics(true);
       try {
-        await fetchFullData();
+        await fetchLyrics();
       } catch {
         toast.error("Failed to load lyrics");
       }
@@ -112,16 +111,9 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     setShowLyrics(!showLyrics);
   }
 
-  async function handleShowChords() {
+  function handleShowChords() {
     if (!showChords) {
-      setLoadingChords(true);
-      try {
-        const data = await fetchFullData();
-        setChordsDraft(data.chords ?? "");
-      } catch {
-        toast.error("Failed to load chords");
-      }
-      setLoadingChords(false);
+      setChordsDraft(song.chords ?? "");
     }
     if (!showChords) {
       if (!guestLocked) {
@@ -142,6 +134,8 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     }, COLLAB_SAVE_DELAY_MS);
   }
 
+  const queryClient = useQueryClient();
+
   async function saveChords() {
     setSaving(true);
     broadcastField(song.id, "chords", chordsDraft);
@@ -156,7 +150,9 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
       return;
     }
     clearPreview("chords");
-    setFullData((prev) => (prev ? { ...prev, chords: chordsDraft } : prev));
+    queryClient.setQueryData<Song[]>(["songs"], (old) =>
+      old?.map((s) => (s.id === song.id ? { ...s, chords: chordsDraft } : s))
+    );
     toast.success("Chords saved");
     setSaving(false);
     setEditingChords(false);
@@ -212,7 +208,6 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
             </button>
             <button
               onClick={handleShowChords}
-              disabled={loadingChords}
               aria-label={showChords ? "Hide chords" : "Show chords"}
               title={showChords ? "Hide chords" : "Show chords"}
               className="rounded-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
@@ -254,13 +249,9 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
         </div>
 
         <div className="flex items-baseline gap-1 flex-wrap min-w-0">
-          {(song.default_key || song.default_bpm || song.default_time_signature) && (
+          {song.default_key && (
             <span className="flex items-baseline gap-x-0.5 text-[10px]">
-              {song.default_key && (<><span style={{ color: "var(--color-accent)" }}>key</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_key}</span></>)}
-              {song.default_key && (song.default_bpm || song.default_time_signature) && <span className="mx-0.5" style={{ color: "var(--color-text-tertiary)" }}>·</span>}
-              {song.default_bpm && (<><span style={{ color: "var(--color-accent)" }}>bpm</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_bpm}</span></>)}
-              {song.default_bpm && song.default_time_signature && <span className="mx-0.5" style={{ color: "var(--color-text-tertiary)" }}>·</span>}
-              {song.default_time_signature && (<><span style={{ color: "var(--color-accent)" }}>time</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_time_signature}</span></>)}
+              <span style={{ color: "var(--color-accent)" }}>key</span><span className="opacity-50 mx-0.5">:</span><span className="font-medium" style={{ color: "var(--color-text)" }}>{song.default_key}</span>
             </span>
           )}
         </div>
@@ -285,7 +276,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
       {showLyrics && (
         <div className="mt-1.5">
-          {fullData?.lyrics ? (
+          {lyricsData ? (
             <pre
               className="w-full rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap"
               style={{
@@ -297,11 +288,11 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
                 overflow: "hidden",
               }}
             >
-              {fullData.lyrics}
+              {lyricsData}
             </pre>
           ) : (
             <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
-              {fullData === null ? "Loading..." : "No lyrics yet."}
+              {loadingLyrics ? "Loading..." : "No lyrics yet."}
             </p>
           )}
         </div>
@@ -316,47 +307,39 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           )}
           {!guestLocked && editingChords ? (
             <div className="flex flex-col gap-1.5">
-              {loadingChords ? (
-                <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
-                  Loading chords...
-                </p>
-              ) : (
-                <>
-                  <ChordsViewer chords={chordsDraft} editable onChange={handleChordsDraftChange} />
-                  <div className="flex gap-1.5 justify-end">
-                    <button
-                      onClick={() => {
-                        setEditingChords(false);
-                        setShowChords(false);
-                        setChordsDraft(fullData?.chords ?? "");
-                      }}
-                      className="rounded px-2 py-1 text-xs font-medium"
-                      style={{
-                        border: "1px solid var(--color-border)",
-                        color: "var(--color-text-secondary)",
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveChords}
-                      disabled={saving}
-                      className="rounded px-2 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50"
-                      style={{
-                        backgroundColor: "var(--color-accent)",
-                        color: "white",
-                      }}
-                    >
-                      {saving ? "Saving..." : "Save"}
-                    </button>
-                  </div>
-                </>
-              )}
+              <ChordsViewer chords={chordsDraft} editable onChange={handleChordsDraftChange} />
+              <div className="flex gap-1.5 justify-end">
+                <button
+                  onClick={() => {
+                    setEditingChords(false);
+                    setShowChords(false);
+                    setChordsDraft(song.chords ?? "");
+                  }}
+                  className="rounded px-2 py-1 text-xs font-medium"
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveChords}
+                  disabled={saving}
+                  className="rounded px-2 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                  style={{
+                    backgroundColor: "var(--color-accent)",
+                    color: "white",
+                  }}
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
             </div>
           ) : (
-            fullData?.chords || chordsPreview ? (
+            song.chords || chordsPreview ? (
               <>
-                <ChordsViewer chords={chordsPreview?.value ?? fullData?.chords ?? ""} />
+                <ChordsViewer chords={chordsPreview?.value ?? song.chords ?? ""} />
                 {chordsPreview && (
                   <p className="text-xs mt-1 animate-preview-pulse" style={{ color: "var(--color-preview-text)" }}>
                     {chordsPreview.authorName} is editing&hellip;
@@ -365,7 +348,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
               </>
             ) : (
               <p className="text-xs italic" style={{ color: "var(--color-text-tertiary)" }}>
-                {fullData === null ? "Loading..." : "No chords yet."}
+                No chords yet.
               </p>
             )
           )}

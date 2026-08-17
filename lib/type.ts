@@ -13,7 +13,7 @@ export type Song = {
   created_at: string;
 };
 
-export type SongListItem = Omit<Song, "lyrics" | "chords">;
+export type SongListItem = Omit<Song, "lyrics">;
 
 export type Setlist = {
   id: string;

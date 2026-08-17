@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SetlistSectionWithSong } from "@/lib/type";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { SONG_NAV_PREFETCH_CACHE, useSongNavigation } from "@/lib/hooks/use-song-navigation";
+import { putSongs, type CachedSong } from "@/lib/offline-db";
 import SongNavBar from "./SongNavBar";
 
 type Props = {
@@ -215,6 +216,25 @@ export default function LyricsViewer({
       }
     }
   }, [prevSong, nextSong]);
+
+  useEffect(() => {
+    if (filtered.length === 0) return;
+    const songsToCache: CachedSong[] = filtered.map((s) => ({
+      id: s.songs.id,
+      title: s.songs.title,
+      author: s.songs.author,
+      category: s.songs.category,
+      language: s.songs.language,
+      default_key: s.songs.default_key,
+      default_bpm: s.songs.default_bpm,
+      default_time_signature: s.songs.default_time_signature,
+      lyrics: s.songs.lyrics,
+      chords: s.songs.chords,
+      status: s.songs.status,
+      created_at: s.created_at,
+    }));
+    putSongs(songsToCache).catch(() => {});
+  }, [filtered]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
