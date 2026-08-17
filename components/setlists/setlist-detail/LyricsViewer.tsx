@@ -101,7 +101,7 @@ const LyricsSongBlock = memo(function LyricsSongBlock({
                 color: "var(--color-badge-key-text)",
               }}
             >
-              Key: {section.song_key ?? section.songs.default_key ?? "G"}
+              Key: {section.song_key?.trim() || section.songs.default_key?.trim() || "G"}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -310,25 +310,31 @@ export default function LyricsViewer({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 pb-[env(safe-area-inset-bottom,16px)] sm:pb-6 backdrop-blur-xl"
+        className="relative w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-t-xl sm:rounded-xl px-4 sm:px-5 pt-2 pb-[env(safe-area-inset-bottom,16px)] sm:pb-5 backdrop-blur-xl"
         style={{
           backgroundColor: "var(--color-surface)",
           border: "1px solid var(--color-border)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between py-2 mb-1"
+          style={{
+            backgroundColor: "var(--color-surface)",
+            borderBottom: "1px solid var(--color-border)",
+          }}
+        >
           <h2
-            className="text-lg font-semibold"
+            className="text-sm font-bold shrink-0"
             style={{ color: "var(--color-text)" }}
           >
             {SECTION_LABELS[sectionType] || sectionType}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
               disabled={zoomIndex === 0}
-              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
+              className="rounded px-1.5 py-0.5 text-xs font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[28px] flex items-center justify-center"
               style={{
                 backgroundColor: "var(--color-surface-muted)",
                 border: "1px solid var(--color-border)",
@@ -336,12 +342,12 @@ export default function LyricsViewer({
               }}
               aria-label="Zoom out"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M2 10a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Z" />
               </svg>
             </button>
             <span
-              className="text-xs font-medium tabular-nums min-w-[3rem] text-center"
+              className="text-[11px] font-medium tabular-nums min-w-[2rem] text-center"
               style={{ color: "var(--color-text-tertiary)" }}
             >
               Zoom
@@ -349,7 +355,7 @@ export default function LyricsViewer({
             <button
               onClick={() => setZoomIndex(Math.min(LYRICS_ZOOM_STEPS.length - 1, zoomIndex + 1))}
               disabled={zoomIndex === LYRICS_ZOOM_STEPS.length - 1}
-              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
+              className="rounded px-1.5 py-0.5 text-xs font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[28px] flex items-center justify-center"
               style={{
                 backgroundColor: "var(--color-surface-muted)",
                 border: "1px solid var(--color-border)",
@@ -357,7 +363,7 @@ export default function LyricsViewer({
               }}
               aria-label="Zoom in"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M10.75 3.25a.75.75 0 0 0-1.5 0v6h-6a.75.75 0 0 0 0 1.5h6v6a.75.75 0 0 0 1.5 0v-6h6a.75.75 0 0 0 0-1.5h-6v-6Z" />
               </svg>
             </button>

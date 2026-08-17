@@ -82,7 +82,7 @@ const SongBlock = memo(function SongBlock({
   const fieldKey = `${section.id}-chords`;
   const showPreview = chordPreview !== undefined && chordDraft === undefined;
   const rawValue = chordDraft ?? chordPreview?.value ?? section.songs.chords ?? "";
-  const displayedKey = keyPreview?.value ?? section.song_key ?? section.songs.default_key ?? "G";
+  const displayedKey = keyPreview?.value?.trim() || section.song_key?.trim() || section.songs.default_key?.trim() || "G";
 
   const value = useMemo(() => {
     const isLetterStored = isLetterChordFormat(rawValue);
@@ -109,7 +109,7 @@ const SongBlock = memo(function SongBlock({
       el.style.height = "auto";
       el.style.height = `${el.scrollHeight}px`;
     }
-  }, [value, fontSize]);
+  }, [rawValue, fontSize]);
 
   const rootRef = useCallback(
     (el: HTMLDivElement | null) => {
@@ -624,7 +624,7 @@ export default function ChordsViewer({
     >
       <div
         ref={containerRef}
-        className="relative w-full max-w-2xl max-h-[85dvh] overflow-y-auto rounded-t-xl sm:rounded-xl p-5 sm:p-6 pb-[env(safe-area-inset-bottom,16px)] sm:pb-6 backdrop-blur-xl"
+        className="relative w-full max-w-2xl max-h-[85dvh] overflow-y-auto rounded-t-xl sm:rounded-xl px-4 sm:px-5 pt-2 pb-[env(safe-area-inset-bottom,16px)] sm:pb-5 backdrop-blur-xl"
         style={{
           backgroundColor: "var(--color-surface)",
           border: "1px solid var(--color-border)",
@@ -634,21 +634,27 @@ export default function ChordsViewer({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between py-2 mb-2"
+          style={{
+            backgroundColor: "var(--color-surface)",
+            borderBottom: "1px solid var(--color-border)",
+          }}
+        >
           <h2
-            className="text-xl font-bold"
+            className="text-sm font-bold shrink-0"
             style={{ color: "var(--color-text)" }}
           >
             {SECTION_LABELS[sectionType] || sectionType}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <div
-              className="flex rounded-lg overflow-hidden"
+              className="flex rounded overflow-hidden"
               style={{ border: "1px solid var(--color-border)" }}
             >
               <button
                 onClick={() => handleUniversalToggle("nashville")}
-                className="px-2.5 py-1 text-xs font-medium transition-all min-h-[32px]"
+                className="px-2 py-0.5 text-[11px] font-medium transition-all min-h-[28px]"
                 style={{
                   backgroundColor: displayMode === "nashville" ? "var(--color-accent)" : "var(--color-surface-muted)",
                   color: displayMode === "nashville" ? "#fff" : "var(--color-text-secondary)",
@@ -658,7 +664,7 @@ export default function ChordsViewer({
               </button>
               <button
                 onClick={() => handleUniversalToggle("letter")}
-                className="px-2.5 py-1 text-xs font-medium transition-all min-h-[32px]"
+                className="px-2 py-0.5 text-[11px] font-medium transition-all min-h-[28px]"
                 style={{
                   backgroundColor: displayMode === "letter" ? "var(--color-accent)" : "var(--color-surface-muted)",
                   color: displayMode === "letter" ? "#fff" : "var(--color-text-secondary)",
@@ -670,7 +676,7 @@ export default function ChordsViewer({
             <button
               onClick={() => setZoomIndex(Math.max(0, zoomIndex - 1))}
               disabled={zoomIndex === 0}
-              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
+              className="rounded px-1.5 py-0.5 text-xs font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[28px] flex items-center justify-center"
               style={{
                 backgroundColor: "var(--color-surface-muted)",
                 border: "1px solid var(--color-border)",
@@ -678,12 +684,12 @@ export default function ChordsViewer({
               }}
               aria-label="Zoom out"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M2 10a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Z" />
               </svg>
             </button>
             <span
-              className="text-xs font-medium tabular-nums min-w-[2.5rem] text-center"
+              className="text-[11px] font-medium tabular-nums min-w-[2rem] text-center"
               style={{ color: "var(--color-text-tertiary)" }}
             >
               {fontSize}px
@@ -691,7 +697,7 @@ export default function ChordsViewer({
             <button
               onClick={() => setZoomIndex(Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1))}
               disabled={zoomIndex === ZOOM_STEPS.length - 1}
-              className="rounded-lg px-2.5 py-1 text-sm font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[44px] sm:min-h-[32px] flex items-center justify-center"
+              className="rounded px-1.5 py-0.5 text-xs font-medium transition-all disabled:opacity-30 hover:opacity-80 min-h-[28px] flex items-center justify-center"
               style={{
                 backgroundColor: "var(--color-surface-muted)",
                 border: "1px solid var(--color-border)",
@@ -699,7 +705,7 @@ export default function ChordsViewer({
               }}
               aria-label="Zoom in"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M10.75 3.25a.75.75 0 0 0-1.5 0v6h-6a.75.75 0 0 0 0 1.5h6v6a.75.75 0 0 0 1.5 0v-6h6a.75.75 0 0 0 0-1.5h-6v-6Z" />
               </svg>
             </button>
@@ -760,7 +766,7 @@ export default function ChordsViewer({
             onClick={(e) => e.stopPropagation()}
           >
             <KeyPicker
-              value={editingSong.song_key ?? editingSong.songs.default_key ?? "G"}
+              value={editingSong.song_key?.trim() || editingSong.songs.default_key?.trim() || "G"}
               onChange={(key) => handleKeyChange(editingSong, key)}
               onCancel={() => setEditingKeyId(null)}
             />

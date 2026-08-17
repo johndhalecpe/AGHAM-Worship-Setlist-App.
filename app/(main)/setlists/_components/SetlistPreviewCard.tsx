@@ -71,7 +71,7 @@ export default function SetlistPreviewCard({
   }
 
   function getKey(s: typeof sections[number]) {
-    return s.song_key ?? s.songs.default_key ?? "G";
+    return s.song_key?.trim() || s.songs.default_key?.trim() || "G";
   }
 
   async function handleCreatePlaylist(e: React.MouseEvent) {

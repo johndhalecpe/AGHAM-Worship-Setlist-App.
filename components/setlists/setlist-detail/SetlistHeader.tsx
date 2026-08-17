@@ -40,7 +40,7 @@ export default function SetlistHeader({
   const [copiedText, setCopiedText] = useState(false);
 
   function getKey(s: SetlistSectionWithSong) {
-    return s.song_key ?? s.songs.default_key ?? "G";
+    return s.song_key?.trim() || s.songs.default_key?.trim() || "G";
   }
 
   function handleCopy() {
