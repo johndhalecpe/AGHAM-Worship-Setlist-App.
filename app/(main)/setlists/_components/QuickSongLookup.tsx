@@ -190,7 +190,7 @@ export default function QuickSongLookup() {
               onClick={() => {
                 resetSelection();
                 setMode(m);
-                setTransposeOffset(0);
+                setModalTransposeOffset(0);
                 if (query.trim() !== "") {
                   setLoading(true);
                   setError(false);

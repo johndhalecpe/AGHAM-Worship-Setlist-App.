@@ -27,6 +27,7 @@ import KeyPicker from "@/components/ui/KeyPicker";
 import PresenceAvatars from "@/components/ui/PresenceAvatars";
 import SongNavBar from "./SongNavBar";
 import { nashvilleToLetter, letterToNashville, isLetterChordFormat, transposeLetterChords, transposeKey } from "@/lib/chord-conversion";
+import { authedFetch } from "@/lib/client-fetch";
 
 
 const ZOOM_STEPS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36];
@@ -54,7 +55,7 @@ type SongBlockProps = {
   registerRef: (sectionId: string, el: HTMLDivElement | null) => void;
   onChordsChange: (sectionId: string, value: string) => void;
   onChordsFocus: (sectionId: string, e: FocusEvent<HTMLTextAreaElement>) => void;
-  onChordsBlur: () => void;
+  onChordsBlur: (sectionId: string, value: string) => void;
   onStartKeyEdit: (sectionId: string) => void;
   effectiveDisplayMode: "nashville" | "letter";
   onToggleOverride: (sectionId: string) => void;
@@ -221,7 +222,7 @@ const SongBlock = memo(function SongBlock({
           onChange={(e) => onChordsChange(section.id, e.target.value)}
           readOnly={isPast || isGuest || effectiveDisplayMode === "letter"}
           onFocus={(e) => onChordsFocus(section.id, e)}
-          onBlur={onChordsBlur}
+          onBlur={(e) => onChordsBlur(section.id, e.target.value)}
           placeholder="No chords available."
           className="w-full rounded-lg px-3 py-2 leading-relaxed outline-none resize-none overflow-hidden"
           style={{
@@ -320,15 +321,28 @@ export default function ChordsViewer({
 
   function flushCurrentSectionDraft() {
     if (!currentSection) return;
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
+    const sectionTimer = chordSaveTimersRef.current[currentSection.id];
+    if (sectionTimer) {
+      clearTimeout(sectionTimer);
+      delete chordSaveTimersRef.current[currentSection.id];
     }
     const edited = chordEditsRef.current[`${currentSection.id}-chords`];
     if (edited !== undefined) {
+      const sectionId = currentSection.id;
       chordsQueueRef.current = chordsQueueRef.current
         .catch(() => {})
-        .then(() => saveChordField(currentSection, edited));
+        .then(async () => {
+          const ok = await saveChordFieldRef.current(currentSection, edited);
+          if (ok) {
+            setChordEdits((prev) => {
+              const fieldKey = `${sectionId}-chords`;
+              if (prev[fieldKey] !== edited) return prev;
+              const next = { ...prev };
+              delete next[fieldKey];
+              return next;
+            });
+          }
+        });
     }
   }
 
@@ -364,7 +378,7 @@ export default function ChordsViewer({
   const chordEditsRef = useRef(chordEdits);
   chordEditsRef.current = chordEdits;
   const chordsQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chordSaveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const isDirtyRef = useRef(false);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const focusedFieldRef = useRef<string | null>(null);
@@ -499,9 +513,8 @@ export default function ChordsViewer({
     });
 
   async function handleKeyChange(s: SetlistSectionWithSong, key: string) {
-    const res = await fetch(`/api/setlists/${setlist.id}/sections`, {
+    const res = await authedFetch(`/api/setlists/${setlist.id}/sections`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: [{ id: s.id, song_key: key }] }),
     });
     if (!res.ok) {
@@ -517,56 +530,63 @@ export default function ChordsViewer({
     setEditingKeyId(null);
   }
 
-  async function saveChordField(s: SetlistSectionWithSong, value: string) {
+  async function saveChordField(s: SetlistSectionWithSong, value: string): Promise<boolean> {
     const fieldKey = `${s.id}-chords`;
-    const clearDraft = () =>
-      setChordEdits((prev) => {
-        if (prev[fieldKey] !== value) return prev;
-        const next = { ...prev };
-        delete next[fieldKey];
-        return next;
-      });
     if (value === (s.songs.chords ?? "")) {
-      return;
+      clearPreview(fieldKey);
+      return true;
     }
     broadcastField(s.songs.id, fieldKey, value);
-    const res = await fetch(`/api/songs/${s.song_id}`, {
+    const res = await authedFetch(`/api/songs/${s.song_id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chords: value }),
     });
     if (!res.ok) {
       toast.error(`Failed to save chords for "${s.songs.title}"`);
-      return;
+      return false;
     }
     markLocalWrite("songs");
-    clearDraft();
     clearPreview(fieldKey);
     onSectionsChange((prev) =>
       prev.map((sec) =>
         sec.id === s.id ? { ...sec, songs: { ...sec.songs, chords: value } } : sec
       )
     );
+    return true;
   }
 
   const saveChordFieldRef = useRef(saveChordField);
   saveChordFieldRef.current = saveChordField;
 
   async function flushDirtyChordFields() {
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
+    for (const sectionId of Object.keys(chordSaveTimersRef.current)) {
+      clearTimeout(chordSaveTimersRef.current[sectionId]);
+      delete chordSaveTimersRef.current[sectionId];
     }
+    let allSucceeded = true;
     for (const s of filtered) {
       const edited = chordEditsRef.current[`${s.id}-chords`];
       if (edited !== undefined) {
         chordsQueueRef.current = chordsQueueRef.current
           .catch(() => {})
-          .then(() => saveChordField(s, edited));
+          .then(async () => {
+            const ok = await saveChordFieldRef.current(s, edited);
+            if (ok) {
+              setChordEdits((prev) => {
+                const fieldKey = `${s.id}-chords`;
+                if (prev[fieldKey] !== edited) return prev;
+                const next = { ...prev };
+                delete next[fieldKey];
+                return next;
+              });
+            } else {
+              allSucceeded = false;
+            }
+          });
       }
     }
     await chordsQueueRef.current;
-    isDirtyRef.current = false;
+    if (allSucceeded) isDirtyRef.current = false;
   }
 
   const handleChordsChange = useCallback((sectionId: string, value: string) => {
@@ -574,23 +594,21 @@ export default function ChordsViewer({
     const fieldKey = `${sectionId}-chords`;
     isDirtyRef.current = true;
     setChordEdits((prev) => ({ ...prev, [fieldKey]: value }));
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      saveTimerRef.current = null;
-      chordsQueueRef.current = chordsQueueRef.current
-        .catch(() => {})
-        .then(() => {
-          const s = filteredRef.current.find((sec) => sec.id === sectionId);
-          if (s) return saveChordFieldRef.current(s, value);
-        });
-    }, 500);
-  }, []);
+    broadcastField(
+      filteredRef.current.find((sec) => sec.id === sectionId)?.songs.id ?? "",
+      fieldKey,
+      value,
+    );
+  }, [broadcastField]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      for (const timer of Object.values(chordSaveTimersRef.current)) {
+        clearTimeout(timer);
+      }
+      chordSaveTimersRef.current = {};
     };
   }, []);
 
@@ -644,11 +662,27 @@ export default function ChordsViewer({
     }, 300);
   }, [isPast]);
 
-  const handleChordsBlur = useCallback(() => {
+  const handleChordsBlur = useCallback((sectionId: string, value: string) => {
     focusedFieldRef.current = null;
     setFocusedInput(false);
     setEditingChordId(null);
     setRealtimeEditing("songs", false);
+    const fieldKey = `${sectionId}-chords`;
+    const s = filteredRef.current.find((sec) => sec.id === sectionId);
+    if (!s) return;
+    chordsQueueRef.current = chordsQueueRef.current
+      .catch(() => {})
+      .then(async () => {
+        const ok = await saveChordFieldRef.current(s, value);
+        if (ok) {
+          setChordEdits((prev) => {
+            if (prev[fieldKey] !== value) return prev;
+            const next = { ...prev };
+            delete next[fieldKey];
+            return next;
+          });
+        }
+      });
   }, []);
 
   const handleStartKeyEdit = useCallback((sectionId: string) => {

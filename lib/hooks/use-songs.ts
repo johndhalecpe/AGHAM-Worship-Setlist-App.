@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Song } from "@/lib/type";
+import { authedFetch } from "@/lib/client-fetch";
 
 const SONGS_KEY = ["songs"] as const;
 const AUTHORS_KEY = ["songs", "authors"] as const;
@@ -22,9 +23,8 @@ async function fetchAuthors(): Promise<string[]> {
 }
 
 async function updateSong(id: string, data: Record<string, unknown>): Promise<Song> {
-  const res = await fetch(`/api/songs/${id}`, {
+  const res = await authedFetch(`/api/songs/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update song");
@@ -32,7 +32,7 @@ async function updateSong(id: string, data: Record<string, unknown>): Promise<So
 }
 
 async function deleteSong(id: string): Promise<void> {
-  const res = await fetch(`/api/songs/${id}`, { method: "DELETE" });
+  const res = await authedFetch(`/api/songs/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete song");
 }
 

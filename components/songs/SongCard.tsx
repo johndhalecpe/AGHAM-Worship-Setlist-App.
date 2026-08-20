@@ -15,6 +15,7 @@ import {
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import PresenceAvatars from "@/components/ui/PresenceAvatars";
 import ChordsViewer from "@/components/chords/ChordsViewer";
+import { authedFetch } from "@/lib/client-fetch";
 
 type SongCardProps = {
   song: SongListItem;
@@ -44,11 +45,14 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   const [transposeOffset, setTransposeOffset] = useState(0);
   const [editingChords, setEditingChords] = useState(false);
   const [chordsDraft, setChordsDraft] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [chordSaveStatus, setChordSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lyricsData, setLyricsData] = useState<string | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
   const chordsRef = useRef<HTMLTextAreaElement>(null);
   const chordsDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chordAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestDraftRef = useRef(chordsDraft);
+  latestDraftRef.current = chordsDraft;
 
   const { liveFields, presentBySong, selfId, broadcastField, clearPreview } =
     useSongCollaboration(showChords ? [song.id] : [], {
@@ -65,6 +69,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   useEffect(() => {
     return () => {
       if (chordsDraftTimer.current) clearTimeout(chordsDraftTimer.current);
+      if (chordAutoSaveTimer.current) clearTimeout(chordAutoSaveTimer.current);
     };
   }, []);
 
@@ -120,7 +125,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
   async function handleDeleteConfirm() {
     setIsDeleting(true);
     setShowDeleteConfirm(false);
-    const res = await fetch(`/api/songs/${song.id}`, { method: "DELETE" });
+    const res = await authedFetch(`/api/songs/${song.id}`, { method: "DELETE" });
     if (!res.ok) {
       toast.error("Failed to delete song");
       setIsDeleting(false);
@@ -173,33 +178,37 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
     chordsDraftTimer.current = setTimeout(() => {
       broadcastField(song.id, "chords", value);
     }, COLLAB_SAVE_DELAY_MS);
+    if (chordAutoSaveTimer.current) clearTimeout(chordAutoSaveTimer.current);
+    setChordSaveStatus("idle");
+    chordAutoSaveTimer.current = setTimeout(async () => {
+      const draftToSave = latestDraftRef.current;
+      setChordSaveStatus("saving");
+      try {
+        const res = await authedFetch(`/api/songs/${song.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ chords: draftToSave }),
+        });
+        if (!res.ok) {
+          toast.error("Failed to save chords");
+          setChordSaveStatus("idle");
+          return;
+        }
+        clearPreview("chords");
+        queryClient.setQueryData<Song[]>(["songs"], (old) =>
+          old?.map((s) => (s.id === song.id ? { ...s, chords: draftToSave } : s))
+        );
+        markLocalWrite("songs");
+        setRealtimeEditing("songs", false);
+        setChordSaveStatus("saved");
+        setTimeout(() => setChordSaveStatus("idle"), 2000);
+      } catch {
+        toast.error("Failed to save chords");
+        setChordSaveStatus("idle");
+      }
+    }, 1200);
   }
 
   const queryClient = useQueryClient();
-
-  async function saveChords() {
-    setSaving(true);
-    broadcastField(song.id, "chords", chordsDraft);
-    const res = await fetch(`/api/songs/${song.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chords: chordsDraft }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to save chords");
-      setSaving(false);
-      return;
-    }
-    clearPreview("chords");
-    queryClient.setQueryData<Song[]>(["songs"], (old) =>
-      old?.map((s) => (s.id === song.id ? { ...s, chords: chordsDraft } : s))
-    );
-    toast.success("Chords saved");
-    setSaving(false);
-    setEditingChords(false);
-    markLocalWrite("songs");
-    setRealtimeEditing("songs", false);
-  }
 
   const showCategoryBadge = !isPredefinedCategory(song.category) && song.category;
   const isDraft = song.status === "draft";
@@ -380,9 +389,16 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           {!guestLocked && editingChords ? (
             <div className="flex flex-col gap-1.5">
               <ChordsViewer chords={chordsDraft} editable onChange={handleChordsDraftChange} displayMode={chordDisplayMode} />
-              <div className="flex gap-1.5 justify-end">
+              <div className="flex gap-1.5 justify-between items-center">
+                <span className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
+                  {chordSaveStatus === "saving" && "Saving…"}
+                  {chordSaveStatus === "saved" && (
+                    <span style={{ color: "var(--color-success)" }}>Saved ✓</span>
+                  )}
+                </span>
                 <button
                   onClick={() => {
+                    if (chordAutoSaveTimer.current) clearTimeout(chordAutoSaveTimer.current);
                     setEditingChords(false);
                     setShowChords(false);
                     setChordsDraft(song.chords ?? "");
@@ -394,17 +410,6 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
                   }}
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={saveChords}
-                  disabled={saving}
-                  className="rounded px-2 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 disabled:opacity-50"
-                  style={{
-                    backgroundColor: "var(--color-accent)",
-                    color: "white",
-                  }}
-                >
-                  {saving ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>

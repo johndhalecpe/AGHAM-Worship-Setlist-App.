@@ -67,6 +67,18 @@ export default function AdminApprovalsPage() {
     setUpdatingId(null);
   }
 
+  async function handleDeleteReset(resetId: string) {
+    setUpdatingId(resetId);
+    const { error } = await supabase.from("password_resets").delete().eq("id", resetId);
+    if (!error) {
+      setPasswordResets((prev) => prev.filter((r) => r.id !== resetId));
+      toast.success("Request deleted");
+    } else {
+      toast.error("Failed to delete request");
+    }
+    setUpdatingId(null);
+  }
+
   async function handleSetPassword(resetId: string, email: string) {
     const newPassword = resetPasswords[resetId];
     if (!newPassword || newPassword.length < 4) {
@@ -168,7 +180,7 @@ export default function AdminApprovalsPage() {
                 <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
                   {reset.email}
                 </p>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
                   <input
                     type="text"
                     placeholder="Enter new password"
@@ -203,6 +215,17 @@ export default function AdminApprovalsPage() {
                     }}
                   >
                     {updatingId === reset.id ? "..." : "Set Password"}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteReset(reset.id)}
+                    disabled={updatingId === reset.id}
+                    className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition-all disabled:opacity-50 hover:opacity-70 shrink-0"
+                    style={{
+                      border: "1px solid var(--color-danger)",
+                      color: "var(--color-danger)",
+                    }}
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
@@ -265,7 +288,7 @@ function ApprovalCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+      <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
         <button
           onClick={() => onAction(profile.id, "approved")}
           disabled={isUpdating}
@@ -291,13 +314,13 @@ function ApprovalCard({
         <button
           onClick={() => onDelete(profile.id)}
           disabled={isUpdating}
-          className="p-2 rounded-lg transition-all disabled:opacity-50 hover:opacity-70 shrink-0"
-          style={{ color: "var(--color-text-tertiary)" }}
-          title="Delete profile"
+          className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition-all disabled:opacity-50 hover:opacity-70 shrink-0"
+          style={{
+            border: "1px solid var(--color-danger)",
+            color: "var(--color-danger)",
+          }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-          </svg>
+          Delete
         </button>
       </div>
     </div>
