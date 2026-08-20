@@ -4,10 +4,13 @@ type ChordsViewerProps = {
   chords: string;
   editable?: boolean;
   onChange?: (value: string) => void;
+  displayMode?: "nashville" | "letter";
 };
 
-export default function ChordsViewer({ chords, editable, onChange }: ChordsViewerProps) {
-  if (editable) {
+export default function ChordsViewer({ chords, editable, onChange, displayMode }: ChordsViewerProps) {
+  const canEdit = editable && displayMode !== "letter";
+
+  if (canEdit) {
     return (
       <textarea
         value={chords}
@@ -25,8 +28,9 @@ export default function ChordsViewer({ chords, editable, onChange }: ChordsViewe
           backgroundColor: "var(--color-surface)",
           color: "var(--color-text)",
           lineHeight: "1.75",
-          whiteSpace: "pre",
-          overflow: "auto hidden",
+          whiteSpace: "pre-wrap",
+          overflowWrap: "break-word",
+          overflow: "auto",
         }}
         onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
         onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}

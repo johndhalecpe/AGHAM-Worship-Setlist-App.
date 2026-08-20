@@ -219,7 +219,7 @@ const SongBlock = memo(function SongBlock({
           autoCapitalize="off"
           value={value.text}
           onChange={(e) => onChordsChange(section.id, e.target.value)}
-          readOnly={isPast || isGuest}
+          readOnly={isPast || isGuest || effectiveDisplayMode === "letter"}
           onFocus={(e) => onChordsFocus(section.id, e)}
           onBlur={onChordsBlur}
           placeholder="No chords available."

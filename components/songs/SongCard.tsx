@@ -379,7 +379,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
           )}
           {!guestLocked && editingChords ? (
             <div className="flex flex-col gap-1.5">
-              <ChordsViewer chords={chordsDraft} editable onChange={handleChordsDraftChange} />
+              <ChordsViewer chords={chordsDraft} editable onChange={handleChordsDraftChange} displayMode={chordDisplayMode} />
               <div className="flex gap-1.5 justify-end">
                 <button
                   onClick={() => {
