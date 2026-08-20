@@ -320,6 +320,10 @@ export default function ChordsViewer({
 
   function flushCurrentSectionDraft() {
     if (!currentSection) return;
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
     const edited = chordEditsRef.current[`${currentSection.id}-chords`];
     if (edited !== undefined) {
       chordsQueueRef.current = chordsQueueRef.current
@@ -360,6 +364,7 @@ export default function ChordsViewer({
   const chordEditsRef = useRef(chordEdits);
   chordEditsRef.current = chordEdits;
   const chordsQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDirtyRef = useRef(false);
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const focusedFieldRef = useRef<string | null>(null);
@@ -451,7 +456,7 @@ export default function ChordsViewer({
         if (draft !== undefined || chordEditing) {
           return {
             ...incoming,
-            songs: { ...incoming.songs, chords: draft ?? existing.songs.chords },
+            songs: { ...incoming.songs, chords: draft ?? incoming.songs.chords },
           };
         }
         if (keyEditing) {
@@ -522,8 +527,6 @@ export default function ChordsViewer({
         return next;
       });
     if (value === (s.songs.chords ?? "")) {
-      clearDraft();
-      clearPreview(fieldKey);
       return;
     }
     broadcastField(s.songs.id, fieldKey, value);
@@ -550,6 +553,10 @@ export default function ChordsViewer({
   saveChordFieldRef.current = saveChordField;
 
   async function flushDirtyChordFields() {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
     for (const s of filtered) {
       const edited = chordEditsRef.current[`${s.id}-chords`];
       if (edited !== undefined) {
@@ -567,17 +574,24 @@ export default function ChordsViewer({
     const fieldKey = `${sectionId}-chords`;
     isDirtyRef.current = true;
     setChordEdits((prev) => ({ ...prev, [fieldKey]: value }));
-    chordsQueueRef.current = chordsQueueRef.current
-      .catch(() => {})
-      .then(() => {
-        const s = filteredRef.current.find((sec) => sec.id === sectionId);
-        if (s) return saveChordFieldRef.current(s, value);
-      });
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      chordsQueueRef.current = chordsQueueRef.current
+        .catch(() => {})
+        .then(() => {
+          const s = filteredRef.current.find((sec) => sec.id === sectionId);
+          if (s) return saveChordFieldRef.current(s, value);
+        });
+    }, 500);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
   }, []);
 
   const handleCloseRef = useRef<() => void>(() => {});
