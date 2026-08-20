@@ -303,6 +303,28 @@ describe("Letter to Nashville Converter", () => {
     it("preserves dash separators", () => {
       expect(letterToNashville("E-A-B", "E").output).toBe("1-4-5");
     });
+
+    it("converts chords inside parentheses", () => {
+      expect(letterToNashville("(C#m - B - A)", "E").output).toBe("(6 - 5 - 4)");
+    });
+
+    it("converts chords after colon with space", () => {
+      expect(letterToNashville("Verse: A B E", "E").output).toBe("Verse: 4 5 1");
+    });
+
+    it("converts chords after colon without space", () => {
+      expect(letterToNashville("Verse:Am B E", "E").output).toBe("Verse:4m 5 1");
+    });
+
+    it("converts multi-line input with parens and colons", () => {
+      const input = `Verse: C#m - B - A
+Chorus: E - B - A`;
+      const result = letterToNashville(input, "E");
+      expect(result.output).toContain("Verse:");
+      expect(result.output).toContain("6");
+      expect(result.output).toContain("Chorus:");
+      expect(result.output).toContain("1");
+    });
   });
 
   describe("Key G", () => {

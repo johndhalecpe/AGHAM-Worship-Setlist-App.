@@ -294,45 +294,47 @@ function tokenizeLetterString(input: string): LetterToken[] {
   const tokens: LetterToken[] = [];
   let current = "";
 
+  const flushCurrent = () => {
+    const trimmed = current.trim();
+    if (trimmed.length > 0) {
+      tokens.push({ value: trimmed, isChord: /^[A-G]/.test(trimmed) });
+    }
+    current = "";
+  };
+
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
 
+    if (char === "(" || char === ")") {
+      flushCurrent();
+      tokens.push({ value: char, isChord: false });
+      continue;
+    }
+
+    if (" \t\n\r-,:;/".includes(char)) {
+      flushCurrent();
+      if (" \t\n\r".includes(char)) {
+        const last = tokens[tokens.length - 1];
+        if (!last || last.value !== " ") {
+          tokens.push({ value: " ", isChord: false });
+        }
+      } else {
+        tokens.push({ value: char, isChord: false });
+      }
+      continue;
+    }
+
     if ("CDEFGAB".includes(char) && current.length > 0) {
       const lastChar = current[current.length - 1];
-      if ("CDEFGAB#bmM2469)".includes(lastChar)) {
-        if (current.trim().length > 0) {
-          tokens.push({ value: current.trim(), isChord: true });
-        }
-        current = "";
+      if ("CDEFGAB#b".includes(lastChar)) {
+        flushCurrent();
       }
-    }
-
-    if (char === " " || char === "-" || char === "\t" || char === "\n" || char === "\r") {
-      if (current.trim().length > 0) {
-        tokens.push({ value: current.trim(), isChord: /^[A-G]/.test(current) });
-      }
-      tokens.push({ value: char, isChord: false });
-      current = "";
-      continue;
-    }
-
-    if (",;/".includes(char)) {
-      const parts = current.split(char);
-      if (parts[0].trim().length > 0) {
-        tokens.push({ value: parts[0].trim(), isChord: true });
-      }
-      tokens.push({ value: char, isChord: false });
-      current = "";
-      continue;
     }
 
     current += char;
   }
 
-  if (current.trim().length > 0) {
-    tokens.push({ value: current.trim(), isChord: /^[A-G]/.test(current) });
-  }
-
+  flushCurrent();
   return tokens;
 }
 
