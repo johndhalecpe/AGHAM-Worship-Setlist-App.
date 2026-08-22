@@ -216,7 +216,7 @@ const SongBlock = memo(function SongBlock({
           autoCapitalize="off"
           value={value.text}
           onChange={(e) => onChordsChange(section.id, e.target.value)}
-          readOnly={isPast || isGuest}
+          readOnly={isPast || isGuest || effectiveDisplayMode === "letter"}
           onFocus={(e) => onChordsFocus(section.id, e)}
           onBlur={(e) => onChordsBlur(section.id, e.target.value)}
           placeholder="No chords available."
@@ -264,10 +264,21 @@ export default function ChordsViewer({
     () => internalSections.filter((s) => s.section_type === sectionType),
     [internalSections, sectionType]
   );
+  const filteredSongIdsRef = useRef<string[]>([]);
   const filteredSongIds = useMemo(() => {
     const seen = new Set<string>();
     for (const s of filtered) seen.add(s.songs.id);
-    return Array.from(seen);
+    const newIds = Array.from(seen);
+    // Only update if the IDs actually changed — prevents infinite channel
+    // recreation when sections are reordered or chord data updates.
+    if (
+      newIds.length === filteredSongIdsRef.current.length &&
+      newIds.every((id, i) => id === filteredSongIdsRef.current[i])
+    ) {
+      return filteredSongIdsRef.current;
+    }
+    filteredSongIdsRef.current = newIds;
+    return newIds;
   }, [filtered]);
   const orderedSongs = useMemo(() => filtered.map((s) => s.songs), [filtered]);
   const {
