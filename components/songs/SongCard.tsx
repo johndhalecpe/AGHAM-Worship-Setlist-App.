@@ -91,11 +91,7 @@ function SongCard({ song, isLocked, onEditRequest, showMissingTags }: SongCardPr
 
     if (chordDisplayMode === "nashville") {
       if (isLetterStored) {
-        const result = letterToNashville(rawChords, key);
-        if (!result.success) {
-          console.warn(`[SongCard] letterToNashville failed for "${song.title}" (key: ${key}):`, result.errors);
-        }
-        return { text: result.success ? result.output : rawChords, failed: !result.success };
+        return { text: rawChords, failed: false };
       }
       return { text: rawChords, failed: false };
     }

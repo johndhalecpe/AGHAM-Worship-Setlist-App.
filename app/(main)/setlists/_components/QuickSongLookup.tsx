@@ -389,13 +389,7 @@ function Modal({
     const storedIsLetter = isLetterChordFormat(fieldText);
     if (chordDisplayMode === "nashville") {
       if (storedIsLetter) {
-        const result = letterToNashville(fieldText, displayKey);
-        if (result.success) {
-          displayChords = result.output;
-        } else {
-          conversionFailed = true;
-          console.warn(`[QuickSongLookup] letterToNashville failed for "${song.title}" (key: ${displayKey}):`, result.errors);
-        }
+        displayChords = fieldText;
       }
     } else {
       if (storedIsLetter) {

@@ -8,7 +8,7 @@ type ChordsViewerProps = {
 };
 
 export default function ChordsViewer({ chords, editable, onChange, displayMode }: ChordsViewerProps) {
-  const canEdit = editable && displayMode !== "letter";
+  const canEdit = !!editable;
 
   if (canEdit) {
     return (

@@ -93,11 +93,7 @@ const SongBlock = memo(function SongBlock({
 
     if (effectiveDisplayMode === "nashville") {
       if (isLetterStored) {
-        const result = letterToNashville(rawValue, displayedKey);
-        if (!result.success) {
-          console.warn(`[ChordsViewer] letterToNashville failed for "${section.songs.title}" (key: ${displayedKey}):`, result.errors);
-        }
-        return { text: result.success ? result.output : rawValue, failed: !result.success };
+        return { text: rawValue, failed: false };
       }
       return { text: rawValue, failed: false };
     }
@@ -220,7 +216,7 @@ const SongBlock = memo(function SongBlock({
           autoCapitalize="off"
           value={value.text}
           onChange={(e) => onChordsChange(section.id, e.target.value)}
-          readOnly={isPast || isGuest || effectiveDisplayMode === "letter"}
+          readOnly={isPast || isGuest}
           onFocus={(e) => onChordsFocus(section.id, e)}
           onBlur={(e) => onChordsBlur(section.id, e.target.value)}
           placeholder="No chords available."
